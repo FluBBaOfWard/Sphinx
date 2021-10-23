@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-#define HW_K2GE		(0)
-#define HW_K1GE		(1)
-#define NGP_COLOR	HW_K2GE
-#define NGP_MONO	HW_K1GE
+#define HW_WSC		(0)
+#define HW_WS		(1)
+#define WS_COLOR	HW_WSC
+#define WS_MONO		HW_WS
 
 /** Game screen width in pixels */
 #define GAME_WIDTH  (224)
@@ -64,7 +64,7 @@ typedef struct {
 
 } K2GE;
 
-void k2GEReset(void *frameIrqFunc(), void *periodicIrqFunc(), void *ram);
+void wsVideoReset(void *frameIrqFunc(), void *periodicIrqFunc(), void *ram);
 
 /**
  * Saves the state of the chip to the destination.

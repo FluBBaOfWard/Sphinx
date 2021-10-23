@@ -1,16 +1,16 @@
 ;@ ASM header for the SNK K1GE/K2GE Graphics Engine emulator
 ;@
 
-#define HW_K2GE		(0)
-#define HW_K1GE		(1)
-#define NGP_COLOR	HW_K2GE
-#define NGP_MONO	HW_K1GE
+#define HW_WSC		(0)
+#define HW_WS		(1)
+#define WS_COLOR	HW_WSC
+#define WS_MONO		HW_WS
 
 
 /** Game screen width in pixels */
-#define GAME_WIDTH  (160)
+#define GAME_WIDTH  (224)
 /** Game screen height in pixels */
-#define GAME_HEIGHT (152)
+#define GAME_HEIGHT (144)
 
 	geptr		.req r12
 						;@ K2GE.s

@@ -9,8 +9,8 @@
 #endif
 #include "WSVideo.i"
 
-	.global k2GEInit
-	.global k2GEReset
+	.global wsVideoInit
+	.global wsVideoReset
 	.global wsVideoSaveState
 	.global wsVideoLoadState
 	.global wsVideoGetStateSize
@@ -22,7 +22,6 @@
 	.global k2GEConvertTiles
 	.global k2GEBufferWindows
 	.global k2GE_R
-	.global k2GE_W
 	.global wsvVCountR
 	.global GetHInt
 
@@ -43,7 +42,7 @@
 #endif
 	.align 2
 ;@----------------------------------------------------------------------------
-k2GEInit:					;@ Only need to be called once
+wsVideoInit:					;@ Only need to be called once
 ;@----------------------------------------------------------------------------
 	mov r1,#0xffffff00			;@ Build chr decode tbl
 	ldr r2,=CHR_DECODE			;@ 0x400
@@ -70,7 +69,7 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=model, r12=geptr
+wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=model, r12=geptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
@@ -104,7 +103,7 @@ k2GEReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=model, r12=geptr
 	str r0,[geptr,#scrollBuff]
 
 	strb r3,[geptr,#kgeModel]
-	cmp r3,#HW_K1GE
+	cmp r3,#HW_WS
 	movne r0,#0x00				;@ Use Color mode.
 	moveq r0,#0x80				;@ Use B&W mode.
 	strb r0,[geptr,#kgeMode]
@@ -185,7 +184,7 @@ wsVideoLoadState:		;@ In r0=geptr, r1=source. Out r0=state size.
 
 	ldr r0,=DIRTYTILES
 	mov r1,#0
-	mov r2,#0x600
+	mov r2,#0x800
 	bl memset
 
 	mov geptr,r5
@@ -427,7 +426,7 @@ k2GEExtraR:					;@ 0x87XX
 ;@----------------------------------------------------------------------------
 	ands r1,r0,#0xFF
 	cmp r1,#0xE0
-	beq k2GEResetR
+	beq wsVideoResetR
 	cmp r1,#0xE2
 	beq k2GEModeR
 	cmp r1,#0xF0
@@ -438,7 +437,7 @@ k2GEExtraR:					;@ 0x87XX
 	mov r0,#0
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEResetR:					;@ 0x87E0
+wsVideoResetR:					;@ 0x87E0
 ;@----------------------------------------------------------------------------
 	mov r11,r11
 	mov r0,#0					;@ should return 1? !!!
@@ -474,7 +473,6 @@ k2GESpriteR:				;@ 0x8800-0x88FF, 0x8C00-0x8C3F
 ;@----------------------------------------------------------------------------
 GetHInt:					;@ Out r0 = 0 / 1, if HInt is happening or not.
 ;@----------------------------------------------------------------------------
-
 	mov r0,#0
 	ldr r1,[geptr,#scanline]
 	cmp r1,#151					;@ Should this be WIN_VStart + WIN_VSize?
@@ -485,32 +483,30 @@ GetHInt:					;@ Out r0 = 0 / 1, if HInt is happening or not.
 	and r0,r0,r1,lsr#6
 	bx lr
 
-
-
 ;@----------------------------------------------------------------------------
-k2GE_W:						;@ I/O write (0x8000-0x8FFF)
+wsVideoW:						;@ I/O write (0x00-0x7F)?
 ;@----------------------------------------------------------------------------
-	and r2,r1,#0x0F00
-	ldr pc,[pc,r2,lsr#6]
+	and r2,r1,#0xF0
+	ldr pc,[pc,r2,lsr#2]
 	.long 0
-	.long k2GERegistersW		;@ 0x80XX
-	.long k2GEPaletteMonoW		;@ 0x81XX
+	.long k2GERegistersW		;@ 0x00
+	.long k2GEPaletteMonoW		;@ 0x01
 k2GEPalPtr:
-	.long k2GEPaletteW			;@ 0x82XX
-	.long k2GEPaletteW			;@ 0x83XX
-	.long k2GELedW				;@ 0x84XX
-	.long k2GEBadW				;@ 0x85XX
-	.long k2GEBadW				;@ 0x86XX
+	.long k2GEPaletteW			;@ 0x02
+	.long k2GEPaletteW			;@ 0x03
+	.long k2GELedW				;@ 0x04
+	.long k2GEBadW				;@ 0x05
+	.long k2GEBadW				;@ 0x06
 k2GEExtraPtr:
-	.long k2GEExtraW			;@ 0x87XX
-	.long k2GESpriteW			;@ 0x88XX
-	.long k2GEBadW				;@ 0x89XX
-	.long k2GEBadW				;@ 0x8AXX
-	.long k2GEBadW				;@ 0x8BXX
-	.long k2GESpriteW			;@ 0x8CXX
-	.long k2GEBadW				;@ 0x8DXX
-	.long k2GEBadW				;@ 0x8EXX
-	.long k2GEBadW				;@ 0x8FXX
+	.long k2GEExtraW			;@ 0x07
+	.long k2GESpriteW			;@ 0x08
+	.long k2GEBadW				;@ 0x09
+	.long k2GEBadW				;@ 0x0A
+	.long k2GEBadW				;@ 0x0B
+	.long k2GESpriteW			;@ 0x0C
+	.long k2GEBadW				;@ 0x0D
+	.long k2GEBadW				;@ 0x0E
+	.long k2GEBadW				;@ 0x0F
 
 k2GERegistersW:
 	ands r1,r1,#0xFF
@@ -527,10 +523,6 @@ k2GERegistersW:
 	beq k2GERefW
 	cmp r1,#0x12
 	beq k2GEBgColW
-	cmp r1,#0x20
-	beq k2GESprOfsXW
-	cmp r1,#0x21
-	beq k2GESprOfsYW
 	cmp r1,#0x30
 	beq k2GEBgPrioW
 	cmp r1,#0x32
@@ -580,16 +572,6 @@ k2GERefW:					;@ 0x8006, Total number of scanlines
 k2GEBgColW:					;@ 0x8012
 ;@----------------------------------------------------------------------------
 	strb r0,[geptr,#kgeBGCol]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GESprOfsXW:				;@ 0x8020
-;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeSprXOfs]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GESprOfsYW:				;@ 0x8021
-;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeSprYOfs]
 	bx lr
 ;@----------------------------------------------------------------------------
 k2GEBgPrioW:				;@ 0x8030
@@ -710,7 +692,7 @@ k1GEExtraW:					;@ 0x87XX
 ;@----------------------------------------------------------------------------
 	ands r1,r1,#0xFF
 	cmp r1,#0xE0
-	beq k2GEResetW
+	beq wsVideoResetW
 	mov r11,r11
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -718,7 +700,7 @@ k2GEExtraW:					;@ 0x87XX
 ;@----------------------------------------------------------------------------
 	ands r1,r1,#0xFF
 	cmp r1,#0xE0
-	beq k2GEResetW
+	beq wsVideoResetW
 	cmp r1,#0xE2
 	beq k2GEModeW
 	cmp r1,#0xF0
@@ -726,7 +708,7 @@ k2GEExtraW:					;@ 0x87XX
 	mov r11,r11
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEResetW:					;@ 0x87E0
+wsVideoResetW:				;@ 0x87E0
 ;@----------------------------------------------------------------------------
 	cmp r0,#0x52
 	beq k2GERegistersReset
@@ -773,8 +755,7 @@ k2GEConvertTileMaps:		;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r9,lr}
 
-	mov r4,r0
-	ldr r3,[geptr,#gfxRAMSwap]
+	ldr r1,=wsRAM
 	ldr r5,=0xFE00FE00
 	ldr r7,=0x20002000
 	ldr r8,=0xC000C000
@@ -782,8 +763,8 @@ k2GEConvertTileMaps:		;@ r0 = destination
 	mov r6,#64
 
 	adr lr,bgRet0
-	ldrb r0,[geptr,#kgeMode]	;@ Color mode
-	tst r0,#0x80
+	ldrb r2,[geptr,#kgeMode]	;@ Color mode
+	tst r2,#0x80
 	beq bgColor
 	bne bgMono
 bgRet0:
@@ -794,7 +775,7 @@ noChange:
 midFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	bl k2GETransferVRAM
+//	bl k2GETransferVRAM
 	ldr r0,=tmpOamBuffer		;@ Destination
 	ldr r0,[r0]
 	bl k2GEConvertSprites
@@ -804,7 +785,16 @@ midFrame:
 ;@----------------------------------------------------------------------------
 endFrame:
 ;@----------------------------------------------------------------------------
-	bx lr
+	stmfd sp!,{lr}
+	ldr r0,=IO_regs
+	ldrb r0,[r0,#0x60]
+	and r0,r0,#0xE0
+	cmp r0,#0xC0
+	adr lr,TransRet
+	beq TransferVRAM16Layered
+	b TransferVRAM16Packed
+TransRet:
+	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 checkFrameIRQ:
 ;@----------------------------------------------------------------------------
@@ -816,9 +806,10 @@ checkFrameIRQ:
 	ldmfd sp!,{lr}
 	bl endFrameGfx
 
-	ldrb r0,[geptr,#kgeIrqEnable]
-	tst r0,#0x80				;@ VBlank IRQ
-	movne r0,#0x0B				;@ 0x0B = VBlank
+	ldr r2,=IO_regs
+	ldrb r0,[r2,#0xB2]
+	tst r0,#0x40				;@ VBlank IRQ?
+	movne r0,#6					;@ 6 = VBlank
 	blne setInterrupt
 //	movne lr,pc
 //	ldrne pc,[geptr,#frameIrqFunc]
@@ -826,23 +817,6 @@ checkFrameIRQ:
 	bx lr
 ;@----------------------------------------------------------------------------
 frameEndHook:
-	ldrb r0,[geptr,#kgeLedOnOff]
-	ldrb r1,[geptr,#kgeLedEnable]
-	cmp r1,#0xff
-	cmpne r1,#0x00
-	andeq r0,r1,#1
-	beq noLedBlink
-	ldr r1,[geptr,#ledCounter]
-	ldr r2,=515*198				;@ Total cycles per frame
-	subs r1,r1,r2
-	eormi r0,r0,#1
-	ldrbmi r2,[geptr,#kgeLedBlink]
-	addsmi r1,r1,r2,lsl#16
-	addmi r1,r1,r2,lsl#16		;@ Lowest value is less than tcpf.
-	str r1,[geptr,#ledCounter]
-noLedBlink:
-	strb r0,[geptr,#kgeLedOnOff]
-
 	mov r0,#0
 	str r0,scrollLine
 
@@ -906,113 +880,112 @@ checkScanlineIRQ:
 //	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
-tData:
-	.long DIRTYTILES
-cData:
-	.long DIRTYTILES2+0x100
+T_data:
+	.long DIRTYTILES+0x200
+VDP_RAM_ptr:
+	.long wsRAM+0x4000
 	.long CHR_DECODE
 	.long BG_GFX+0x08000		;@ BGR tiles
-	.long BG_GFX+0x0C000		;@ BGR tiles2
 	.long SPRITE_GFX			;@ SPR tiles
-	.long 0x44444444			;@ Tile2 mask
 ;@----------------------------------------------------------------------------
-k2GETransferVRAM:
+TransferVRAM16Packed:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r11,lr}
-	adr r0,tData
-	ldmia r0,{r5}
-	add r6,r5,#0x300
-	ldr r0,[geptr,#gfxRAMSwap]
-	ldr r1,[geptr,#gfxRAM]
-	mov r2,#0
-	ldr r7,=0x44444444
-
-tileLoop16_2p:
-	ldr r4,[r5]
-	str r7,[r5],#4
-	ldr r3,[r6]
-	and r3,r3,r4
-	str r3,[r6],#4
-	tst r4,#0x000000FF
-	addne r2,r2,#0x10
-	bleq tileLoop16_3p
-	tst r4,#0x0000FF00
-	addne r2,r2,#0x10
-	bleq tileLoop16_3p
-	tst r4,#0x00FF0000
-	addne r2,r2,#0x10
-	bleq tileLoop16_3p
-	tst r4,#0xFF000000
-	addne r2,r2,#0x10
-	bleq tileLoop16_3p
-	cmp r2,#0x3000
-	bne tileLoop16_2p
-
-	ldmfd sp!,{r4-r11,pc}
-
-tileLoop16_3p:
-	add r3,r1,r2
-	ldmia r3,{r8-r11}
-	add r3,r0,r2
-	stmia r3,{r8-r11}
-	add r2,r2,#16
-
-	bx lr
-
-;@----------------------------------------------------------------------------
-k2GEConvertTiles:
-;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r11,lr}
-	adr r0,cData
-	ldmia r0,{r5-r10}
-	ldr r4,[geptr,#gfxRAMSwap]
-	add r4,r4,#0x1000
+	stmfd sp!,{r4-r10,lr}
+	adr r0,T_data
+	ldmia r0,{r4-r8}
+	ldr r6,=0xF0F0F0F0
+	mov r9,#-1
 	mov r1,#0
-	mov r2,#0xFF
-	mov r2,r2,lsl#1
 
 tileLoop16_0p:
-	ldr r11,[r5]
-	str r10,[r5],#4
-	tst r11,#0x000000FF
-	addne r1,r1,#0x10
+	ldr r10,[r4]
+	str r9,[r4],#4
+	tst r10,#0x000000FF
+	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r11,#0x0000FF00
-	addne r1,r1,#0x10
+	tst r10,#0x0000FF00
+	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r11,#0x00FF0000
-	addne r1,r1,#0x10
+	tst r10,#0x00FF0000
+	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r11,#0xFF000000
-	addne r1,r1,#0x10
+	tst r10,#0xFF000000
+	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	cmp r1,#0x2000
+	cmp r1,#0x8000
 	bne tileLoop16_0p
 
-	ldmfd sp!,{r4-r11,pc}
+	ldmfd sp!,{r4-r10,pc}
 
 tileLoop16_1p:
-	ldrh r0,[r4,r1]
-	and r3,r2,r0,lsr#7
-	ldrh r3,[r6,r3]
-	and r0,r2,r0,lsl#1
-	ldrh r0,[r6,r0]
-	orr r0,r3,r0,lsl#16
+	ldr r0,[r5,r1]
 
-	str r0,[r9,r1,lsl#1]
-	str r0,[r7,r1,lsl#1]
-	orr r3,r0,r0,lsr#1
-	and r3,r10,r3,lsl#2
-	orr r0,r0,r3
-	str r0,[r8,r1,lsl#1]
-	add r1,r1,#2
-	tst r1,#0x0E
+	and r3,r6,r0,lsl#4
+	and r0,r0,r6
+	orr r3,r3,r0,lsr#4
+
+	str r3,[r7,r1]
+	str r3,[r8,r1]
+	add r1,r1,#4
+	tst r1,#0x1C
 	bne tileLoop16_1p
 
 	bx lr
 
 ;@----------------------------------------------------------------------------
-;@bgchrfinish	;@ End of frame...
+TransferVRAM16Layered:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r10,lr}
+	adr r0,T_data
+	ldmia r0,{r4-r8}
+	mov r9,#-1
+	mov r1,#0
+
+tileLoop16_0:
+	ldr r10,[r4]
+	str r9,[r4],#4
+	tst r10,#0x000000FF
+	addne r1,r1,#0x20
+	bleq tileLoop16_1
+	tst r10,#0x0000FF00
+	addne r1,r1,#0x20
+	bleq tileLoop16_1
+	tst r10,#0x00FF0000
+	addne r1,r1,#0x20
+	bleq tileLoop16_1
+	tst r10,#0xFF000000
+	addne r1,r1,#0x20
+	bleq tileLoop16_1
+	cmp r1,#0x8000
+	bne tileLoop16_0
+
+	ldmfd sp!,{r4-r10,pc}
+
+tileLoop16_1:
+	ldr r0,[r5,r1]
+
+	ands r3,r0,#0x000000FF
+	ldrne r3,[r6,r3,lsl#2]
+	ands r2,r0,#0x0000FF00
+	ldrne r2,[r6,r2,lsr#6]
+	orrne r3,r3,r2,lsl#1
+	ands r2,r0,#0x00FF0000
+	ldrne r2,[r6,r2,lsr#14]
+	orrne r3,r3,r2,lsl#2
+	ands r2,r0,#0xFF000000
+	ldrne r2,[r6,r2,lsr#22]
+	orrne r3,r3,r2,lsl#3
+
+	str r3,[r7,r1]
+	str r3,[r8,r1]
+	add r1,r1,#4
+	tst r1,#0x1C
+	bne tileLoop16_1
+
+	bx lr
+
+;@----------------------------------------------------------------------------
+;@bgChrFinish	;@ End of frame... r0=destination, r1=source
 ;@----------------------------------------------------------------------------
 ;@	ldr r5,=0xFE00FE00
 ;@	ldr r7,=0x20002000
@@ -1021,23 +994,23 @@ tileLoop16_1p:
 ;@ MSB          LSB
 ;@ hvcCCCCnnnnnnnnn
 bgColor:
-	ldr r0,[r3],#4				;@ Read from NeoGeo Pocket Tilemap RAM
-	bic r1,r0,r5
-	and r2,r0,r9
-	orr r1,r1,r2,lsl#3			;@ Color
-	and r0,r0,r8				;@ Mask NGP flip bits
-	orr r0,r0,r0,lsr#2
-	and r0,r8,r0,lsl#1
-	orr r1,r1,r0,lsr#4			;@ XY flip
+	ldr r3,[r1],#4				;@ Read from NeoGeo Pocket Tilemap RAM
+	bic r2,r3,r5
+	and r4,r3,r9
+	orr r2,r2,r4,lsl#3			;@ Color
+	and r3,r3,r8				;@ Mask NGP flip bits
+	orr r3,r3,r3,lsr#2
+	and r3,r8,r3,lsl#1
+	orr r2,r2,r3,lsr#4			;@ XY flip
 
-	str r1,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
-	tst r4,#0x3C				;@ 32 tiles wide
+	str r2,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
+	tst r0,#0x3C				;@ 32 tiles wide
 	subseq r6,r6,#1
 	bne bgColor
 
 	bx lr
 ;@----------------------------------------------------------------------------
-;@bgchrfinish	;@ End of frame...
+;@bgChrFinish	;@ End of frame... r0=destination, r1=source
 ;@----------------------------------------------------------------------------
 ;@	ldr r5,=0xFE00FE00
 ;@	ldr r7,=0x20002000
@@ -1046,17 +1019,17 @@ bgColor:
 ;@ MSB          LSB
 ;@ hvcCCCCnnnnnnnnn
 bgMono:
-	ldr r0,[r3],#4				;@ Read from NeoGeo Pocket Tilemap RAM
-	bic r1,r0,r5
-	and r2,r0,r7
-	orr r1,r1,r2,lsr#1			;@ Color
-	and r0,r0,r8				;@ Mask NGP flip bits
-	orr r0,r0,r0,lsr#2
-	and r0,r8,r0,lsl#1
-	orr r1,r1,r0,lsr#4			;@ XY flip
+	ldr r3,[r1],#4				;@ Read from NeoGeo Pocket Tilemap RAM
+	bic r2,r3,r5
+	and r4,r3,r7
+	orr r2,r2,r4,lsr#1			;@ Color
+	and r3,r3,r8				;@ Mask NGP flip bits
+	orr r3,r3,r3,lsr#2
+	and r3,r8,r3,lsl#1
+	orr r2,r2,r3,lsr#4			;@ XY flip
 
-	str r1,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
-	tst r4,#0x3C				;@ 32 tiles wide
+	str r2,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
+	tst r0,#0x3C				;@ 32 tiles wide
 	subseq r6,r6,#1
 	bne bgMono
 

@@ -1,2 +1,2 @@
 # WSVideo
-WonderSwan video emulator for GBA/NDS.
+Bandai WonderSwan video emulator for GBA/NDS.
