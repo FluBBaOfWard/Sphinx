@@ -20,15 +20,19 @@ nextLineChange:	.long 0
 lineState:		.long 0
 
 k2GEState:					;@
-k2GERegs:
+wsvRegs:
+wsvDisplayControl:	.byte 0	;@ Display control
+wsvSpriteTblAdr:	.byte 0	;@ Sprite table address
+wsvSpriteStart:	.byte 0		;@ Sprite to start with
+wsvSpriteEnd:	.byte 0		;@ Sprite to end with
 kgeWinXPos:		.byte 0		;@ Window X-Position
 kgeWinYPos:		.byte 0		;@ Window Y-Position
 kgeWinXSize:	.byte 0		;@ Window X-Size
 kgeWinYSize:	.byte 0		;@ Window Y-Size
-kgeBGXScroll:	.byte 0,0	;@ Background X-Scroll
-kgeBGYScroll:	.byte 0,0	;@ Background Y-Scroll
-kgeFGXScroll:	.byte 0,0	;@ Foreground X-Scroll
-kgeFGYScroll:	.byte 0,0	;@ Foreground Y-Scroll
+wsvBGXScroll:	.byte 0,0	;@ Background X-Scroll
+wsvBGYScroll:	.byte 0,0	;@ Background Y-Scroll
+wsvFGXScroll:	.byte 0,0	;@ Foreground X-Scroll
+wsvFGYScroll:	.byte 0,0	;@ Foreground Y-Scroll
 
 kgeSprXOfs:		.byte 0
 kgeSprYOfs:		.byte 0
@@ -43,11 +47,12 @@ kgeModeChange:	.byte 0
 
 kgeLedOnOff:	.byte 0		;@ Bit 0, Led On/Off.
 kgeModel:		.byte 0		;@ HW_K2GE / HW_K1GE.
-//kgePadding1:	.space 1
+nameTable:		.byte 0
+kgePadding1:	.space 3
 
 ledCounter:		.long 0
 windowData:		.long 0
-k2GEStateSize:
+k2GEStateEnd:
 
 frameIrqFunc:	.long 0		;@ V-Blank Irq
 periodicIrqFunc:.long 0		;@ H-Blank Irq

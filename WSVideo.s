@@ -15,21 +15,24 @@
 	.global wsVideoLoadState
 	.global wsVideoGetStateSize
 	.global k2GEConvertTiles
-	.global k2GEDoScanline
+	.global wsvDoScanline
 	.global copyScrollValues
 	.global k2GEConvertTileMaps
-	.global k2GEConvertSprites
+	.global wsvConvertSprites
 	.global k2GEConvertTiles
 	.global k2GEBufferWindows
 	.global k2GE_R
 	.global wsvVCountR
-	.global GetHInt
 
-	.global k2GEBgScrXW
-	.global k2GEBgScrYW
-	.global k2GEFgScrXW
-	.global k2GEFgScrYW
+	.global wsvDisplayControlW
+	.global wsvSpriteTblAdrW
+	.global wsvSpriteStartW
+	.global wsvSpriteEndW
 	.global wsvTileMapBaseW
+	.global wsvBgScrXW
+	.global wsvBgScrYW
+	.global wsvFgScrXW
+	.global wsvFgScrYW
 
 
 	.syntax unified
@@ -91,6 +94,8 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=model, r12=geptr
 	str r1,[geptr,#periodicIrqFunc]
 
 	str r2,[geptr,#gfxRAM]
+	add r0,r2,#0xFE00
+	str r0,[geptr,#paletteRAM]
 	add r2,r2,#0x3000
 	str r2,[geptr,#sprRAM]
 	add r2,r2,#0x140
@@ -107,23 +112,14 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=model, r12=geptr
 	movne r0,#0x00				;@ Use Color mode.
 	moveq r0,#0x80				;@ Use B&W mode.
 	strb r0,[geptr,#kgeMode]
-	ldrne r0,=k2GEPaletteW
-	ldreq r0,=k2GEBadW
-	ldr r1,=k2GEPalPtr
-	str r0,[r1],#4
-	str r0,[r1],#4
-	ldrne r0,=k2GEExtraW
-	ldreq r0,=k1GEExtraW
-	ldr r1,=k2GEExtraPtr
-	str r0,[r1],#4
 
-	b k2GERegistersReset
+	b wsvRegistersReset
 
 dummyIrqFunc:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-k2GERegistersReset:
+wsvRegistersReset:
 ;@----------------------------------------------------------------------------
 	mov r0,#0xC0
 	strb r0,[geptr,#kgeIrqEnable]	;@ Both interrupts allowed
@@ -136,11 +132,6 @@ k2GERegistersReset:
 	strb r0,[geptr,#kgeLedBlink]	;@ Flash cycle = 1.3s
 	ldr r1,[geptr,#paletteMonoRAM]
 	strb r0,[r1,#0x18]				;@ BGC on!
-	ldr r0,=0x0FFF
-	ldr r1,[geptr,#paletteRAM]
-	add r1,r1,#0x100
-	strh r0,[r1,#0xE0]			;@ 0x83E0. Default background colour
-	strh r0,[r1,#0xF0]			;@ 0x83F0. Default window colour
 
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -158,11 +149,11 @@ wsVideoSaveState:		;@ In r0=destination, r1=geptr. Out r0=state size.
 	ldr r2,=0x3360
 	add r0,r4,r2
 	add r1,r5,#k2GEState
-	mov r2,#(k2GEStateSize-k2GEState)
+	mov r2,#(k2GEStateEnd-k2GEState)
 	bl memcpy
 
 	ldmfd sp!,{r4,r5,lr}
-	ldr r0,=0x3360+(k2GEStateSize-k2GEState)
+	ldr r0,=0x3360+(k2GEStateEnd-k2GEState)
 	bx lr
 ;@----------------------------------------------------------------------------
 wsVideoLoadState:		;@ In r0=geptr, r1=source. Out r0=state size.
@@ -179,7 +170,7 @@ wsVideoLoadState:		;@ In r0=geptr, r1=source. Out r0=state size.
 	ldr r2,=0x3360
 	add r0,r5,#k2GEState
 	add r1,r4,r2
-	mov r2,#(k2GEStateSize-k2GEState)
+	mov r2,#(k2GEStateEnd-k2GEState)
 	bl memcpy
 
 	ldr r0,=DIRTYTILES
@@ -194,7 +185,7 @@ wsVideoLoadState:		;@ In r0=geptr, r1=source. Out r0=state size.
 wsVideoGetStateSize:	;@ Out r0=state size.
 	.type   wsVideoGetStateSize STT_FUNC
 ;@----------------------------------------------------------------------------
-	ldr r0,=0x3360+(k2GEStateSize-k2GEState)
+	ldr r0,=0x3360+(k2GEStateEnd-k2GEState)
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -230,95 +221,108 @@ k2GEBufferWindows:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GE_R:						;@ I/O read (0x8000-0x8FFF)
+k2GE_R:						;@ I/O read (0x00-0x3F)
 ;@----------------------------------------------------------------------------
-	and r2,r0,#0x0F00
+	and r2,r0,#0xE0
 	ldr pc,[pc,r2,lsr#6]
 	.long 0
-	.long k2GERegistersR		;@ 0x80XX
-	.long k2GEPaletteMonoR		;@ 0x81XX
-	.long k2GEPaletteR			;@ 0x82XX
-	.long k2GEPaletteR			;@ 0x83XX
-	.long k2GELedR				;@ 0x84XX
-	.long k2GEBadR				;@ 0x85XX
-	.long k2GEBadR				;@ 0x86XX
-	.long k2GEExtraR			;@ 0x87XX
-	.long k2GESpriteR			;@ 0x88XX
-	.long k2GEBadR				;@ 0x89XX
-	.long k2GEBadR				;@ 0x8AXX
-	.long k2GEBadR				;@ 0x8BXX
-	.long k2GESpriteR			;@ 0x8CXX
-	.long k2GEBadR				;@ 0x8DXX
-	.long k2GEBadR				;@ 0x8EXX
-	.long k2GEBadR				;@ 0x8FXX
+	.long wsvRegistersR			;@ 0x0X
+	.long k2GEPaletteR			;@ 0x2X
+	.long k2GELedR				;@ 0x4X
+	.long wsvBadR				;@ 0x6X
+	.long k2GESpriteR			;@ 0x8X, Audio
+	.long wsvBadR				;@ 0xAX
+	.long k2GESpriteR			;@ 0xCX, Bank select, In/Out
+	.long wsvBadR				;@ 0xEX
 
-k2GERegistersR:
+wsvRegistersR:
 	ands r0,r0,#0xFF
-	beq k2GEIrqEnableR
-	cmp r0,#0x02
-	beq k2GEWinHStartR
+	beq wsvDisplayControlR
 	cmp r0,#0x03
-	beq k2GEWinVStartR
-	cmp r0,#0x04
-	beq k2GEWinHSizeR
-	cmp r0,#0x05
-	beq k2GEWinVSizeR
-	cmp r0,#0x06
-	beq k2GERefreshR
+	beq wsvVCountR
+	cmp r0,#0x08
+	beq wsvWinHStartR
+	cmp r0,#0x09
+	beq wsvWinVStartR
+	cmp r0,#0x0A
+	beq wsvWinHSizeR
+	cmp r0,#0x0B
+	beq wsvWinVSizeR
 	cmp r0,#0x08
 	beq k2GEHCountR
-	cmp r0,#0x09
-	beq k2GEVCountR
+	cmp r0,#0x10
+	beq wsvBgScrXR
+	cmp r0,#0x11
+	beq wsvBgScrYR
+	cmp r0,#0x12
+	beq wsvFgScrXR
+	cmp r0,#0x13
+	beq wsvFgScrYR
 	cmp r0,#0x10
 	beq k2GEStatusR
 	cmp r0,#0x12
 	beq k2GEBgColR
-	cmp r0,#0x20
-	beq k2GESprOfsXR
-	cmp r0,#0x21
-	beq k2GESprOfsYR
 	cmp r0,#0x30
 	beq k2GEBgPrioR
-	cmp r0,#0x32
-	beq k2GEBgScrXR
-	cmp r0,#0x33
-	beq k2GEBgScrYR
-	cmp r0,#0x34
-	beq k2GEFgScrXR
-	cmp r0,#0x35
-	beq k2GEFgScrYR
-k2GEBadR:
+	cmp r0,#0xA6
+	beq k2GERefreshR
+wsvBadR:
 	mov r11,r11					;@ No$GBA breakpoint
 	ldr r0,=0x826EBAD0
 	mov r0,#0
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEIrqEnableR:				;@ 0x8000
+wsvDisplayControlR:			;@ 0x00
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeIrqEnable]
+	ldrb r0,[geptr,#wsvDisplayControl]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinHStartR:				;@ 0x8002
+wsvVCountR:					;@ 0x03
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#scanline]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvWinHStartR:				;@ 0x08
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#kgeWinXPos]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinVStartR:				;@ 0x8003
+wsvWinVStartR:				;@ 0x09
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#kgeWinYPos]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinHSizeR:				;@ 0x8004
+wsvWinHSizeR:				;@ 0x0A
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#kgeWinXSize]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinVSizeR:				;@ 0x8005
+wsvWinVSizeR:				;@ 0x0B
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#kgeWinYSize]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GERefreshR:				;@ 0x8006
+wsvBgScrXR:					;@ 0x10, Background Horizontal Scroll register
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#wsvBGXScroll]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvBgScrYR:					;@ 0x11
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#wsvBGYScroll]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvFgScrXR:					;@ 0x12
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#wsvFGXScroll]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvFgScrYR:					;@ 0x13
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#wsvFGYScroll]
+	bx lr
+;@----------------------------------------------------------------------------
+k2GERefreshR:				;@ 0xA6
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#kgeRef]
 	bx lr
@@ -326,12 +330,6 @@ k2GERefreshR:				;@ 0x8006
 k2GEHCountR:				;@ 0x8008
 ;@----------------------------------------------------------------------------
 //	mov r0,t9cycles,lsr#T9CYC_SHIFT+2	;@
-	bx lr
-;@----------------------------------------------------------------------------
-k2GEVCountR:				;@ 0x8009
-;@----------------------------------------------------------------------------
-;@	mov t9cycles,#0				;@
-	ldrb r0,[geptr,#scanline]
 	bx lr
 ;@----------------------------------------------------------------------------
 k2GEStatusR:				;@ 0x8010
@@ -347,44 +345,9 @@ k2GEBgColR:					;@ 0x8012
 	ldrb r0,[geptr,#kgeBGCol]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GESprOfsXR:				;@ 0x8020
-;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeSprXOfs]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GESprOfsYR:				;@ 0x8021
-;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeSprYOfs]
-	bx lr
-;@----------------------------------------------------------------------------
 k2GEBgPrioR:				;@ 0x8030
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#kgeBGPrio]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GEBgScrXR:				;@ 0x8032, Background Horizontal Scroll register
-;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeBGXScroll]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GEBgScrYR:				;@ 0x8033
-;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeBGYScroll]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GEFgScrXR:				;@ 0x8034
-;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeFGXScroll]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GEFgScrYR:				;@ 0x8035
-;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeFGYScroll]
-	bx lr
-;@----------------------------------------------------------------------------
-wsvVCountR:					;@ 0x03
-;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#scanline]
 	bx lr
 ;@----------------------------------------------------------------------------
 k2GEPaletteMonoR:			;@ 0x8100-0x8118
@@ -470,160 +433,166 @@ k2GESpriteR:				;@ 0x8800-0x88FF, 0x8C00-0x8C3F
 	tstne r1,#0xC0000000
 	ldrbeq r0,[r2,r1,lsr#24]
 	bx lr
-;@----------------------------------------------------------------------------
-GetHInt:					;@ Out r0 = 0 / 1, if HInt is happening or not.
-;@----------------------------------------------------------------------------
-	mov r0,#0
-	ldr r1,[geptr,#scanline]
-	cmp r1,#151					;@ Should this be WIN_VStart + WIN_VSize?
-	movmi r0,#1
-	cmp r1,#198
-	moveq r0,#1
-	ldrb r1,[geptr,#kgeIrqEnable]
-	and r0,r0,r1,lsr#6
-	bx lr
 
 ;@----------------------------------------------------------------------------
-wsVideoW:						;@ I/O write (0x00-0x7F)?
+wsVideoW:						;@ I/O write (0x00-0xFF)?
 ;@----------------------------------------------------------------------------
-	and r2,r1,#0xF0
+	and r2,r0,#0xE0
 	ldr pc,[pc,r2,lsr#2]
 	.long 0
-	.long k2GERegistersW		;@ 0x00
-	.long k2GEPaletteMonoW		;@ 0x01
-k2GEPalPtr:
-	.long k2GEPaletteW			;@ 0x02
-	.long k2GEPaletteW			;@ 0x03
-	.long k2GELedW				;@ 0x04
-	.long k2GEBadW				;@ 0x05
-	.long k2GEBadW				;@ 0x06
-k2GEExtraPtr:
-	.long k2GEExtraW			;@ 0x07
-	.long k2GESpriteW			;@ 0x08
-	.long k2GEBadW				;@ 0x09
-	.long k2GEBadW				;@ 0x0A
-	.long k2GEBadW				;@ 0x0B
-	.long k2GESpriteW			;@ 0x0C
-	.long k2GEBadW				;@ 0x0D
-	.long k2GEBadW				;@ 0x0E
-	.long k2GEBadW				;@ 0x0F
+	.long wsvRegistersW			;@ 0x0X
+	.long k2GEPaletteW			;@ 0x2X
+	.long k2GELedW				;@ 0x4X
+	.long wsvBadW				;@ 0x6X
+	.long k2GESpriteW			;@ 0x8X, Audio
+	.long wsvBadW				;@ 0xAX
+	.long k2GESpriteW			;@ 0xCX
+	.long wsvBadW				;@ 0xEX
 
-k2GERegistersW:
-	ands r1,r1,#0xFF
-	beq k2GEIrqEnableW
-	cmp r1,#0x02
-	beq k2GEWinHStartW
-	cmp r1,#0x03
-	beq k2GEWinVStartW
-	cmp r1,#0x04
-	beq k2GEWinHSizeW
-	cmp r1,#0x05
-	beq k2GEWinVSizeW
-	cmp r1,#0x06
-	beq k2GERefW
-	cmp r1,#0x12
+wsvRegistersW:
+	ands r0,r0,#0xFF
+	beq wsvDisplayControlW
+	cmp r0,#0x04
+	beq wsvSpriteTblAdrW
+	cmp r0,#0x05
+	beq wsvSpriteStartW
+	cmp r0,#0x06
+	beq wsvSpriteEndW
+	cmp r0,#0x07
+	beq wsvTileMapBaseW
+	cmp r0,#0x08
+	beq wsvWinHStartW
+	cmp r0,#0x09
+	beq wsvWinVStartW
+	cmp r0,#0x0A
+	beq wsvWinHSizeW
+	cmp r0,#0x0B
+	beq wsvWinVSizeW
+	cmp r0,#0x10
+	beq wsvBgScrXW
+	cmp r0,#0x11
+	beq wsvBgScrYW
+	cmp r0,#0x12
+	beq wsvFgScrXW
+	cmp r0,#0x13
+	beq wsvFgScrYW
+	cmp r0,#0x12
 	beq k2GEBgColW
-	cmp r1,#0x30
+	cmp r0,#0x30
 	beq k2GEBgPrioW
-	cmp r1,#0x32
-	beq k2GEBgScrXW
-	cmp r1,#0x33
-	beq k2GEBgScrYW
-	cmp r1,#0x34
-	beq k2GEFgScrXW
-	cmp r1,#0x35
-	beq k2GEFgScrYW
-k2GEBadW:
-								;@ Cool Boarders writes 0x80 to 0x8011 and 0x00 to 8036.
+	cmp r0,#0xA6
+	beq k2GERefW
+wsvBadW:
 	mov r11,r11					;@ No$GBA breakpoint
 	ldr r0,=0x826EBAD1
 	bx lr
+
 ;@----------------------------------------------------------------------------
-k2GEIrqEnableW:				;@ 0x8000
+wsvDisplayControlW:			;@ 0x00
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeIrqEnable]
+	strb r1,[geptr,#wsvDisplayControl]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinHStartW:				;@ 0x8002
+wsvSpriteTblAdrW:			;@ 0x04
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeWinXPos]
+	strb r1,[geptr,#wsvSpriteTblAdr]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinVStartW:				;@ 0x8003
+wsvSpriteStartW:			;@ 0x05
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeWinYPos]
+	strb r1,[geptr,#wsvSpriteStart]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinHSizeW:				;@ 0x8004
+wsvSpriteEndW:				;@ 0x06
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeWinXSize]
+	strb r1,[geptr,#wsvSpriteEnd]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEWinVSizeW:				;@ 0x8005
+wsvTileMapBaseW:			;@ 0x07
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeWinYSize]
+	strb r1,[geptr,#nameTable]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GERefW:					;@ 0x8006, Total number of scanlines
+wsvWinHStartW:				;@ 0x08
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeRef]
+	strb r1,[geptr,#kgeWinXPos]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvWinVStartW:				;@ 0x09
+;@----------------------------------------------------------------------------
+	strb r1,[geptr,#kgeWinYPos]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvWinHSizeW:				;@ 0x0A
+;@----------------------------------------------------------------------------
+	strb r1,[geptr,#kgeWinXSize]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvWinVSizeW:				;@ 0x0B
+;@----------------------------------------------------------------------------
+	strb r1,[geptr,#kgeWinYSize]
+	bx lr
+;@----------------------------------------------------------------------------
+k2GERefW:					;@ 0xA6, Total number of scanlines?
+;@----------------------------------------------------------------------------
+	strb r1,[geptr,#kgeRef]
 	bx lr
 ;@----------------------------------------------------------------------------
 k2GEBgColW:					;@ 0x8012
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeBGCol]
+	strb r1,[geptr,#kgeBGCol]
 	bx lr
 ;@----------------------------------------------------------------------------
 k2GEBgPrioW:				;@ 0x8030
 ;@----------------------------------------------------------------------------
-	strb r0,[geptr,#kgeBGPrio]
+	strb r1,[geptr,#kgeBGPrio]
 	bx lr
 ;@----------------------------------------------------------------------------
-k2GEBgScrXW:				;@ 0x8032, Background Horizontal Scroll register
+wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
 ;@----------------------------------------------------------------------------
 #ifdef NDS
-	ldrd r2,r3,[geptr,#kgeBGXScroll]
+	ldrd r2,r3,[geptr,#wsvBGXScroll]
 #else
-	ldr r2,[geptr,#kgeBGXScroll]
-	ldr r3,[geptr,#kgeFGXScroll]
+	ldr r2,[geptr,#wsvBGXScroll]
+	ldr r3,[geptr,#wsvFGXScroll]
 #endif
-	strb r0,[geptr,#kgeBGXScroll]
+	strb r1,[geptr,#wsvBGXScroll]
 	b scrollCnt
 
 ;@----------------------------------------------------------------------------
-k2GEBgScrYW:				;@ 0x8033, Background Vertical Scroll register
+wsvBgScrYW:					;@ 0x11, Background Vertical Scroll register
 ;@----------------------------------------------------------------------------
 #ifdef NDS
-	ldrd r2,r3,[geptr,#kgeBGXScroll]
+	ldrd r2,r3,[geptr,#wsvBGXScroll]
 #else
-	ldr r2,[geptr,#kgeBGXScroll]
-	ldr r3,[geptr,#kgeFGXScroll]
+	ldr r2,[geptr,#wsvBGXScroll]
+	ldr r3,[geptr,#wsvFGXScroll]
 #endif
-	strb r0,[geptr,#kgeBGYScroll]
+	strb r1,[geptr,#wsvBGYScroll]
 	b scrollCnt
 
 ;@----------------------------------------------------------------------------
-k2GEFgScrXW:				;@ 0x8034, Foreground Horizontal Scroll register
+wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 ;@----------------------------------------------------------------------------
 #ifdef NDS
-	ldrd r2,r3,[geptr,#kgeBGXScroll]
+	ldrd r2,r3,[geptr,#wsvBGXScroll]
 #else
-	ldr r2,[geptr,#kgeBGXScroll]
-	ldr r3,[geptr,#kgeFGXScroll]
+	ldr r2,[geptr,#wsvBGXScroll]
+	ldr r3,[geptr,#wsvFGXScroll]
 #endif
-	strb r0,[geptr,#kgeFGXScroll]
+	strb r1,[geptr,#wsvFGXScroll]
 	b scrollCnt
 
 ;@----------------------------------------------------------------------------
-k2GEFgScrYW:				;@ 0x8035, Foreground Vertical Scroll register
+wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
 #ifdef NDS
-	ldrd r2,r3,[geptr,#kgeBGXScroll]
+	ldrd r2,r3,[geptr,#wsvBGXScroll]
 #else
-	ldr r2,[geptr,#kgeBGXScroll]
-	ldr r3,[geptr,#kgeFGXScroll]
+	ldr r2,[geptr,#wsvBGXScroll]
+	ldr r3,[geptr,#wsvFGXScroll]
 #endif
-	strb r0,[geptr,#kgeFGYScroll]
+	strb r1,[geptr,#wsvFGYScroll]
 scrollCnt:
 
 	ldr r1,[geptr,#scanline]	;@ r1=scanline
@@ -646,10 +615,6 @@ sy2:
 
 scrollLine: .long 0 ;@ ..was when?
 
-;@----------------------------------------------------------------------------
-wsvTileMapBaseW:			;@ 0x07
-;@----------------------------------------------------------------------------
-	bx lr
 ;@----------------------------------------------------------------------------
 k2GEPaletteMonoW:			;@ 0x8100-0x8118
 ;@----------------------------------------------------------------------------
@@ -711,7 +676,7 @@ k2GEExtraW:					;@ 0x87XX
 wsVideoResetW:				;@ 0x87E0
 ;@----------------------------------------------------------------------------
 	cmp r0,#0x52
-	beq k2GERegistersReset
+	beq wsvRegistersReset
 	bx lr
 ;@----------------------------------------------------------------------------
 k2GEModeW:					;@ 0x87E2
@@ -753,23 +718,29 @@ k2GESpriteW:				;@ 0x8800-0x88FF, 0x8C00-0x8C3F
 ;@----------------------------------------------------------------------------
 k2GEConvertTileMaps:		;@ r0 = destination
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r9,lr}
+	stmfd sp!,{r4-r11,lr}
 
-	ldr r1,=wsRAM
-	ldr r5,=0xFE00FE00
-	ldr r7,=0x20002000
-	ldr r8,=0xC000C000
-	ldr r9,=0x1E001E00
-	mov r6,#64
+	mov r10,r0
+	ldr r5,=0xF000F000
+	ldr r7,=0x00010001
+	mov r6,#0
+//	ldr r8,=TMAPBUFF
+	ldr r11,=wsRAM
+	mov r9,#32
 
-	adr lr,bgRet0
-	ldrb r2,[geptr,#kgeMode]	;@ Color mode
-	tst r2,#0x80
-	beq bgColor
-	bne bgMono
-bgRet0:
-noChange:
-	ldmfd sp!,{r4-r9,pc}
+	bl bgColor
+
+	add r10,r10,#0x800
+	ldr r5,=0xF000F000
+	ldr r7,=0x00010001
+	mov r6,#0
+//	ldr r8,=TMAPBUFF
+	ldr r11,=wsRAM
+	mov r9,#32
+
+	bl fgColor
+
+	ldmfd sp!,{r4-r11,pc}
 
 ;@----------------------------------------------------------------------------
 midFrame:
@@ -778,7 +749,7 @@ midFrame:
 //	bl k2GETransferVRAM
 	ldr r0,=tmpOamBuffer		;@ Destination
 	ldr r0,[r0]
-	bl k2GEConvertSprites
+	bl wsvConvertSprites
 	bl k2GEBufferWindows
 
 	ldmfd sp!,{pc}
@@ -799,10 +770,8 @@ TransRet:
 checkFrameIRQ:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{geptr,lr}
-	ldrb r0,[geptr,#kgeBGXScroll]
-	bl k2GEBgScrXW
-	ldrb r0,[geptr,#kgeFGXScroll]
-	bl k2GEFgScrXW
+	ldrb r1,[geptr,#wsvBGXScroll]
+	bl wsvBgScrXW
 	ldmfd sp!,{lr}
 	bl endFrameGfx
 
@@ -856,7 +825,7 @@ redoScanline:
 	bx r0
 	ldmfd sp!,{lr}
 ;@----------------------------------------------------------------------------
-k2GEDoScanline:
+wsvDoScanline:
 ;@----------------------------------------------------------------------------
 	ldmia geptr,{r0,r1}			;@ Read scanLine & nextLineChange
 	cmp r0,r1
@@ -984,54 +953,73 @@ tileLoop16_1:
 
 	bx lr
 
-;@----------------------------------------------------------------------------
-;@bgChrFinish	;@ End of frame... r0=destination, r1=source
-;@----------------------------------------------------------------------------
-;@	ldr r5,=0xFE00FE00
-;@	ldr r7,=0x20002000
-;@	ldr r8,=0xC000C000
-;@	ldr r9,=0x1E001E00
+;@-------------------------------------------------------------------------------
+;@ bgChrFinish	;end of frame...
+;@-------------------------------------------------------------------------------
+;@	ldr r5,=0xF000F000
+;@	ldr r7,=0x00010001
 ;@ MSB          LSB
-;@ hvcCCCCnnnnnnnnn
+;@ ---pcvhnnnnnnnnn
 bgColor:
-	ldr r3,[r1],#4				;@ Read from NeoGeo Pocket Tilemap RAM
-	bic r2,r3,r5
-	and r4,r3,r9
-	orr r2,r2,r4,lsl#3			;@ Color
-	and r3,r3,r8				;@ Mask NGP flip bits
-	orr r3,r3,r3,lsr#2
-	and r3,r8,r3,lsl#1
-	orr r2,r2,r3,lsr#4			;@ XY flip
+//	ldrb r1,[r8],#1				;@ Need to fix this up later!!!
+	ldrb r1,[geptr,#nameTable]	;@ Need to fix this up later!!!
+	and r1,r1,#0x07
+	add r3,r11,r1,lsl#11
+	add r3,r3,r6,lsl#6
+	add r4,r10,r6,lsl#6
+	add r6,r6,#1
+	and r6,r6,#0x1F
 
-	str r2,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
-	tst r0,#0x3C				;@ 32 tiles wide
-	subseq r6,r6,#1
+bgm4Loop:
+	ldr r0,[r3],#4				;@ Read from WonderSwan Tilemap RAM
+
+	bic r1,r0,r5,lsr#3
+	and r0,r0,r5,lsr#3
+	and r2,r1,r5
+	bic r1,r1,r5
+	orr r1,r1,r2,lsr#4			;@ XY flip
+	orr r1,r1,r0,lsl#3			;@ Color
+
+	str r1,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
+	tst r4,#0x3C				;@ 32 tiles wide
+	bne bgm4Loop
+	subs r9,r9,#1
 	bne bgColor
 
 	bx lr
-;@----------------------------------------------------------------------------
-;@bgChrFinish	;@ End of frame... r0=destination, r1=source
-;@----------------------------------------------------------------------------
-;@	ldr r5,=0xFE00FE00
-;@	ldr r7,=0x20002000
-;@	ldr r8,=0xC000C000
-;@	ldr r9,=0x1E001E00
-;@ MSB          LSB
-;@ hvcCCCCnnnnnnnnn
-bgMono:
-	ldr r3,[r1],#4				;@ Read from NeoGeo Pocket Tilemap RAM
-	bic r2,r3,r5
-	and r4,r3,r7
-	orr r2,r2,r4,lsr#1			;@ Color
-	and r3,r3,r8				;@ Mask NGP flip bits
-	orr r3,r3,r3,lsr#2
-	and r3,r8,r3,lsl#1
-	orr r2,r2,r3,lsr#4			;@ XY flip
 
-	str r2,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
-	tst r0,#0x3C				;@ 32 tiles wide
-	subseq r6,r6,#1
-	bne bgMono
+;@-------------------------------------------------------------------------------
+;@ fgChrFinish	;end of frame...
+;@-------------------------------------------------------------------------------
+;@	ldr r5,=0xF000F000
+;@	ldr r7,=0x00010001
+;@ MSB          LSB
+;@ ---pcvhnnnnnnnnn
+fgColor:
+//	ldrb r1,[r8],#1				;@ Need to fix this up later!!!
+	ldrb r1,[geptr,#nameTable]	;@ Need to fix this up later!!!
+	and r1,r1,#0x70
+	add r3,r11,r1,lsl#7
+	add r3,r3,r6,lsl#6
+	add r4,r10,r6,lsl#6
+	add r6,r6,#1
+	and r6,r6,#0x1F
+
+fgm4Loop:
+	ldr r0,[r3],#4				;@ Read from WonderSwan Tilemap RAM
+
+	bic r1,r0,r5,lsr#3
+	and r0,r0,r5,lsr#3
+	and r2,r1,r5
+	bic r1,r1,r5
+	orr r1,r1,r2,lsr#4			;@ XY flip
+	orr r1,r1,r0,lsl#3			;@ Color
+
+	str r1,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
+	tst r4,#0x3C				;@ 32 tiles wide
+	bne fgm4Loop
+	subs r9,r9,#1
+	bne fgColor
 
 	bx lr
 
@@ -1060,56 +1048,49 @@ setScrlLoop:
 ;@----------------------------------------------------------------------------
 	.equ PRIORITY,	0x400		;@ 0x400=AGB OBJ priority 1
 ;@----------------------------------------------------------------------------
-k2GEConvertSprites:			;@ in r0 = destination.
+wsvConvertSprites:			;@ in r0 = destination.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
 	mov r11,r0					;@ Destination
 
-	ldr r10,[geptr,#sprRAM]
-	add r9,r10,#0x100			;@ Spr palette
+	ldr r10,[geptr,#gfxRAM]
+	ldrb r1,[geptr,#wsvSpriteTblAdr]
+	and r1,r1,#0x3F
+	add r10,r10,r1,lsl#9
+	ldrb r1,[geptr,#wsvSpriteStart]
+	add r10,r10,r1,lsl#2
 
-	ldrb r7,[geptr,#kgeMode]	;@ Color mode
-	ldrb r0,[geptr,#kgeSprXOfs]	;@ Sprite offset X
-	ldrb r5,[geptr,#kgeSprYOfs]	;@ Sprite offset Y
-	add r0,r0,#(SCREEN_WIDTH-GAME_WIDTH)/2		;@ GBA/NDS X offset
-	add r5,r5,#(SCREEN_HEIGHT-GAME_HEIGHT)/2	;@ GBA/NDS Y offset
-	orr r5,r5,r0,lsl#24
-	mov r4,r5
+	mov r0,#(SCREEN_WIDTH-GAME_WIDTH)/2		;@ GBA/NDS X offset
+	mov r5,#(SCREEN_HEIGHT-GAME_HEIGHT)/2	;@ GBA/NDS Y offset
+	orr r5,r0,r5,lsl#24
 
-	mov r8,#64					;@ Number of sprites
+//	ldrb r9,[geptr,#wsvSpriteEnd]	;@ Last sprite
+	mov r8,#128					;@ Total number of sprites
+//	cmp r9,#0
+//	beq dm4_3
 dm5:
-	ldr r0,[r10],#4				;@ NGP OBJ, r4=Tile,Attrib,Xpos,Ypos.
-	ands r6,r0,#0x1800			;@ Prio
-	beq skipSprite
-	movs r2,r0,lsl#22			;@ 0x400=X-Chain, 0x200=Y-Chain
-	addcs r1,r0,r4,lsr#8		;@ X-Chain
-	addcc r1,r0,r5,lsr#8		;@ X-Offset
-	addmi r3,r4,r0,lsr#24		;@ Y-Chain
-	addpl r3,r5,r0,lsr#24		;@ Y-Offset
-	and r1,r1,#0xFF0000
-	and r4,r3,#0xFF				;@ Save Y-pos
-	orr r3,r4,r1				;@ Xpos
-	orr r4,r4,r1,lsl#8			;@ Save X-pos
-	movs r2,r0,lsl#17			;@ Test H- & V-flip
-	orrcs r3,r3,#0x10000000		;@ H-flip
-	orrmi r3,r3,#0x20000000		;@ V-flip
+	ldr r0,[r10],#4				;@ WonderSwan OBJ, r0=Tile,Attrib,Ypos,Xpos.
+	add r3,r5,r0,lsl#8
+	mov r3,r3,lsr#24			;@ Ypos
+	mov r4,r0,lsr#24			;@ Xpos
+	cmp r4,#240
+	addpl r4,r4,#0x100
+	add r4,r4,r5
+	mov r4,r4,lsl#23
+	orr r3,r3,r4,lsr#7
+	and r4,r0,#0xC000
+	orr r3,r3,r4,lsl#14			;@ Flip
 
 	str r3,[r11],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, flip, scale/rot, size, shape.
 
-	mov r0,r0,ror#9
-	mov r3,r0,lsr#23			;@ Tilenumber
-	and r0,r0,#0x10
-	mov r0,r0,lsr#4
-	tst r7,#0x80
-	ldrbeq r0,[r9],#1			;@ Color palette
-	orr r3,r3,r0,lsl#12
-#ifdef NDS
-	rsb r6,r6,#0x1800			;@ Convert prio NDS
-#elif GBA
-	rsb r6,r6,#0x2000			;@ Convert prio GBA
-#endif
-	orr r3,r3,r6,lsr#1
+	mov r3,r0,lsl#23
+	mov r4,#0x0400
+	orr r3,r4,r3,lsr#23
+	and r4,r0,#0x0E00
+	orr r3,r3,r4,lsl#3
+	tst r0,#0x2000
+	bicne r3,r3,#0x0400			;@ Priority
 
 	strh r3,[r11],#4			;@ Store OBJ Atr 2. Pattern, palette.
 dm4:
@@ -1119,7 +1100,6 @@ dm4:
 skipSprite:
 	mov r0,#0x200+SCREEN_HEIGHT	;@ Double, y=SCREEN_HEIGHT
 	str r0,[r11],#8
-	add r9,r9,#1
 	b dm4
 
 ;@----------------------------------------------------------------------------

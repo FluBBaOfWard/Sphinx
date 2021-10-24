@@ -22,16 +22,18 @@ typedef struct {
 	u32 nextLineChange;
 	u32 lineState;
 
-//k2GEState:
-//k2GERegs:					// 0-4
+//wsvState:
+//wsvRegs:					// 0-4
+	u8 wsvDisplayControl;
+	u8 koPadding0[3];
 	u8 kgeWinXPos;
 	u8 kgeWinYPos;
 	u8 kgeWinXSize;
 	u8 kgeWinYSize;
-	u8 kgeBGXScroll[2];
-	u8 kgeBGYScroll[2];
-	u8 kgeFGXScroll[2];
-	u8 kgeFGYScroll[2];
+	u8 wsvBGXScroll[2];
+	u8 wsvBGYScroll[2];
+	u8 wsvFGXScroll[2];
+	u8 wsvFGYScroll[2];
 
 	u8 kgeSprXOfs;
 	u8 kgeSprYOfs;
@@ -88,10 +90,10 @@ int wsVideoLoadState(K2GE *chip, const void *source);
  */
 int wsVideoGetStateSize(void);
 
-void k2GEDoScanline(void);
-void k2GEConvertTileMaps(void *destination);
-void k2GEConvertSprites(void *destination);
-void k2GEConvertTiles(void);
+void wsvDoScanline(void);
+void wsvConvertTileMaps(void *destination);
+void wsvConvertSprites(void *destination);
+void wsvConvertTiles(void);
 
 #ifdef __cplusplus
 } // extern "C"
