@@ -2,8 +2,9 @@ WSVideo revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.1.2 - 2021-10-24 (FluBBa)
+V0.1.2 - 2021-10-29 (FluBBa)
 	Fixed background and foreground.
+	Fixed mono background and foreground.
 	Fixed sprites.
 
 V0.1.1 - 2021-10-17 (FluBBa)

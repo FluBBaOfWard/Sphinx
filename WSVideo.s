@@ -101,7 +101,6 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=model, r12=geptr
 	add r2,r2,#0x140
 	str r2,[geptr,#paletteMonoRAM]
 	add r2,r2,#0x20
-	str r2,[geptr,#paletteRAM]
 	add r2,r2,#0x200
 	str r2,[geptr,#gfxRAMSwap]
 	ldr r0,=SCROLL_BUFF
@@ -227,7 +226,7 @@ k2GE_R:						;@ I/O read (0x00-0x3F)
 	ldr pc,[pc,r2,lsr#6]
 	.long 0
 	.long wsvRegistersR			;@ 0x0X
-	.long k2GEPaletteR			;@ 0x2X
+	.long wsvBadR				;@ 0x2X
 	.long k2GELedR				;@ 0x4X
 	.long wsvBadR				;@ 0x6X
 	.long k2GESpriteR			;@ 0x8X, Audio
@@ -356,13 +355,6 @@ k2GEPaletteMonoR:			;@ 0x8100-0x8118
 	cmp r0,#0x19
 	ldrmi r2,[geptr,#paletteMonoRAM]
 	ldrbmi r0,[r2,r0]
-	bx lr
-;@----------------------------------------------------------------------------
-k2GEPaletteR:				;@ 0x8200-0x83FF
-;@----------------------------------------------------------------------------
-	ldr r2,[geptr,#paletteRAM]
-	mov r0,r0,lsl#23
-	ldrb r0,[r2,r0,lsr#23]
 	bx lr
 ;@----------------------------------------------------------------------------
 k2GELedR:					;@ 0x84XX
@@ -720,26 +712,18 @@ k2GEConvertTileMaps:		;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
-	mov r10,r0
-	ldr r5,=0xF000F000
-	ldr r7,=0x00010001
-	mov r6,#0
-//	ldr r8,=TMAPBUFF
-	ldr r11,=wsRAM
-	mov r9,#32
+	ldr r5,=0xFE00FE00
+	ldr r6,=0x00010001
+	ldr r10,[geptr,#gfxRAM]
 
-	bl bgColor
+	ldr r1,=IO_regs
+	ldrb r1,[r1,#0x60]
+	adr lr,tMapRet
+	ands r1,r1,#0xE0
+	beq bgMono
+	b bgColor
 
-	add r10,r10,#0x800
-	ldr r5,=0xF000F000
-	ldr r7,=0x00010001
-	mov r6,#0
-//	ldr r8,=TMAPBUFF
-	ldr r11,=wsRAM
-	mov r9,#32
-
-	bl fgColor
-
+tMapRet:
 	ldmfd sp!,{r4-r11,pc}
 
 ;@----------------------------------------------------------------------------
@@ -759,9 +743,10 @@ endFrame:
 	stmfd sp!,{lr}
 	ldr r0,=IO_regs
 	ldrb r0,[r0,#0x60]
-	and r0,r0,#0xE0
-	cmp r0,#0xC0
 	adr lr,TransRet
+	ands r0,r0,#0xE0
+	beq TransferVRAM4Layered
+	cmp r0,#0xC0
 	beq TransferVRAM16Layered
 	b TransferVRAM16Packed
 TransRet:
@@ -838,7 +823,7 @@ checkScanlineIRQ:
 //	cmp r0,#152
 	mov r0,#1
 	bx lr
-	
+
 //	stmfd sp!,{lr}
 //	ldrb r0,[geptr,#kgeIrqEnable]
 //	ands r0,r0,#0x40			;@ HIRQ enabled?
@@ -851,7 +836,6 @@ checkScanlineIRQ:
 ;@----------------------------------------------------------------------------
 T_data:
 	.long DIRTYTILES+0x200
-VDP_RAM_ptr:
 	.long wsRAM+0x4000
 	.long CHR_DECODE
 	.long BG_GFX+0x08000		;@ BGR tiles
@@ -953,73 +937,147 @@ tileLoop16_1:
 
 	bx lr
 
-;@-------------------------------------------------------------------------------
-;@ bgChrFinish	;end of frame...
-;@-------------------------------------------------------------------------------
-;@	ldr r5,=0xF000F000
-;@	ldr r7,=0x00010001
-;@ MSB          LSB
-;@ ---pcvhnnnnnnnnn
-bgColor:
-//	ldrb r1,[r8],#1				;@ Need to fix this up later!!!
-	ldrb r1,[geptr,#nameTable]	;@ Need to fix this up later!!!
-	and r1,r1,#0x07
-	add r3,r11,r1,lsl#11
-	add r3,r3,r6,lsl#6
-	add r4,r10,r6,lsl#6
-	add r6,r6,#1
-	and r6,r6,#0x1F
+;@----------------------------------------------------------------------------
+T4Data:
+	.long DIRTYTILES+0x100
+	.long wsRAM+0x2000
+	.long CHR_DECODE
+	.long BG_GFX+0x08000		;@ BGR tiles
+	.long BG_GFX+0x0C000		;@ BGR tiles 2
+	.long SPRITE_GFX			;@ SPR tiles
+	.long 0x44444444			;@ Extra bitplane
+;@----------------------------------------------------------------------------
+TransferVRAM4Layered:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r12,lr}
+	adr r0,T4Data
+	ldmia r0,{r4-r10}
+	mov r11,#-1
+	mov r1,#0
 
-bgm4Loop:
-	ldr r0,[r3],#4				;@ Read from WonderSwan Tilemap RAM
+tileLoop4_0:
+	ldr r12,[r4]
+	str r11,[r4],#4
+	tst r12,#0x000000FF
+	addne r1,r1,#0x20
+	bleq tileLoop4_1
+	tst r12,#0x0000FF00
+	addne r1,r1,#0x20
+	bleq tileLoop4_1
+	tst r12,#0x00FF0000
+	addne r1,r1,#0x20
+	bleq tileLoop4_1
+	tst r12,#0xFF000000
+	addne r1,r1,#0x20
+	bleq tileLoop4_1
+	cmp r1,#0x2000
+	bne tileLoop4_0
 
-	bic r1,r0,r5,lsr#3
-	and r0,r0,r5,lsr#3
-	and r2,r1,r5
-	bic r1,r1,r5
-	orr r1,r1,r2,lsr#4			;@ XY flip
-	orr r1,r1,r0,lsl#3			;@ Color
+	ldmfd sp!,{r4-r12,pc}
 
-	str r1,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
-	tst r4,#0x3C				;@ 32 tiles wide
-	bne bgm4Loop
-	subs r9,r9,#1
-	bne bgColor
+tileLoop4_1:
+	ldr r0,[r5,r1]
+
+	ands r3,r0,#0x000000FF
+	ldrne r3,[r6,r3,lsl#2]
+	ands r2,r0,#0x0000FF00
+	ldrne r2,[r6,r2,lsr#6]
+	orrne r3,r3,r2,lsl#1
+
+	str r3,[r8,r1,lsl#1]
+	str r3,[r9,r1,lsl#1]
+	orr r3,r3,r10
+	str r3,[r7,r1,lsl#1]
+	add r1,r1,#2
+
+	ands r3,r0,#0x00FF0000
+	ldrne r3,[r6,r3,lsr#14]
+	ands r2,r0,#0xFF000000
+	ldrne r2,[r6,r2,lsr#22]
+	orrne r3,r3,r2,lsl#1
+
+	str r3,[r8,r1,lsl#1]
+	str r3,[r9,r1,lsl#1]
+	orr r3,r3,r10
+	str r3,[r7,r1,lsl#1]
+	add r1,r1,#2
+
+	tst r1,#0x1C
+	bne tileLoop4_1
 
 	bx lr
 
 ;@-------------------------------------------------------------------------------
-;@ fgChrFinish	;end of frame...
+;@ bgChrFinish	;end of frame...
 ;@-------------------------------------------------------------------------------
-;@	ldr r5,=0xF000F000
-;@	ldr r7,=0x00010001
+;@	ldr r5,=0xFE00FE00
+;@	ldr r6,=0x00010001
 ;@ MSB          LSB
-;@ ---pcvhnnnnnnnnn
-fgColor:
-//	ldrb r1,[r8],#1				;@ Need to fix this up later!!!
-	ldrb r1,[geptr,#nameTable]	;@ Need to fix this up later!!!
+;@ hvbppppnnnnnnnnn
+bgColor:
+	ldrb r1,[geptr,#nameTable]
+	and r1,r1,#0x07
+	add r1,r10,r1,lsl#11
+	stmfd sp!,{lr}
+	bl bgm16Start
+	ldmfd sp!,{lr}
+
+	ldrb r1,[geptr,#nameTable]
 	and r1,r1,#0x70
-	add r3,r11,r1,lsl#7
-	add r3,r3,r6,lsl#6
-	add r4,r10,r6,lsl#6
-	add r6,r6,#1
-	and r6,r6,#0x1F
+	add r1,r10,r1,lsl#7
 
-fgm4Loop:
-	ldr r0,[r3],#4				;@ Read from WonderSwan Tilemap RAM
+bgm16Start:
+	mov r2,#0x400
+bgm16Loop:
+	ldr r3,[r1],#4				;@ Read from WonderSwan Tilemap RAM
 
-	bic r1,r0,r5,lsr#3
-	and r0,r0,r5,lsr#3
-	and r2,r1,r5
-	bic r1,r1,r5
-	orr r1,r1,r2,lsr#4			;@ XY flip
-	orr r1,r1,r0,lsl#3			;@ Color
+	and r4,r5,r3				;@ Mask out palette, flip & bank
+	bic r3,r3,r5
+	orr r4,r4,r4,lsr#7			;@ Switch palette vs flip + bank
+	and r4,r5,r4,lsl#3			;@ Mask again
+	orr r3,r3,r4				;@ Add palette, flip + bank.
 
-	str r1,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, foreground
-	tst r4,#0x3C				;@ 32 tiles wide
-	bne fgm4Loop
-	subs r9,r9,#1
-	bne fgColor
+	str r3,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, background
+	subs r2,r2,#2
+	bne bgm16Loop
+
+	bx lr
+
+;@-------------------------------------------------------------------------------
+;@ bgChrFinish	;end of frame...
+;@-------------------------------------------------------------------------------
+;@	ldr r5,=0xFE00FE00
+;@	ldr r6,=0x00010001
+;@ MSB          LSB
+;@ hvbppppnnnnnnnnn
+bgMono:
+	ldrb r1,[geptr,#nameTable]
+	and r1,r1,#0x03
+	add r1,r10,r1,lsl#11
+	stmfd sp!,{lr}
+	bl bgm4Start
+	ldmfd sp!,{lr}
+
+	ldrb r1,[geptr,#nameTable]
+	and r1,r1,#0x30
+	add r1,r10,r1,lsl#7
+
+bgm4Start:
+	mov r2,#0x400
+bgm4Loop:
+	ldr r3,[r1],#4				;@ Read from WonderSwan Tilemap RAM
+
+	and r4,r5,r3				;@ Mask out palette, flip & bank
+	bic r3,r3,r5
+	orr r4,r4,r4,lsr#7			;@ Switch palette vs flip + bank
+	and r4,r5,r4,lsl#3			;@ Mask again
+	orr r3,r3,r4				;@ Add palette, flip + bank.
+	and r4,r3,r6,lsl#14			;@ Mask out palette bit 3
+	orr r3,r3,r4,lsr#5			;@ Add as bank bit (GBA/NDS)
+
+	str r3,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, background
+	subs r2,r2,#2
+	bne bgm4Loop
 
 	bx lr
 
@@ -1050,57 +1108,58 @@ setScrlLoop:
 ;@----------------------------------------------------------------------------
 wsvConvertSprites:			;@ in r0 = destination.
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r11,lr}
+	stmfd sp!,{r4-r7,lr}
 
-	mov r11,r0					;@ Destination
+	ldr r1,[geptr,#gfxRAM]
+	ldrb r2,[geptr,#wsvSpriteTblAdr]
+	and r2,r2,#0x3F
+	add r1,r1,r2,lsl#9
+	ldrb r2,[geptr,#wsvSpriteStart]	;@ First sprite
+//	and r2,r2,#0x7F
+	add r1,r1,r2,lsl#2
 
-	ldr r10,[geptr,#gfxRAM]
-	ldrb r1,[geptr,#wsvSpriteTblAdr]
-	and r1,r1,#0x3F
-	add r10,r10,r1,lsl#9
-	ldrb r1,[geptr,#wsvSpriteStart]
-	add r10,r10,r1,lsl#2
+	ldrb r7,[geptr,#wsvSpriteEnd]	;@ Last sprite
+//	and r7,r7,#0x7F
+	subs r7,r7,r2
+	movmi r7,#0
+	rsb r6,r7,#128				;@ Max number of sprites minus used.
+	ble skipSprites
 
-	mov r0,#(SCREEN_WIDTH-GAME_WIDTH)/2		;@ GBA/NDS X offset
+	mov r2,#(SCREEN_WIDTH-GAME_WIDTH)/2		;@ GBA/NDS X offset
 	mov r5,#(SCREEN_HEIGHT-GAME_HEIGHT)/2	;@ GBA/NDS Y offset
-	orr r5,r0,r5,lsl#24
-
-//	ldrb r9,[geptr,#wsvSpriteEnd]	;@ Last sprite
-	mov r8,#128					;@ Total number of sprites
-//	cmp r9,#0
-//	beq dm4_3
+	orr r5,r2,r5,lsl#24
 dm5:
-	ldr r0,[r10],#4				;@ WonderSwan OBJ, r0=Tile,Attrib,Ypos,Xpos.
-	add r3,r5,r0,lsl#8
+	ldr r2,[r1],#4				;@ WonderSwan OBJ, r0=Tile,Attrib,Ypos,Xpos.
+	add r3,r5,r2,lsl#8
 	mov r3,r3,lsr#24			;@ Ypos
-	mov r4,r0,lsr#24			;@ Xpos
+	mov r4,r2,lsr#24			;@ Xpos
 	cmp r4,#240
 	addpl r4,r4,#0x100
 	add r4,r4,r5
 	mov r4,r4,lsl#23
 	orr r3,r3,r4,lsr#7
-	and r4,r0,#0xC000
+	and r4,r2,#0xC000
 	orr r3,r3,r4,lsl#14			;@ Flip
 
-	str r3,[r11],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, flip, scale/rot, size, shape.
+	str r3,[r0],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, flip, scale/rot, size, shape.
 
-	mov r3,r0,lsl#23
-	mov r4,#0x0400
-	orr r3,r4,r3,lsr#23
-	and r4,r0,#0x0E00
+	mov r3,r2,lsl#23
+	mov r3,r3,lsr#23
+	and r4,r2,#0x0E00			;@ Palette
 	orr r3,r3,r4,lsl#3
-	tst r0,#0x2000
-	bicne r3,r3,#0x0400			;@ Priority
+	tst r2,#0x2000				;@ Priority
+	orreq r3,r3,#PRIORITY
 
-	strh r3,[r11],#4			;@ Store OBJ Atr 2. Pattern, palette.
-dm4:
-	subs r8,r8,#1
+	strh r3,[r0],#4				;@ Store OBJ Atr 2. Pattern, palette.
+	subs r7,r7,#1
 	bne dm5
-	ldmfd sp!,{r4-r11,pc}
-skipSprite:
-	mov r0,#0x200+SCREEN_HEIGHT	;@ Double, y=SCREEN_HEIGHT
-	str r0,[r11],#8
-	b dm4
+skipSprites:
+	mov r2,#0x200+SCREEN_HEIGHT	;@ Double, y=SCREEN_HEIGHT
+skipSprLoop:
+	str r2,[r0],#8
+	subs r6,r6,#1
+	bhi skipSprLoop
+	ldmfd sp!,{r4-r7,pc}
 
 ;@----------------------------------------------------------------------------
 #ifdef GBA

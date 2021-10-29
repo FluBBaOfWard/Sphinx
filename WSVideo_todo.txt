@@ -1,5 +1,6 @@
 Bandai WonderSwan video To do
 -----------------------------
 
-	??
+	Fix Window.
+	Fix B&W sprites.
 
