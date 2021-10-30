@@ -1,1 +1,1 @@
-#define K2GEVERSION "V0.1.2"
+#define WSVVERSION "V0.1.2"

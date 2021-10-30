@@ -1,4 +1,4 @@
-// Bandai WondeSwan video emulation
+// Bandai WonderSwan video emulation
 
 #ifndef WSVIDEO_HEADER
 #define WSVIDEO_HEADER
@@ -25,30 +25,36 @@ typedef struct {
 //wsvState:
 //wsvRegs:					// 0-4
 	u8 wsvDisplayControl;
-	u8 koPadding0[3];
-	u8 kgeWinXPos;
-	u8 kgeWinYPos;
-	u8 kgeWinXSize;
-	u8 kgeWinYSize;
-	u8 wsvBGXScroll[2];
-	u8 wsvBGYScroll[2];
-	u8 wsvFGXScroll[2];
-	u8 wsvFGYScroll[2];
+	u8 wsvBGColor;
+	u8 wsvCurrentLine;
+	u8 wsvLineCompare;
 
-	u8 kgeSprXOfs;
-	u8 kgeSprYOfs;
+	u8 wsvWinXPos;
+	u8 wsvWinYPos;
+	u8 wsvWinXSize;
+	u8 wsvWinYSize;
+
+	u8 wsvSprWinXPos;
+	u8 wsvSprWinYPos;
+	u8 wsvSprWinXSize;
+	u8 wsvSprWinYSize;
+
+	u8 wsvBGXScroll;
+	u8 wsvBGYScroll;
+	u8 wsvFGXScroll;
+	u8 wsvFGYScroll;
+
 	u8 kgeIrqEnable;
 	u8 kgeRef;
 	u8 kgeBGCol;
 	u8 kgeBGPrio;
 	u8 kgeLedEnable;
 	u8 kgeLedBlink;
-	u8 kgeMode;
-	u8 kgeModeChange;
+	u8 wsvVideoMode;
 
 	u8 kgeLedOnOff;			// Bit 0, Led On/Off.
-	u8 kgeModel;
-//	u8 koPadding1[1];
+	u8 wsvModel;
+	u8 koPadding1[2];
 
 	u32 ledCounter;
 	u32 windowData;
@@ -58,34 +64,33 @@ typedef struct {
 
 	u8 dirtyTiles[4];
 	void *gfxRAM;
-	void *sprRAM;
 	void *paletteMonoRAM;
 	void *paletteRAM;
 	void *gfxRAMSwap;
 	u32 *scrollBuff;
 
-} K2GE;
+} WSVideo;
 
 void wsVideoReset(void *frameIrqFunc(), void *periodicIrqFunc(), void *ram);
 
 /**
  * Saves the state of the chip to the destination.
  * @param  *destination: Where to save the state.
- * @param  *chip: The K1GE/K2GE chip to save.
+ * @param  *chip: The WSVideo chip to save.
  * @return The size of the state.
  */
-int wsVideoSaveState(void *destination, const K2GE *chip);
+int wsVideoSaveState(void *destination, const WSVideo *chip);
 
 /**
  * Loads the state of the chip from the source.
- * @param  *chip: The K1GE/K2GE chip to load a state into.
+ * @param  *chip: The WSVideo chip to load a state into.
  * @param  *source: Where to load the state from.
  * @return The size of the state.
  */
-int wsVideoLoadState(K2GE *chip, const void *source);
+int wsVideoLoadState(WSVideo *chip, const void *source);
 
 /**
- * Gets the state size of a K1GE/K2GE.
+ * Gets the state size of a WSVideo chip.
  * @return The size of the state.
  */
 int wsVideoGetStateSize(void);
