@@ -91,10 +91,10 @@ wsvPaletteF1:	.byte 0		;@ 0x3F Palette F1
 
 wsvDMASource0:	.byte 0		;@ 0x40 DMA source adr bits 7-0
 wsvDMASource1:	.byte 0		;@ 0x41 DMA source adr bits 15-8
-wsvDMASource2:	.byte 0		;@ 0x42 DMA source adr bits 23-16
-wsvDMADest0:	.byte 0		;@ 0x43 DMA destination adr bits 7-0
-wsvDMADest1:	.byte 0		;@ 0x44 DMA destination adr bits 15-8
-wsvDMADest2:	.byte 0		;@ 0x45 DMA destination adr bits 23-16
+wsvDMASrcBnk:	.byte 0		;@ 0x42 DMA source adr bits 23-16
+wsvDMADstBnk:	.byte 0		;@ 0x43 DMA destination adr bits 23-16
+wsvDMADest0:	.byte 0		;@ 0x44 DMA destination adr bits 15-8
+wsvDMADest1:	.byte 0		;@ 0x45 DMA destination adr bits 7-0
 wsvDMALength0:	.byte 0		;@ 0x46 DMA length bits 7-0
 wsvDMALength1:	.byte 0		;@ 0x47 DMA length bits 15-8
 wsvDMAStart:	.byte 0		;@ 0x48 DMA start bit 7
@@ -187,13 +187,10 @@ wsvRTCData:		.byte 0		;@ 0xCB RTC Data
 
 wsvPadding14:	.space 52	;@ 0xCC - 0xFF ???
 
-kgeIrqEnable:	.byte 0
-kgeRef:			.byte 0
 kgeLedEnable:	.byte 0
 kgeLedBlink:	.byte 0
-
 kgeLedOnOff:	.byte 0		;@ Bit 0, Led On/Off.
-kgePadding1:	.space 3
+kgePadding1:	.space 1
 
 ledCounter:		.long 0
 wsVideoStateEnd:

@@ -118,10 +118,10 @@ dummyIrqFunc:
 ;@----------------------------------------------------------------------------
 wsvRegistersReset:
 ;@----------------------------------------------------------------------------
-	mov r0,#0xC0
-	strb r0,[geptr,#kgeIrqEnable]	;@ Both interrupts allowed
-	mov r0,#0xC6
-	strb r0,[geptr,#kgeRef]			;@ Refresh Rate value
+//	mov r0,#0xC0
+//	strb r0,[geptr,#wsvInterruptEnable]
+//	mov r0,#0xC6
+//	strb r0,[geptr,#wsvTotalLines]	;@ Total number of scanlines?
 	mov r0,#0xFF
 	strb r0,[geptr,#wsvWinXSize]	;@ Window size
 	strb r0,[geptr,#wsvWinYSize]
@@ -254,8 +254,6 @@ wsvRegistersR:
 	beq wsvFgScrXR
 	cmp r0,#0x13
 	beq wsvFgScrYR
-	cmp r0,#0xA6
-	beq wsvRefreshR
 wsvBadR:
 	mov r11,r11					;@ No$GBA breakpoint
 	ldr r0,=0x826EBAD0
@@ -312,9 +310,10 @@ wsvFgScrYR:					;@ 0x13
 	ldrb r0,[geptr,#wsvFGYScroll]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvRefreshR:				;@ 0xA6
+wsvHWTypeR:					;@ 0xA0
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#kgeRef]
+	ldrb r0,[geptr,#wsvHardwareType]
+	orr r0,r0,#2
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -606,8 +605,6 @@ wsvImportantW:
 ;@----------------------------------------------------------------------------
 wsvRegW:
 	add r2,geptr,#wsvRegs
-//	cmp r0,#0x08
-//	cmpne r0,#0x09
 	strb r1,[r2,r0]
 	bx lr
 
@@ -705,9 +702,9 @@ sy2:
 scrollLine: .long 0 ;@ ..was when?
 
 ;@----------------------------------------------------------------------------
-wsvRefW:					;@ 0xA6, Total number of scanlines?
+wsvRefW:					;@ 0x16, Total number of scanlines?
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#kgeRef]
+	strb r1,[geptr,#wsvTotalLines]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvConvertTileMaps:		;@ r0 = destination
@@ -766,6 +763,7 @@ checkFrameIRQ:
 	blne setInterrupt
 //	movne lr,pc
 //	ldrne pc,[geptr,#frameIrqFunc]
+	mov r0,#1
 	ldmfd sp!,{geptr,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
