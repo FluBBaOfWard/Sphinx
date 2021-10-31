@@ -44,8 +44,6 @@ typedef struct {
 	u8 wsvFGXScroll;
 	u8 wsvFGYScroll;
 
-	u8 kgeIrqEnable;
-	u8 kgeRef;
 	u8 kgeBGCol;
 	u8 kgeBGPrio;
 	u8 kgeLedEnable;

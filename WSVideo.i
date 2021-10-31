@@ -19,8 +19,8 @@ scanline:		.long 0		;@ These 3 must be first in state.
 nextLineChange:	.long 0
 lineState:		.long 0
 
-wsVideoState:				;@
 windowData:		.long 0
+wsVideoState:				;@
 wsvRegs:
 wsvDispCtrl:	.byte 0		;@ 0x00 Display control
 wsvBGColor:		.byte 0		;@ 0x01 Background color
@@ -48,7 +48,8 @@ wsvFGYScroll:	.byte 0		;@ 0x13 Foreground Y-Scroll
 
 wsvLCDControl:	.byte 0		;@ 0x14 LCD control (on/off?)
 wsvLCDIcons:	.byte 0		;@ 0x15 LCD icons
-wsvPadding0:	.space 6	;@ 0x16 - 0x1B ???
+wsvTotalLines:	.byte 0		;@ 0x16 Total scan lines
+wsvPadding0:	.space 5	;@ 0x17 - 0x1B ???
 
 wsvColor01:		.byte 0		;@ 0x1C Color 0 & 1
 wsvColor23:		.byte 0		;@ 0x1D Color 2 & 3
@@ -160,7 +161,7 @@ wsvComDir:		.byte 0		;@ 0xB3 Communication direction
 wsvPadding10:	.space 1	;@ 0xB4 ???
 
 wsvControls:	.byte 0		;@ 0xB5 Input Controls
-wsvInterruptAck:.byte 0	;@ 0xB6 Interrupt acknowledge
+wsvInterruptAck:.byte 0		;@ 0xB6 Interrupt acknowledge
 
 wsvPadding11:	.space 3	;@ 0xB7 - 0xB9 ???
 
@@ -171,7 +172,7 @@ wsvIntEEPROMCmd:.byte 0		;@ 0xBE Internal EEPROM (?) command
 wsvPadding12:	.space 1	;@ 0xBF ???
 
 wsvBnk0Slct:	.byte 0		;@ 0xC0 ROM Bank Base Selector for segments 4-$F
-wsvBnk1Slct:	.byte 0		;@ 0xC1 SRAM Bank selector (???)
+wsvBnk1Slct:	.byte 0		;@ 0xC1 SRAM Bank selector
 wsvBnk2Slct:	.byte 0		;@ 0xC2 BNK2SLCT - ROM Bank selector for segment 2
 wsvBnk3Slct:	.byte 0		;@ 0xC3 BNK2SLCT - ROM Bank selector for segment 3
 wsvEEPROMData:	.short 0	;@ 0xC4/0xC5 EEPROM Data
