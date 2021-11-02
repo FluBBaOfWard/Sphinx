@@ -89,25 +89,23 @@ wsvPaletteE1:	.byte 0		;@ 0x3D Palette E1
 wsvPaletteF0:	.byte 0		;@ 0x3E Palette F0
 wsvPaletteF1:	.byte 0		;@ 0x3F Palette F1
 
-wsvDMASource0:	.byte 0		;@ 0x40 DMA source adr bits 7-0
-wsvDMASource1:	.byte 0		;@ 0x41 DMA source adr bits 15-8
-wsvDMASrcBnk:	.byte 0		;@ 0x42 DMA source adr bits 23-16
-wsvDMADstBnk:	.byte 0		;@ 0x43 DMA destination adr bits 23-16
-wsvDMADest0:	.byte 0		;@ 0x44 DMA destination adr bits 15-8
-wsvDMADest1:	.byte 0		;@ 0x45 DMA destination adr bits 7-0
-wsvDMALength0:	.byte 0		;@ 0x46 DMA length bits 7-0
-wsvDMALength1:	.byte 0		;@ 0x47 DMA length bits 15-8
-wsvDMAStart:	.byte 0		;@ 0x48 DMA start bit 7
+wsvDMASource:	.short 0	;@ 0x40 DMA source adr bits 15-0
+wsvDMASrcBnk:	.byte 0		;@ 0x42 DMA source adr bits 19-16
+wsvDMAEmpty:	.byte 0		;@ 0x43 Nothing
+wsvDMADest:		.short 0	;@ 0x44 DMA destination adr bits 15-0
+wsvDMALength:	.short 0	;@ 0x46 DMA length bits 15-0
+wsvDMAStart:	.byte 0		;@ 0x48 DMA control, bit 7 start
 
 wsvPadding1:	.space 1	;@ 0x49 ???
 wsvSndDMASrc0:	.byte 0		;@ 0x4A Sound DMA source adr bits 7-0
 wsvSndDMASrc1:	.byte 0		;@ 0x4B Sound DMA source adr bits 15-8
-wsvSndDMASrc2:	.byte 0		;@ 0x4C Sound DMA source adr bits 23-16
+wsvSndDMASrc2:	.byte 0		;@ 0x4C Sound DMA source adr bits 19-16
 wsvPadding2:	.space 1	;@ 0x4D ???
 wsvSndDMALen0:	.byte 0		;@ 0x4E Sound DMA length bits 7-0
 wsvSndDMALen1:	.byte 0		;@ 0x4F Sound DMA length bits 15-8
-wsvPadding3:	.space 2	;@ 0x50 - 0x51 ???
-wsvSndDMAStart:	.byte 0		;@ 0x52 Sound DMA start bit 7
+wsvSndDMALen2:	.byte 0		;@ 0x4F Sound DMA length bits 23-16
+wsvPadding3:	.space 1	;@ 0x51 ???
+wsvSndDMAStart:	.byte 0		;@ 0x52 Sound DMA control, bit 7 start
 
 wsvPadding4:	.space 13	;@ 0x53 - 0x5F ???
 
@@ -140,7 +138,7 @@ wsvVolume:		.byte 0		;@ 0x94 Volume (4 bit)
 
 wsvPadding6:	.space 11	;@ 0x95 - 0x9F ???
 
-wsvHardwareType:.byte 0		;@ 0xA0 Hardware type, HW_WSC / HW_WS.
+wsvHardwareType:.byte 0		;@ 0xA0 Hardware type, boot rom lock.
 
 wsvPadding7:	.space 1	;@ 0xA1 ???
 
@@ -157,9 +155,7 @@ wsvInterruptBase:.byte 0	;@ 0xB0 Interrupt base
 wsvComByte:		.byte 0		;@ 0xB1 Communication byte
 wsvInterruptEnable:.byte 0	;@ 0xB2 Interrupt enable
 wsvComDir:		.byte 0		;@ 0xB3 Communication direction
-
-wsvPadding10:	.space 1	;@ 0xB4 ???
-
+wsvInterruptStatus:.byte 0	;@ 0xB4 Interrupt status
 wsvControls:	.byte 0		;@ 0xB5 Input Controls
 wsvInterruptAck:.byte 0		;@ 0xB6 Interrupt acknowledge
 
@@ -187,10 +183,11 @@ wsvRTCData:		.byte 0		;@ 0xCB RTC Data
 
 wsvPadding14:	.space 52	;@ 0xCC - 0xFF ???
 
+wsvMachine:		.byte 0
 kgeLedEnable:	.byte 0
 kgeLedBlink:	.byte 0
 kgeLedOnOff:	.byte 0		;@ Bit 0, Led On/Off.
-kgePadding1:	.space 1
+//kgePadding1:	.space 1
 
 ledCounter:		.long 0
 wsVideoStateEnd:
