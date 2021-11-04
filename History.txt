@@ -2,13 +2,14 @@ WSVideo revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.1.2 - 2021-10-30 (FluBBa)
+V0.1.2 - 2021-11-03 (FluBBa)
 	Fixed background and foreground.
 	Fixed mono background and foreground.
 	Fixed sprites.
+	Fixed Interrupts and Timers.
 
 V0.1.1 - 2021-10-17 (FluBBa)
-	Started port to Nintendo DS & dekitPro.
+	Started port to Nintendo DS & devkitPro.
 
 V0.1.0 - 2006-07-28 (FluBBa)
 	Initial release.

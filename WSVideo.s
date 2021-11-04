@@ -239,16 +239,16 @@ IN_Table:
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
-	.long wsvWSUnmappedR		;@ 0x18
-	.long wsvWSUnmappedR
-	.long wsvUnknownR
-	.long wsvWSUnmappedR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
+	.long wsvWSUnmappedR		;@ 0x18 ---
+	.long wsvWSUnmappedR		;@ 0x19 ---
+	.long wsvUnknownR			;@ 0x1A ???
+	.long wsvWSUnmappedR		;@ 0x1B ---
+	.long wsvRegR				;@ 0x1C Pal mono pool 0
+	.long wsvRegR				;@ 0x1D Pal mono pool 1
+	.long wsvRegR				;@ 0x1E Pal mono pool 2
+	.long wsvRegR				;@ 0x1F Pal mono pool 3
 
-	.long wsvRegR				;@ 0x20
+	.long wsvRegR				;@ 0x20 Pal mono
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
@@ -282,73 +282,73 @@ IN_Table:
 	.long wsvRegR
 	.long wsvRegR
 
-	.long wsvRegR				;@ 0x40
+	.long wsvRegR				;@ 0x40 DMA
+	.long wsvRegR
+	.long wsvRegR
+	.long wsvWSUnmappedR		;@ 0x43 ---
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
+	.long wsvImportantR			;@ 0x48 DMA control
+	.long wsvWSUnmappedR		;@ 0x49 ---
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
-	.long wsvImportantR			;@ 0x48
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
+	.long wsvWSUnmappedR		;@ 0x4D ---
 	.long wsvRegR
 	.long wsvRegR
 
 	.long wsvRegR				;@ 0x50
-	.long wsvWSUnmappedR
-	.long wsvRegR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR		;@ 0x58
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
+	.long wsvWSUnmappedR		;@ 0x51 ---
+	.long wsvRegR				;@ 0x52 Sound DMA control
+	.long wsvWSUnmappedR		;@ 0x53 ---
+	.long wsvWSUnmappedR		;@ 0x54 ---
+	.long wsvWSUnmappedR		;@ 0x55 ---
+	.long wsvWSUnmappedR		;@ 0x56 ---
+	.long wsvWSUnmappedR		;@ 0x57 ---
+	.long wsvWSUnmappedR		;@ 0x58 ---
+	.long wsvWSUnmappedR		;@ 0x59 ---
+	.long wsvWSUnmappedR		;@ 0x5A ---
+	.long wsvWSUnmappedR		;@ 0x5B ---
+	.long wsvWSUnmappedR		;@ 0x5C ---
+	.long wsvWSUnmappedR		;@ 0x5D ---
+	.long wsvWSUnmappedR		;@ 0x5E ---
+	.long wsvWSUnmappedR		;@ 0x5F ---
 
 	.long wsvRegR				;@ 0x60
-	.long wsvWSUnmappedR
+	.long wsvWSUnmappedR		;@ 0x61 ---
 	.long wsvRegR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR		;@ 0x68
-	.long wsvWSUnmappedR
+	.long wsvWSUnmappedR		;@ 0x63 ---
+	.long wsvWSUnmappedR		;@ 0x64 ---
+	.long wsvWSUnmappedR		;@ 0x65 ---
+	.long wsvWSUnmappedR		;@ 0x66 ---
+	.long wsvWSUnmappedR		;@ 0x67 ---
+	.long wsvWSUnmappedR		;@ 0x68 ---
+	.long wsvWSUnmappedR		;@ 0x69 ---
 	.long wsvRegR
 	.long wsvRegR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
+	.long wsvWSUnmappedR		;@ 0x6C ---
+	.long wsvWSUnmappedR		;@ 0x6D ---
+	.long wsvWSUnmappedR		;@ 0x6E ---
+	.long wsvWSUnmappedR		;@ 0x6F ---
 
-	.long wsvRegR				;@ 0x70
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
-	.long wsvWSUnmappedR		;@ 0x78
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
+	.long wsvImportantR			;@ 0x70 Unknown70
+	.long wsvImportantR			;@ 0x71 Unknown71
+	.long wsvImportantR			;@ 0x72 Unknown72
+	.long wsvImportantR			;@ 0x73 Unknown73
+	.long wsvImportantR			;@ 0x74 Unknown74
+	.long wsvImportantR			;@ 0x75 Unknown75
+	.long wsvImportantR			;@ 0x76 Unknown76
+	.long wsvImportantR			;@ 0x77 Unknown77
+	.long wsvWSUnmappedR		;@ 0x78 ---
+	.long wsvWSUnmappedR		;@ 0x79 ---
+	.long wsvWSUnmappedR		;@ 0x7A ---
+	.long wsvWSUnmappedR		;@ 0x7B ---
+	.long wsvWSUnmappedR		;@ 0x7C ---
+	.long wsvWSUnmappedR		;@ 0x7D ---
+	.long wsvWSUnmappedR		;@ 0x7E ---
+	.long wsvWSUnmappedR		;@ 0x7F ---
 
 	.long wsvRegR				;@ 0x80
 	.long wsvRegR
@@ -369,8 +369,8 @@ IN_Table:
 
 	.long wsvRegR				;@ 0x90
 	.long wsvRegR
-	.long wsvRegR
-	.long wsvRegR
+	.long wsvImportantR			;@ 0x92 Noise LFSR value low
+	.long wsvImportantR			;@ 0x93 Noise LFSR value high
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
@@ -382,50 +382,54 @@ IN_Table:
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
-	.long wsvWSUnmappedR
+	.long wsvWSUnmappedR		;@ 0x9F ---
 
 	.long wsvHWTypeR			;@ 0xA0, Color or mono
-	.long wsvWSUnmappedR
+	.long wsvWSUnmappedR		;@ 0xA1 ---
 	.long wsvRegR
-	.long wsvUnknownR
-	.long wsvRegR
-	.long wsvRegR
+	.long wsvUnknownR			;@ 0xA3 ???
 	.long wsvRegR
 	.long wsvRegR
-	.long wsvRegR				;@ 0xA8
 	.long wsvRegR
-	.long wsvImportantR			;@ 0xAA VBlank counter
 	.long wsvRegR
-	.long wsvUnknownR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
-	.long wsvWSUnmappedR
+	.long wsvRegR				;@ 0xA8 HBlankTimer counter low
+	.long wsvRegR				;@ 0xA9 HBlankTimer counter high
+	.long wsvRegR				;@ 0xAA VBlankTimer counter low
+	.long wsvRegR				;@ 0xAB VBlankTimer counter high
+	.long wsvUnknownR			;@ 0xAC ???
+	.long wsvWSUnmappedR		;@ 0xAD ---
+	.long wsvWSUnmappedR		;@ 0xAE ---
+	.long wsvWSUnmappedR		;@ 0xAF ---
 
 	.long wsvRegR				;@ 0xB0
 	.long wsvRegR
 	.long wsvRegR				;@ 0xB2 Interrupt enable
-	.long wsvImportantR			;@ 0xB3 communication direction
+	.long wsvSerialStatusR		;@ 0xB3 Serial status
 	.long wsvRegR				;@ 0xB4 Interrupt status
 	.long IOPortA_R				;@ 0xB5 keypad
 	.long wsvZeroR				;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownR
-	.long wsvWSUnmappedR		;@ 0xB8
-	.long wsvWSUnmappedR
-	.long wsvImportantR			;@ 0xBA int-eeprom even byte read
-	.long wsvImportantR			;@ 0xBB int-eeprom odd byte read
-	.long wsvRegR
-	.long wsvRegR
+	.long wsvUnknownR			;@ 0xB7 ???
+	.long wsvWSUnmappedR		;@ 0xB8 ---
+	.long wsvWSUnmappedR		;@ 0xB9 ---
+	.long wsvImportantR			;@ 0xBA int-eeprom data low
+	.long wsvImportantR			;@ 0xBB int-eeprom data high
+	.long wsvImportantR			;@ 0xBC int-eeprom address low
+	.long wsvImportantR			;@ 0xBD int-eeprom address high
 	.long wsvImportantR			;@ 0xBE int-eeprom status
 	.long wsvRegR
+
+;@----------------------------------------------------------------------------
+;@Cartridge
+;@----------------------------------------------------------------------------
 
 	.long wsvRegR				;@ 0xC0
 	.long wsvRegR
 	.long wsvRegR
 	.long wsvRegR
-	.long wsvImportantR			;@ 0xC4 ext-eeprom even byte read
-	.long wsvImportantR			;@ 0xC5 ext-eeprom odd byte read
-	.long wsvRegR
-	.long wsvRegR
+	.long wsvImportantR			;@ 0xC4 ext-eeprom data low
+	.long wsvImportantR			;@ 0xC5 ext-eeprom data high
+	.long wsvImportantR			;@ 0xC6 ext-eeprom address low
+	.long wsvImportantR			;@ 0xC7 ext-eeprom address high
 	.long wsvImportantR			;@ 0xC8 ext-eeprom status
 	.long wsvUnknownR
 	.long wsvImportantR			;@ 0xCA rtc status
@@ -493,6 +497,10 @@ wsvUnknownR:
 ;@----------------------------------------------------------------------------
 wsvWSUnmappedR:
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	ldr r2,=debugIOUnimplR
+	blx r2
+	ldmfd sp!,{lr}
 	mov r0,#0x90
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -500,11 +508,19 @@ wsvZeroR:
 ;@----------------------------------------------------------------------------
 wsvWSCUnmappedR:
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	ldr r2,=debugIOUnimplR
+	blx r2
+	ldmfd sp!,{lr}
 	mov r0,#0x00
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvImportantR:
 	mov r11,r11				;@ No$GBA breakpoint
+	stmfd sp!,{geptr,lr}
+	ldr r2,=debugIOUnimplR
+	blx r2
+	ldmfd sp!,{geptr,lr}
 ;@----------------------------------------------------------------------------
 wsvRegR:
 	add r2,geptr,#wsvRegs
@@ -544,6 +560,12 @@ wsvHWTypeR:					;@ 0xA0
 	cmp r1,#0
 	orreq r0,r0,#2
 	bx lr
+;@----------------------------------------------------------------------------
+wsvSerialStatusR:			;@ 0xB3
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#wsvSerialStatus]
+	orr r0,r0,#4			;@ Hack, send buffer always empty
+	bx lr
 
 ;@----------------------------------------------------------------------------
 wsVideoW:					;@ I/O write (0x00-0xFF)
@@ -557,8 +579,8 @@ OUT_Table:
 	.long wsvReadOnlyW			;@ 0x02 Current scan line
 	.long wsvRegW				;@ 0x03 Scan line compare
 	.long wsvRegW				;@ 0x04 Sprite table address
-	.long wsvRegW				;@ 0x05 Sprite to start with
-	.long wsvRegW				;@ 0x06 Last sprite
+	.long wsvSpriteFirstW		;@ 0x05 Sprite to start with
+	.long wsvRegW				;@ 0x06 Sprite count
 	.long wsvRegW				;@ 0x07 Map table address
 	.long wsvRegW				;@ 0x08 Window X-Position
 	.long wsvRegW				;@ 0x09 Window Y-Position
@@ -569,281 +591,291 @@ OUT_Table:
 	.long wsvRegW				;@ 0x0E Sprite window X-Size
 	.long wsvRegW				;@ 0x0F Sprite window Y-Size
 
-	.long wsvBgScrXW			;@ 0x10
-	.long wsvBgScrYW
-	.long wsvFgScrXW
-	.long wsvFgScrYW
+	.long wsvBgScrXW			;@ 0x10 Bg scroll X
+	.long wsvBgScrYW			;@ 0x11 Bg scroll Y
+	.long wsvFgScrXW			;@ 0x12 Fg scroll X
+	.long wsvFgScrYW			;@ 0x13 Fg scroll Y
 	.long wsvRegW				;@ 0x14 LCD control (on/off?)
 	.long wsvRegW				;@ 0x15 LCD icons
 	.long wsvRegW				;@ 0x16 Total scan lines
 	.long wsvRegW				;@ 0x17 Vsync line
-	.long wsvUnmappedW			;@ 0x18
-	.long wsvUnmappedW
-	.long wsvUnknownW
-	.long wsvUnmappedW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
+	.long wsvUnmappedW			;@ 0x18 ---
+	.long wsvUnmappedW			;@ 0x19 ---
+	.long wsvUnknownW			;@ 0x1A ???
+	.long wsvUnmappedW			;@ 0x1B ---
+	.long wsvRegW				;@ 0x1C Pal mono pool 0
+	.long wsvRegW				;@ 0x1D Pal mono pool 1
+	.long wsvRegW				;@ 0x1E Pal mono pool 2
+	.long wsvRegW				;@ 0x1F Pal mono pool 3
 
-	.long wsvRegW				;@ 0x20
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW				;@ 0x28
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
+	.long wsvRegW				;@ 0x20 Pal mono 0 low
+	.long wsvRegW				;@ 0x21 Pal mono 0 high
+	.long wsvRegW				;@ 0x22 Pal mono 1 low
+	.long wsvRegW				;@ 0x23 Pal mono 1 high
+	.long wsvRegW				;@ 0x24 Pal mono 2 low
+	.long wsvRegW				;@ 0x25 Pal mono 2 high
+	.long wsvRegW				;@ 0x26 Pal mono 3 low
+	.long wsvRegW				;@ 0x27 Pal mono 3 high
+	.long wsvRegW				;@ 0x28 Pal mono 4 low
+	.long wsvRegW				;@ 0x29 Pal mono 4 high
+	.long wsvRegW				;@ 0x2A Pal mono 5 low
+	.long wsvRegW				;@ 0x2B Pal mono 5 high
+	.long wsvRegW				;@ 0x2C Pal mono 6 low
+	.long wsvRegW				;@ 0x2D Pal mono 6 high
+	.long wsvRegW				;@ 0x2E Pal mono 7 low
+	.long wsvRegW				;@ 0x2F Pal mono 7 high
 
-	.long wsvRegW				;@ 0x30
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW				;@ 0x38
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
+	.long wsvRegW				;@ 0x30 Pal mono 8 low
+	.long wsvRegW				;@ 0x31 Pal mono 8 high
+	.long wsvRegW				;@ 0x32 Pal mono 9 low
+	.long wsvRegW				;@ 0x33 Pal mono 9 high
+	.long wsvRegW				;@ 0x34 Pal mono A low
+	.long wsvRegW				;@ 0x35 Pal mono A high
+	.long wsvRegW				;@ 0x36 Pal mono B low
+	.long wsvRegW				;@ 0x37 Pal mono B high
+	.long wsvRegW				;@ 0x38 Pal mono C low
+	.long wsvRegW				;@ 0x39 Pal mono C high
+	.long wsvRegW				;@ 0x3A Pal mono D low
+	.long wsvRegW				;@ 0x3B Pal mono D high
+	.long wsvRegW				;@ 0x3C Pal mono E low
+	.long wsvRegW				;@ 0x3D Pal mono E high
+	.long wsvRegW				;@ 0x3E Pal mono F low
+	.long wsvRegW				;@ 0x3F Pal mono F high
+			;@ DMA registers, only WSC
+	.long wsvRegW				;@ 0x40	DMA source
+	.long wsvRegW				;@ 0x41 DMA src
+	.long wsvRegW				;@ 0x42 DMA src
+	.long wsvRegW				;@ 0x43 ---
+	.long wsvRegW				;@ 0x44 DMA destination
+	.long wsvRegW				;@ 0x45 DMA dst
+	.long wsvRegW				;@ 0x46 DMA length
+	.long wsvRegW				;@ 0x47 DMA len
+	.long wsvDMAStartW			;@ 0x48 DMA control
+	.long wsvUnmappedW			;@ 0x49 ---
+	.long wsvRegW				;@ 0x4A	Sound DMA source
+	.long wsvRegW				;@ 0x4B Sound DMA src
+	.long wsvRegW				;@ 0x4C Sound DMA src
+	.long wsvUnmappedW			;@ 0x4D ---
+	.long wsvRegW				;@ 0x4C Sound DMA length
+	.long wsvRegW				;@ 0x4C Sound DMA len
 
-	.long wsvRegW				;@ 0x40	DMA, source
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvUnmappedW
-	.long wsvRegW				;@ DMA destination
-	.long wsvUnknownW
-	.long wsvRegW				;@ DMA length
-	.long wsvRegW
-	.long wsvDMAStartW			;@ 0x48, only WSC
-	.long wsvUnmappedW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvUnmappedW
-	.long wsvRegW
-	.long wsvRegW
+	.long wsvRegW				;@ 0x50 Sound DMA len
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvRegW				;@ 0x52 Sound DMA control
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x58 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvUnmappedW			;@ 0x51 ---
 
-	.long wsvUnknownW			;@ 0x50
-	.long wsvUnmappedW
-	.long wsvRegW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW			;@ 0x58
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
+	.long wsvRegW				;@ 0x60 Display mode
+	.long wsvUnmappedW			;@ 0x61 ---
+	.long wsvImportantW			;@ 0x62 SwanCrystal/Power off
+	.long wsvUnmappedW			;@ 0x63 ---
+	.long wsvUnmappedW			;@ 0x64 ---
+	.long wsvUnmappedW			;@ 0x65 ---
+	.long wsvUnmappedW			;@ 0x66 ---
+	.long wsvUnmappedW			;@ 0x67 ---
+	.long wsvUnmappedW			;@ 0x68 ---
+	.long wsvUnmappedW			;@ 0x69 ---
+	.long wsvImportantW			;@ 0x6A Hyper control
+	.long wsvImportantW			;@ 0x6B Hyper Chan control
+	.long wsvUnmappedW			;@ 0x6C ---
+	.long wsvUnmappedW			;@ 0x6D ---
+	.long wsvUnmappedW			;@ 0x6E ---
+	.long wsvUnmappedW			;@ 0x6F ---
 
-	.long wsvRegW				;@ 0x60
-	.long wsvUnmappedW
-	.long wsvUnknownW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW			;@ 0x68
-	.long wsvUnmappedW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
+	.long wsvReadOnlyW			;@ 0x70 Unknown70
+	.long wsvReadOnlyW			;@ 0x71 Unknown71
+	.long wsvReadOnlyW			;@ 0x72 Unknown72
+	.long wsvReadOnlyW			;@ 0x73 Unknown73
+	.long wsvReadOnlyW			;@ 0x74 Unknown74
+	.long wsvReadOnlyW			;@ 0x75 Unknown75
+	.long wsvReadOnlyW			;@ 0x76 Unknown76
+	.long wsvReadOnlyW			;@ 0x77 Unknown77
+	.long wsvUnmappedW			;@ 0x78 ---
+	.long wsvUnmappedW			;@ 0x79 ---
+	.long wsvUnmappedW			;@ 0x7A ---
+	.long wsvUnmappedW			;@ 0x7B ---
+	.long wsvUnmappedW			;@ 0x7C ---
+	.long wsvUnmappedW			;@ 0x7D ---
+	.long wsvUnmappedW			;@ 0x7E ---
+	.long wsvUnmappedW			;@ 0x7F ---
 
-	.long wsvReadOnlyW			;@ 0x70
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvUnmappedW			;@ 0x78
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
+	.long wsvRegW				;@ 0x80 Sound Ch1 pitch low
+	.long wsvRegW				;@ 0x81 Sound Ch1 pitch high
+	.long wsvRegW				;@ 0x82 Sound Ch2 pitch low
+	.long wsvRegW				;@ 0x83 Sound Ch2 pitch high
+	.long wsvRegW				;@ 0x84 Sound Ch3 pitch low
+	.long wsvRegW				;@ 0x85 Sound Ch3 pitch high
+	.long wsvRegW				;@ 0x86 Sound Ch4 pitch low
+	.long wsvRegW				;@ 0x87 Sound Ch4 pitch high
+	.long wsvRegW				;@ 0x88 Sound Ch1 volume
+	.long wsvRegW				;@ 0x89 Sound Ch2 volume
+	.long wsvRegW				;@ 0x8A Sound Ch3 volume
+	.long wsvRegW				;@ 0x8B Sound Ch4 volume
+	.long wsvRegW				;@ 0x8C Sweeep value
+	.long wsvRegW				;@ 0x8D Sweep time
+	.long wsvRegW				;@ 0x8E Noise control
+	.long wsvRegW				;@ 0x8F Wave base
 
-	.long wsvRegW				;@ 0x80
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW				;@ 0x88
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-
-	.long wsvRegW				;@ 0x90 Audio control
-	.long wsvRegW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW				;@ 0x98
-	.long wsvRegW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvUnmappedW
+	.long wsvRegW				;@ 0x90 Sound control
+	.long wsvRegW				;@ 0x91 Sound output
+	.long wsvReadOnlyW			;@ 0x92 Noise LFSR value low
+	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
+	.long wsvRegW				;@ 0x94 Sound voice control
+	.long wsvRegW				;@ 0x95 Sound Hyper voice
+	.long wsvImportantW			;@ 0x96 SND9697
+	.long wsvImportantW			;@ 0x97 SND9697
+	.long wsvImportantW			;@ 0x98 SND9899
+	.long wsvImportantW			;@ 0x99 SND9899
+	.long wsvReadOnlyW			;@ 0x9A
+	.long wsvReadOnlyW			;@ 0x9B
+	.long wsvReadOnlyW			;@ 0x9C
+	.long wsvReadOnlyW			;@ 0x9D
+	.long wsvReadOnlyW			;@ 0x9E
+	.long wsvUnmappedW			;@ 0x9F ---
 
 	.long wsvHW					;@ 0xA0 Hardware type, HW_WSC / HW_WS.
-	.long wsvUnmappedW
+	.long wsvUnmappedW			;@ 0xA1 ---
 	.long wsvRegW				;@ 0xA2 Timer control
-	.long wsvUnknownW
+	.long wsvUnknownW			;@ 0xA3 ???
 	.long wsvHTimerLowW			;@ 0xA4 HBlank timer low
 	.long wsvHTimerHighW		;@ 0xA5 HBlank timer high
 	.long wsvVTimerLowW			;@ 0xA6 VBlank timer low
-	.long wsvVTimerHighW		;@ 0xA7 HBlank timer high
-	.long wsvReadOnlyW			;@ 0xA8
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvReadOnlyW
-	.long wsvUnknownW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
-	.long wsvUnmappedW
+	.long wsvVTimerHighW		;@ 0xA7 VBlank timer high
+	.long wsvReadOnlyW			;@ 0xA8 HBlank counter low
+	.long wsvReadOnlyW			;@ 0xA9 HBlank counter high
+	.long wsvReadOnlyW			;@ 0xAA VBlank counter low
+	.long wsvReadOnlyW			;@ 0xAB VBlank counter high
+	.long wsvUnknownW			;@ 0xAC ???
+	.long wsvUnmappedW			;@ 0xAD ---
+	.long wsvUnmappedW			;@ 0xAE ---
+	.long wsvUnmappedW			;@ 0xAF ---
 
-	.long wsvRegW				;@ 0xB0
+	.long wsvRegW				;@ 0xB0 Interrupt base
 	.long wsvRegW				;@ 0xB1 Serial data
 	.long wsvRegW				;@ 0xB2 Interrupt enable
-	.long wsvRegW				;@ 0xB1 Serial status
+	.long wsvImportantW			;@ 0xB3 Serial status
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
 	.long wsvRegW				;@ 0xB5 Input Controls
 	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownW
-	.long wsvUnmappedW			;@ 0xB8
-	.long wsvUnmappedW
+	.long wsvUnknownW			;@ 0xB7 ???
+	.long wsvUnmappedW			;@ 0xB8 ---
+	.long wsvUnmappedW			;@ 0xB9 ---
 	.long wsvImportantW			;@ 0xBA int-eeprom data low
 	.long wsvImportantW			;@ 0xBB int-eeprom data high
 	.long wsvImportantW			;@ 0xBC int-eeprom address low
 	.long wsvImportantW			;@ 0xBD int-eeprom address high
-	.long wsvImportantW			;@ 0xBD int-eeprom status/command
-	.long wsvUnknownW
+	.long wsvImportantW			;@ 0xBE int-eeprom command
+	.long wsvUnknownW			;@ 0xBF ???
 
-	.long BankSwitch4_F_W		;@ 0xC0
-	.long wsvRegW
-	.long BankSwitch2_W
-	.long BankSwitch3_W
-	.long wsvImportantW			;@ 0xC4 ext-eeprom even byte write
-	.long wsvImportantW			;@ 0xC5 ext-eeprom odd byte write
-	.long wsvRegW
-	.long wsvRegW
-	.long wsvRegW				;@ 0xC8
-	.long wsvUnknownW
-	.long wsvImportantW			;@ 0xCA RTC data
-	.long wsvImportantW			;@ 0xCB RTC command
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
+;@----------------------------------------------------------------------------
+;@Cartridge
+;@----------------------------------------------------------------------------
 
-	.long wsvUnknownW			;@ 0xD0
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW			;@ 0xD8
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
+	.long BankSwitch4_F_W		;@ 0xC0 Bank switch 0x40000-0xF0000
+	.long wsvImportantW			;@ 0xC1 Bank switch 0x10000 (SRAM)
+	.long BankSwitch2_W			;@ 0xC2 Bank switch 0x20000
+	.long BankSwitch3_W			;@ 0xC3 Bank switch 0x30000
+	.long wsvImportantW			;@ 0xC4 ext-eeprom data low
+	.long wsvImportantW			;@ 0xC5 ext-eeprom data high
+	.long wsvImportantW			;@ 0xC6 ext-eeprom address low
+	.long wsvImportantW			;@ 0xC7 ext-eeprom address high
+	.long wsvImportantW			;@ 0xC8 ext-eeprom command
+	.long wsvUnknownW			;@ 0xC9 ???
+	.long wsvImportantW			;@ 0xCA RTC command
+	.long wsvImportantW			;@ 0xCB RTC data
+	.long wsvImportantW			;@ 0xCC General purpose output enable, bit 3-0.
+	.long wsvImportantW			;@ 0xCD General purpose output data, bit 3-0.
+	.long wsvImportantW			;@ 0xCE WonderWitch flash
+	.long wsvUnknownW			;@ 0xCF ???
 
-	.long wsvUnknownW			;@ 0xE0
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW			;@ 0xE8
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
+	.long wsvUnknownW			;@ 0xD0 ???
+	.long wsvUnknownW			;@ 0xD1 ???
+	.long wsvUnknownW			;@ 0xD2 ???
+	.long wsvUnknownW			;@ 0xD3 ???
+	.long wsvUnknownW			;@ 0xD4 ???
+	.long wsvUnknownW			;@ 0xD5 ???
+	.long wsvUnknownW			;@ 0xD6 ???
+	.long wsvUnknownW			;@ 0xD7 ???
+	.long wsvUnknownW			;@ 0xD8 ???
+	.long wsvUnknownW			;@ 0xD9 ???
+	.long wsvUnknownW			;@ 0xDA ???
+	.long wsvUnknownW			;@ 0xDB ???
+	.long wsvUnknownW			;@ 0xDC ???
+	.long wsvUnknownW			;@ 0xDD ???
+	.long wsvUnknownW			;@ 0xDE ???
+	.long wsvUnknownW			;@ 0xDF ???
 
-	.long wsvUnknownW			;@ 0xF0
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW			;@ 0xF8
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
-	.long wsvUnknownW
+	.long wsvUnknownW			;@ 0xE0 ???
+	.long wsvUnknownW			;@ 0xE1 ???
+	.long wsvUnknownW			;@ 0xE2 ???
+	.long wsvUnknownW			;@ 0xE3 ???
+	.long wsvUnknownW			;@ 0xE4 ???
+	.long wsvUnknownW			;@ 0xE5 ???
+	.long wsvUnknownW			;@ 0xE6 ???
+	.long wsvUnknownW			;@ 0xE7 ???
+	.long wsvUnknownW			;@ 0xE8 ???
+	.long wsvUnknownW			;@ 0xE9 ???
+	.long wsvUnknownW			;@ 0xEA ???
+	.long wsvUnknownW			;@ 0xEB ???
+	.long wsvUnknownW			;@ 0xEC ???
+	.long wsvUnknownW			;@ 0xED ???
+	.long wsvUnknownW			;@ 0xEE ???
+	.long wsvUnknownW			;@ 0xEF ???
 
+	.long wsvUnknownW			;@ 0xF0 ???
+	.long wsvUnknownW			;@ 0xF1 ???
+	.long wsvUnknownW			;@ 0xF2 ???
+	.long wsvUnknownW			;@ 0xF3 ???
+	.long wsvUnknownW			;@ 0xF4 ???
+	.long wsvUnknownW			;@ 0xF5 ???
+	.long wsvUnknownW			;@ 0xF6 ???
+	.long wsvUnknownW			;@ 0xF7 ???
+	.long wsvUnknownW			;@ 0xF8 ???
+	.long wsvUnknownW			;@ 0xF9 ???
+	.long wsvUnknownW			;@ 0xFA ???
+	.long wsvUnknownW			;@ 0xFB ???
+	.long wsvUnknownW			;@ 0xFC ???
+	.long wsvUnknownW			;@ 0xFD ???
+	.long wsvUnknownW			;@ 0xFE ???
+	.long wsvUnknownW			;@ 0xFF ???
+
+;@----------------------------------------------------------------------------
+wsvUnknownW:
+;@----------------------------------------------------------------------------
+wsvImportantW:
+	add r2,geptr,#wsvRegs
+	strb r1,[r2,r0]
 ;@----------------------------------------------------------------------------
 wsvReadOnlyW:
 ;@----------------------------------------------------------------------------
 wsvUnmappedW:
 ;@----------------------------------------------------------------------------
 	mov r11,r11				;@ No$GBA breakpoint
-	bx lr
-;@----------------------------------------------------------------------------
-wsvUnknownW:
-;@----------------------------------------------------------------------------
-	ldr r2,=0x826EBAD1
-;@----------------------------------------------------------------------------
-wsvImportantW:
-	mov r11,r11				;@ No$GBA breakpoint
+	ldr r2,=debugIOUnimplW
+	bx r2
 ;@----------------------------------------------------------------------------
 wsvRegW:
 	add r2,geptr,#wsvRegs
 	strb r1,[r2,r0]
 	bx lr
 
+;@----------------------------------------------------------------------------
+wsvSpriteFirstW:			;@ 0x05, First Sprite
+;@----------------------------------------------------------------------------
+	and r1,r1,#0x7F
+	strb r1,[geptr,#wsvBGXScroll]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
 ;@----------------------------------------------------------------------------
@@ -1012,9 +1044,6 @@ midFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 //	bl wsvTransferVRAM
-	ldr r0,=tmpOamBuffer		;@ Destination
-	ldr r0,[r0]
-	bl wsvConvertSprites
 	bl wsvBufferWindows
 
 	ldmfd sp!,{pc}
@@ -1022,6 +1051,9 @@ midFrame:
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
+	ldr r0,=tmpOamBuffer		;@ Destination
+	ldr r0,[r0]
+	bl wsvConvertSprites
 	ldrb r0,[geptr,#wsvVideoMode]
 	adr lr,TransRet
 	ands r0,r0,#0xE0
@@ -1034,32 +1066,30 @@ TransRet:
 ;@----------------------------------------------------------------------------
 checkFrameIRQ:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{geptr,lr}
+	stmfd sp!,{lr}
 	ldrb r1,[geptr,#wsvBGXScroll]
 	bl wsvBgScrXW
 	ldmfd sp!,{lr}
 	bl endFrameGfx
 
-	ldrb r2,[geptr,#wsvTimerControl]
-	tst r2,#0x4						;@ VBlank timer enabled?
+	ldrb r2,[geptr,#wsvInterruptStatus]
+	ldrb r0,[geptr,#wsvTimerControl]
+	tst r0,#0x4						;@ VBlank timer enabled?
 	beq noTimerVblIrq
-	mov r0,#0
 	ldrh r1,[geptr,#wsvVBlCounter]
 	subs r1,r1,#1
 	bmi noTimerVblIrq
-	moveq r0,#5						;@ 5 = VBlank timer
-	eor r2,r2,#0x8
-	tsteq r2,#0x8					;@ Repeat?
+	orreq r2,r2,#0x20				;@ #5 = VBlank timer
+	eor r0,r0,#0x8
+	tsteq r0,#0x8					;@ Repeat?
 	ldrheq r1,[geptr,#wsvVBlTimerFreq]
 	strh r1,[geptr,#wsvVBlCounter]
-	cmp r0,#0
-	blne setInterrupt
 noTimerVblIrq:
-	mov r0,#6					;@ 6 = VBlank
-	bl setInterrupt
+	orr r2,r2,#0x40					;@ #6 = VBlank
+	strb r2,[geptr,#wsvInterruptStatus]
 
 	mov r0,#1
-	ldmfd sp!,{geptr,lr}
+	ldmfd sp!,{lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 frameEndHook:
@@ -1112,31 +1142,25 @@ wsvDoScanline:
 ;@----------------------------------------------------------------------------
 checkScanlineIRQ:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
-
+	ldrb r2,[geptr,#wsvInterruptStatus]
 	ldrb r1,[geptr,#wsvLineCompare]
 	cmp r0,r1
-	moveq r0,#4
-	bleq setInterrupt
+	orreq r2,r2,#0x10				;@ #4 = Line compare
 
-	ldr geptr,=wsv_0
-	ldrb r2,[geptr,#wsvTimerControl]
-	tst r2,#0x1						;@ HBlank timer enabled?
+	ldrb r0,[geptr,#wsvTimerControl]
+	tst r0,#0x1						;@ HBlank timer enabled?
 	beq noTimerHblIrq
-	mov r0,#0
 	ldrh r1,[geptr,#wsvHBlCounter]
 	subs r1,r1,#1
 	bmi noTimerHblIrq
-	moveq r0,#7						;@ 7 = HBlank timer
-	eor r2,r2,#0x2
-	tsteq r2,#0x2					;@ Repeat?
+	orreq r2,r2,#0x80				;@ #7 = HBlank timer
+	eor r0,r0,#0x2
+	tsteq r0,#0x2					;@ Repeat?
 	ldrheq r1,[geptr,#wsvHBlTimerFreq]
 	strh r1,[geptr,#wsvHBlCounter]
-	cmp r0,#0
-	blne setInterrupt
 noTimerHblIrq:
+	strb r2,[geptr,#wsvInterruptStatus]
 
-	ldmfd sp!,{lr}
 	mov r0,#1
 	bx lr
 
@@ -1427,12 +1451,12 @@ wsvConvertSprites:			;@ in r0 = destination.
 	ldrb r2,[geptr,#wsvSprTblAdr]
 	and r2,r2,#0x3F
 	add r1,r1,r2,lsl#9
-	ldrb r2,[geptr,#wsvSpriteStart]	;@ First sprite
-//	and r2,r2,#0x7F
+	ldrb r2,[geptr,#wsvSpriteFirst]	;@ First sprite
 	add r1,r1,r2,lsl#2
 
-	ldrb r7,[geptr,#wsvSpriteEnd]	;@ Last sprite
-//	and r7,r7,#0x7F
+	ldrb r7,[geptr,#wsvSpriteCount]	;@ Sprite count
+	cmp r7,#128
+	movpl r7,#128
 	subs r7,r7,r2
 	movmi r7,#0
 	rsb r6,r7,#128				;@ Max number of sprites minus used.

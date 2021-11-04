@@ -27,8 +27,8 @@ wsvBGColor:		.byte 0		;@ 0x01 Background color
 wsvCurrentLine:	.byte 0		;@ 0x02 Current scan line
 wsvLineCompare:	.byte 0		;@ 0x03 Scan line compare for IRQ
 wsvSprTblAdr:	.byte 0		;@ 0x04 Sprite table address
-wsvSpriteStart:	.byte 0		;@ 0x05 Sprite to start with
-wsvSpriteEnd:	.byte 0		;@ 0x06 Sprite to end with
+wsvSpriteFirst:	.byte 0		;@ 0x05 Sprite to start with
+wsvSpriteCount:	.byte 0		;@ 0x06 Sprite count
 wsvMapTblAdr:	.byte 0		;@ 0x07 Map table address
 
 wsvWinXPos:		.byte 0		;@ 0x08 Window X-Position
@@ -154,7 +154,7 @@ wsvPadding9:	.space 4	;@ 0xAC - 0xAF ???
 wsvInterruptBase:.byte 0	;@ 0xB0 Interrupt base
 wsvComByte:		.byte 0		;@ 0xB1 Communication byte
 wsvInterruptEnable:.byte 0	;@ 0xB2 Interrupt enable
-wsvComDir:		.byte 0		;@ 0xB3 Communication direction
+wsvSerialStatus: .byte 0	;@ 0xB3 Serial status
 wsvInterruptStatus:.byte 0	;@ 0xB4 Interrupt status
 wsvControls:	.byte 0		;@ 0xB5 Input Controls
 wsvInterruptAck:.byte 0		;@ 0xB6 Interrupt acknowledge
