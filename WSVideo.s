@@ -874,7 +874,7 @@ wsvRegW:
 wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x7F
-	strb r1,[geptr,#wsvBGXScroll]
+	strb r1,[geptr,#wsvSpriteFirst]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
