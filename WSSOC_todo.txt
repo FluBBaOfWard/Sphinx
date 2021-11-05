@@ -1,4 +1,4 @@
-Bandai WonderSwan video To do
+Bandai WonderSwan SOC To do
 -----------------------------
 
 	Fix Window.
