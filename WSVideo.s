@@ -182,15 +182,14 @@ wsVideoGetStateSize:	;@ Out r0=state size.
 wsvBufferWindows:
 ;@----------------------------------------------------------------------------
 	ldr r0,[geptr,#wsvWinXPos]	;@ Win pos/size
-	ldr r0,=0xB0F00000
 	and r1,r0,#0x000000FF		;@ H start
-	and r2,r0,#0x00FF0000		;@ H size
+	and r2,r0,#0x00FF0000		;@ H end
 	cmp r1,#GAME_WIDTH
 	movpl r1,#GAME_WIDTH
 	add r1,r1,#(SCREEN_WIDTH-GAME_WIDTH)/2
-	add r2,r2,r1,lsl#16
-	cmp r2,#((SCREEN_WIDTH+GAME_WIDTH)/2)<<16
-	movpl r2,#((SCREEN_WIDTH+GAME_WIDTH)/2)<<16
+	cmp r2,#GAME_WIDTH<<16
+	movpl r2,#GAME_WIDTH<<16
+	add r2,r2,#((SCREEN_WIDTH-GAME_WIDTH)/2)<<16
 	orr r1,r1,r2,lsl#8
 	mov r1,r1,ror#24
 	strh r1,[geptr,#windowData]
@@ -200,9 +199,9 @@ wsvBufferWindows:
 	cmp r1,#GAME_HEIGHT<<8
 	movpl r1,#GAME_HEIGHT<<8
 	add r1,r1,#((SCREEN_HEIGHT-GAME_HEIGHT)/2)<<8
-	add r2,r2,r1,lsr#8
-	cmp r2,#(SCREEN_HEIGHT+GAME_HEIGHT)/2
-	movpl r2,#(SCREEN_HEIGHT+GAME_HEIGHT)/2
+	cmp r2,#GAME_HEIGHT
+	movpl r2,#GAME_HEIGHT
+	add r2,r2,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
 	orr r1,r1,r2
 	strh r1,[geptr,#windowData+2]
 
@@ -214,31 +213,31 @@ wsvRead:					;@ I/O read (0x00-0x3F)
 	ldr pc,[pc,r0,lsl#2]
 	.long 0
 IN_Table:
-	.long wsvRegR				;@ 0x00
-	.long wsvRegR				;@ 0x01
-	.long wsvVCountR			;@ 0x02
-	.long wsvRegR				;@ 0x03
-	.long wsvRegR				;@ 0x04
-	.long wsvRegR				;@ 0x05
-	.long wsvRegR				;@ 0x06
-	.long wsvRegR				;@ 0x07
-	.long wsvRegR				;@ 0x08
-	.long wsvRegR				;@ 0x09
-	.long wsvRegR				;@ 0x0A
-	.long wsvRegR				;@ 0x0B
-	.long wsvRegR				;@ 0x0C
-	.long wsvRegR				;@ 0x0D
-	.long wsvRegR				;@ 0x0E
-	.long wsvRegR				;@ 0x0F
+	.long wsvRegR				;@ 0x00 Display control
+	.long wsvRegR				;@ 0x01 Background color
+	.long wsvVCountR			;@ 0x02 Current scan line
+	.long wsvRegR				;@ 0x03 Scan line compare
+	.long wsvRegR				;@ 0x04 Sprite table address
+	.long wsvRegR				;@ 0x05 Sprite to start with
+	.long wsvRegR				;@ 0x06 Sprite count
+	.long wsvRegR				;@ 0x07 Map table address
+	.long wsvRegR				;@ 0x08 Window X-Position
+	.long wsvRegR				;@ 0x09 Window Y-Position
+	.long wsvRegR				;@ 0x0A Window X-Size
+	.long wsvRegR				;@ 0x0B Window Y-Size
+	.long wsvRegR				;@ 0x0C Sprite window X-Position
+	.long wsvRegR				;@ 0x0D Sprite window Y-Position
+	.long wsvRegR				;@ 0x0E Sprite window X-Size
+	.long wsvRegR				;@ 0x0F Sprite window Y-Size
 
-	.long wsvRegR				;@ 0x10
-	.long wsvRegR				;@ 0x11
-	.long wsvRegR				;@ 0x12
-	.long wsvRegR				;@ 0x13
-	.long wsvRegR				;@ 0x14
-	.long wsvRegR				;@ 0x15
-	.long wsvRegR				;@ 0x16
-	.long wsvRegR				;@ 0x17
+	.long wsvRegR				;@ 0x10 Bg scroll X
+	.long wsvRegR				;@ 0x11 Bg scroll Y
+	.long wsvRegR				;@ 0x12 Fg scroll X
+	.long wsvRegR				;@ 0x13 Fg scroll Y
+	.long wsvRegR				;@ 0x14 LCD control (on/off?)
+	.long wsvRegR				;@ 0x15 LCD icons
+	.long wsvRegR				;@ 0x16 Total scan lines
+	.long wsvRegR				;@ 0x17 Vsync line
 	.long wsvWSUnmappedR		;@ 0x18 ---
 	.long wsvWSUnmappedR		;@ 0x19 ---
 	.long wsvUnknownR			;@ 0x1A ???
@@ -282,14 +281,14 @@ IN_Table:
 	.long wsvRegR				;@ 0x3E
 	.long wsvRegR				;@ 0x3F
 			;@ DMA registers, only WSC
-	.long wsvRegR				;@ 0x40 DMA
-	.long wsvRegR				;@ 0x41
-	.long wsvRegR				;@ 0x42
+	.long wsvRegR				;@ 0x40 DMA source
+	.long wsvRegR				;@ 0x41 DMA source
+	.long wsvRegR				;@ 0x42 DMA source
 	.long wsvWSUnmappedR		;@ 0x43 ---
-	.long wsvRegR				;@ 0x44
-	.long wsvRegR				;@ 0x45
-	.long wsvRegR				;@ 0x46
-	.long wsvRegR				;@ 0x47
+	.long wsvRegR				;@ 0x44 DMA destination
+	.long wsvRegR				;@ 0x45 DMA destination
+	.long wsvRegR				;@ 0x46 DMA length
+	.long wsvRegR				;@ 0x47 DMA length
 	.long wsvImportantR			;@ 0x48 DMA control
 	.long wsvWSUnmappedR		;@ 0x49 ---
 	.long wsvRegR				;@ 0x4A Sound DMA source
@@ -422,7 +421,7 @@ IN_Table:
 ;@Cartridge
 ;@----------------------------------------------------------------------------
 
-	.long wsvRegR				;@ 0xC0 Bank ROM 0x40000
+	.long wsvRegR				;@ 0xC0 Bank ROM 0x40000-0xF0000
 	.long wsvRegR				;@ 0xC1 Bank SRAM 0x10000
 	.long wsvRegR				;@ 0xC2 Bank ROM 0x20000
 	.long wsvRegR				;@ 0xC3 Bank ROM 0x30000
@@ -434,9 +433,9 @@ IN_Table:
 	.long wsvUnknownR			;@ 0xC9 ???
 	.long wsvImportantR			;@ 0xCA RTC status
 	.long wsvImportantR			;@ 0xCB RTC read
-	.long wsvUnknownR			;@ 0xCC ???
-	.long wsvUnknownR			;@ 0xCD ???
-	.long wsvUnknownR			;@ 0xCE ???
+	.long wsvImportantR			;@ 0xCC General purpose output enable, bit 3-0.
+	.long wsvImportantR			;@ 0xCD General purpose output data, bit 3-0.
+	.long wsvImportantR			;@ 0xCE WonderWitch flash
 	.long wsvUnknownR			;@ 0xCF ???
 
 	.long wsvUnknownR			;@ 0xD0 ???
@@ -445,7 +444,7 @@ IN_Table:
 	.long wsvUnknownR			;@ 0xD3 ???
 	.long wsvUnknownR			;@ 0xD4 ???
 	.long wsvUnknownR			;@ 0xD5 ???
-	.long wsvUnknownR			;@ 0xD& ???
+	.long wsvUnknownR			;@ 0xD6 ???
 	.long wsvUnknownR			;@ 0xD7 ???
 	.long wsvUnknownR			;@ 0xD8 ???
 	.long wsvUnknownR			;@ 0xD9 ???
@@ -517,10 +516,10 @@ wsvWSCUnmappedR:
 ;@----------------------------------------------------------------------------
 wsvImportantR:
 	mov r11,r11				;@ No$GBA breakpoint
-	stmfd sp!,{geptr,lr}
+	stmfd sp!,{r0,geptr,lr}
 	ldr r2,=debugIOUnimplR
 	blx r2
-	ldmfd sp!,{geptr,lr}
+	ldmfd sp!,{r0,geptr,lr}
 ;@----------------------------------------------------------------------------
 wsvRegR:
 	add r2,geptr,#wsvRegs
@@ -545,6 +544,14 @@ wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#wsvSerialStatus]
 	orr r0,r0,#4			;@ Hack, send buffer always empty
+	bx lr
+
+;@----------------------------------------------------------------------------
+wsvBnk0SlctR:				;@ 0xC0
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#wsvBnk0Slct]
+	and r0,r0,#0xF
+	orr r0,r0,#0x20
 	bx lr
 
 ;@----------------------------------------------------------------------------
