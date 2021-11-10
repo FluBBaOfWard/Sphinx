@@ -60,13 +60,18 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=HWType 0=color, r12=geptr
+wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=HWType 1=mono, r12=geptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
 	mov r0,geptr
 	ldr r1,=wsVideoSize/4
 	bl memclr_					;@ Clear WSVideo state
+
+//	ldr r0,=DIRTYTILES
+//	mov r1,#0
+//	mov r2,#0x800
+//	bl memset
 
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
@@ -94,10 +99,10 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=HWType 0=color, 
 	str r0,[geptr,#scrollBuff]
 
 	strb r3,[geptr,#wsvMachine]
-	cmp r3,#HW_WS
+	cmp r3,#HW_ASWAN
 	movne r0,#0xC0				;@ Use Color mode.
 	moveq r0,#0x00				;@ Use B&W mode.
-	strb r0,[geptr,#wsvVideoMode]
+//	strb r0,[geptr,#wsvVideoMode]
 
 	b wsvRegistersReset
 
@@ -410,11 +415,11 @@ IN_Table:
 	.long wsvUnknownR			;@ 0xB7 ???
 	.long wsvWSUnmappedR		;@ 0xB8 ---
 	.long wsvWSUnmappedR		;@ 0xB9 ---
-	.long wsvImportantR			;@ 0xBA int-eeprom data low
-	.long wsvImportantR			;@ 0xBB int-eeprom data high
-	.long wsvImportantR			;@ 0xBC int-eeprom address low
-	.long wsvImportantR			;@ 0xBD int-eeprom address high
-	.long wsvImportantR			;@ 0xBE int-eeprom status
+	.long intEepromDataLowR		;@ 0xBA int-eeprom data low
+	.long intEepromDataHighR	;@ 0xBB int-eeprom data high
+	.long intEepromAdrLowR		;@ 0xBC int-eeprom address low
+	.long intEepromAdrHighR		;@ 0xBD int-eeprom address high
+	.long intEepromStatusR		;@ 0xBE int-eeprom status
 	.long wsvUnknownR			;@ 0xBF ???
 
 ;@----------------------------------------------------------------------------
@@ -425,11 +430,11 @@ IN_Table:
 	.long wsvRegR				;@ 0xC1 Bank SRAM 0x10000
 	.long wsvRegR				;@ 0xC2 Bank ROM 0x20000
 	.long wsvRegR				;@ 0xC3 Bank ROM 0x30000
-	.long wsvImportantR			;@ 0xC4 ext-eeprom data low
-	.long wsvImportantR			;@ 0xC5 ext-eeprom data high
-	.long wsvImportantR			;@ 0xC6 ext-eeprom address low
-	.long wsvImportantR			;@ 0xC7 ext-eeprom address high
-	.long wsvImportantR			;@ 0xC8 ext-eeprom status
+	.long extEepromDataLowR		;@ 0xC4 ext-eeprom data low
+	.long extEepromDataHighR	;@ 0xC5 ext-eeprom data high
+	.long extEepromAdrLowR		;@ 0xC6 ext-eeprom address low
+	.long extEepromAdrHighR		;@ 0xC7 ext-eeprom address high
+	.long extEepromStatusR		;@ 0xC8 ext-eeprom status
 	.long wsvUnknownR			;@ 0xC9 ???
 	.long wsvImportantR			;@ 0xCA RTC status
 	.long wsvImportantR			;@ 0xCB RTC read
@@ -536,7 +541,7 @@ wsvHWTypeR:					;@ 0xA0
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#wsvHardwareType]
 	ldrb r1,[geptr,#wsvMachine]
-	cmp r1,#WS_MONO
+	cmp r1,#HW_ASWAN
 	orrne r0,r0,#2
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -731,7 +736,7 @@ OUT_Table:
 	.long wsvReadOnlyW			;@ 0x9E
 	.long wsvUnmappedW			;@ 0x9F ---
 
-	.long wsvHW					;@ 0xA0 Hardware type, HW_WSC / HW_WS.
+	.long wsvHW					;@ 0xA0 Hardware type, HW_ASWAN / HW_SPHINX.
 	.long wsvUnmappedW			;@ 0xA1 ---
 	.long wsvRegW				;@ 0xA2 Timer control
 	.long wsvUnknownW			;@ 0xA3 ???
@@ -758,11 +763,11 @@ OUT_Table:
 	.long wsvUnknownW			;@ 0xB7 ???
 	.long wsvUnmappedW			;@ 0xB8 ---
 	.long wsvUnmappedW			;@ 0xB9 ---
-	.long wsvImportantW			;@ 0xBA int-eeprom data low
-	.long wsvImportantW			;@ 0xBB int-eeprom data high
-	.long wsvImportantW			;@ 0xBC int-eeprom address low
-	.long wsvImportantW			;@ 0xBD int-eeprom address high
-	.long wsvImportantW			;@ 0xBE int-eeprom command
+	.long intEepromDataLowW		;@ 0xBA int-eeprom data low
+	.long intEepromDataHighW	;@ 0xBB int-eeprom data high
+	.long intEepromAdrLowW		;@ 0xBC int-eeprom address low
+	.long intEepromAdrHighW		;@ 0xBD int-eeprom address high
+	.long intEepromCommandW		;@ 0xBE int-eeprom command
 	.long wsvUnknownW			;@ 0xBF ???
 
 ;@----------------------------------------------------------------------------
@@ -773,11 +778,11 @@ OUT_Table:
 	.long wsvImportantW			;@ 0xC1 Bank switch 0x10000 (SRAM)
 	.long BankSwitch2_W			;@ 0xC2 Bank switch 0x20000
 	.long BankSwitch3_W			;@ 0xC3 Bank switch 0x30000
-	.long wsvImportantW			;@ 0xC4 ext-eeprom data low
-	.long wsvImportantW			;@ 0xC5 ext-eeprom data high
-	.long wsvImportantW			;@ 0xC6 ext-eeprom address low
-	.long wsvImportantW			;@ 0xC7 ext-eeprom address high
-	.long wsvImportantW			;@ 0xC8 ext-eeprom command
+	.long extEepromDataLowW		;@ 0xC4 ext-eeprom data low
+	.long extEepromDataHighW	;@ 0xC5 ext-eeprom data high
+	.long extEepromAdrLowW		;@ 0xC6 ext-eeprom address low
+	.long extEepromAdrHighW		;@ 0xC7 ext-eeprom address high
+	.long extEepromCommandW		;@ 0xC8 ext-eeprom command
 	.long wsvUnknownW			;@ 0xC9 ???
 	.long wsvImportantW			;@ 0xCA RTC command
 	.long wsvImportantW			;@ 0xCB RTC data
@@ -1056,9 +1061,9 @@ endFrame:
 	adr lr,TransRet
 	ands r0,r0,#0xE0
 	beq TransferVRAM4Layered
-	cmp r0,#0xC0
-	beq TransferVRAM16Layered
-	b TransferVRAM16Packed
+	tst r0,#0x20
+	bne TransferVRAM16Packed
+	b TransferVRAM16Layered
 TransRet:
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------

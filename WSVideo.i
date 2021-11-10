@@ -1,10 +1,11 @@
 ;@ ASM header for the Bandai WonderSwan Graphics emulator
 ;@
 
-#define HW_WSC		(0)
-#define HW_WS		(1)
-#define WS_COLOR	HW_WSC
-#define WS_MONO		HW_WS
+#define HW_AUTO			(0)
+#define HW_ASWAN		(1)
+#define HW_SPHINX		(2)
+#define HW_SPHINX2		(3)
+#define HW_SELECT_END	(4)
 
 
 /** Game screen width in pixels */
