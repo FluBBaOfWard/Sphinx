@@ -438,8 +438,8 @@ IN_Table:
 	.long wsvUnknownR			;@ 0xC9 ???
 	.long wsvImportantR			;@ 0xCA RTC status
 	.long wsvImportantR			;@ 0xCB RTC read
-	.long wsvImportantR			;@ 0xCC General purpose output enable, bit 3-0.
-	.long wsvImportantR			;@ 0xCD General purpose output data, bit 3-0.
+	.long wsvImportantR			;@ 0xCC General purpose input/output enable, bit 3-0.
+	.long wsvImportantR			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantR			;@ 0xCE WonderWitch flash
 	.long wsvUnknownR			;@ 0xCF ???
 
@@ -555,8 +555,6 @@ wsvSerialStatusR:			;@ 0xB3
 wsvBnk0SlctR:				;@ 0xC0
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#wsvBnk0Slct]
-	and r0,r0,#0xF
-	orr r0,r0,#0x20
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -786,8 +784,8 @@ OUT_Table:
 	.long wsvUnknownW			;@ 0xC9 ???
 	.long wsvImportantW			;@ 0xCA RTC command
 	.long wsvImportantW			;@ 0xCB RTC data
-	.long wsvImportantW			;@ 0xCC General purpose output enable, bit 3-0.
-	.long wsvImportantW			;@ 0xCD General purpose output data, bit 3-0.
+	.long wsvImportantW			;@ 0xCC General purpose input/output enable, bit 3-0.
+	.long wsvImportantW			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantW			;@ 0xCE WonderWitch flash
 	.long wsvUnknownW			;@ 0xCF ???
 
@@ -971,7 +969,7 @@ dmaEnd:
 wsvHW:					;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#wsvHardwareType]
-	and r0,r0,#1
+	and r0,r0,#0x81
 	orr r1,r1,r0
 	strb r1,[geptr,#wsvHardwareType]
 	eor r0,r0,r1
@@ -1035,7 +1033,7 @@ wsvConvertTileMaps:		;@ r0 = destination
 
 	ldrb r1,[geptr,#wsvVideoMode]
 	adr lr,tMapRet
-	ands r1,r1,#0xE0
+	tst r1,#0x40				;@ 4 bit planes?
 	beq bgMono
 	b bgColor
 
@@ -1060,10 +1058,11 @@ endFrame:
 	ldrb r0,[geptr,#wsvVideoMode]
 	adr lr,TransRet
 	ands r0,r0,#0xE0
-	beq TransferVRAM4Layered
+	tst r0,#0x40
+	beq TransferVRAM4Planar
 	tst r0,#0x20
 	bne TransferVRAM16Packed
-	b TransferVRAM16Layered
+	b TransferVRAM16Planar
 TransRet:
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
@@ -1220,7 +1219,7 @@ tileLoop16_1p:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-TransferVRAM16Layered:
+TransferVRAM16Planar:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r10,lr}
 	adr r0,T_data
@@ -1281,7 +1280,7 @@ T4Data:
 	.long SPRITE_GFX			;@ SPR tiles
 	.long 0x44444444			;@ Extra bitplane
 ;@----------------------------------------------------------------------------
-TransferVRAM4Layered:
+TransferVRAM4Planar:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r12,lr}
 	adr r0,T4Data

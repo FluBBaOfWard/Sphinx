@@ -2,11 +2,12 @@ WSSOC revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.1.2 - 2021-11-05 (FluBBa)
+V0.1.2 - 2021-11-14 (FluBBa)
 	Fixed background and foreground.
 	Fixed mono background and foreground.
 	Fixed sprites.
 	Fixed interrupts and timers.
+	Fixed handling of register 0xA0.
 
 V0.1.1 - 2021-10-17 (FluBBa)
 	Started port to Nintendo DS & devkitPro.
