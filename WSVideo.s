@@ -17,7 +17,7 @@
 	.global wsvDoScanline
 	.global copyScrollValues
 	.global wsvConvertTileMaps
-	.global wsvConvertSprites
+//	.global wsvConvertSprites
 	.global wsvBufferWindows
 	.global wsvRead
 	.global wsVideoW
@@ -898,9 +898,9 @@ scrollCnt:
 	add r1,r1,#1
 	cmp r1,#159
 	movhi r1,#159
-	ldr r0,scrollLine
+	ldr r0,[geptr,#scrollLine]
 	subs r0,r1,r0
-	strhi r1,scrollLine
+	strhi r1,[geptr,#scrollLine]
 
 	stmfd sp!,{r3}
 	ldr r3,[geptr,#scrollBuff]
@@ -911,8 +911,6 @@ sy2:
 	subs r0,r0,#1
 	bhi sy2
 	bx lr
-
-scrollLine: .long 0 ;@ ..was when?
 
 ;@----------------------------------------------------------------------------
 wsvRefW:					;@ 0x16, Total number of scanlines?
@@ -1046,15 +1044,16 @@ midFrame:
 	stmfd sp!,{lr}
 //	bl wsvTransferVRAM
 	bl wsvBufferWindows
+	ldr r0,=tmpOamBuffer		;@ Destination
+	ldr r0,[r0]
+	bl wsvConvertSprites
 
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldr r0,=tmpOamBuffer		;@ Destination
-	ldr r0,[r0]
-	bl wsvConvertSprites
+	bl wsvDMASprites
 	ldrb r0,[geptr,#wsvVideoMode]
 	adr lr,TransRet
 	ands r0,r0,#0xE0
@@ -1096,7 +1095,7 @@ noTimerVblIrq:
 ;@----------------------------------------------------------------------------
 frameEndHook:
 	mov r0,#0
-	str r0,scrollLine
+	str r0,[geptr,#scrollLine]
 
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
@@ -1443,12 +1442,11 @@ setScrlLoop:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-	.equ PRIORITY,	0x400		;@ 0x400=AGB OBJ priority 1
+wsvDMASprites:
 ;@----------------------------------------------------------------------------
-wsvConvertSprites:			;@ in r0 = destination.
-;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r7,lr}
+	stmfd sp!,{geptr,lr}
 
+	add r0,geptr,#wsvSpriteRAM
 	ldr r1,[geptr,#gfxRAM]
 	ldrb r2,[geptr,#wsvSprTblAdr]
 	and r2,r2,#0x3F
@@ -1456,13 +1454,33 @@ wsvConvertSprites:			;@ in r0 = destination.
 	ldrb r2,[geptr,#wsvSpriteFirst]	;@ First sprite
 	add r1,r1,r2,lsl#2
 
-	ldrb r7,[geptr,#wsvSpriteCount]	;@ Sprite count
-	cmp r7,#128
-	movpl r7,#128
-	subs r7,r7,r2
-	movmi r7,#0
+	ldrb r3,[geptr,#wsvSpriteCount]	;@ Sprite count
+	add r3,r3,r2
+	cmp r3,#128
+	movpl r3,#128
+	subs r2,r3,r2
+	movmi r2,#0
+	strb r2,[geptr,#wsvLatchedSprCnt]
+	ldmfdle sp!,{geptr,pc}
+	mov r2,r2,lsl#2
+
+	ldr r3,=memcpy
+	blx r3
+
+	ldmfd sp!,{geptr,pc}
+
+;@----------------------------------------------------------------------------
+	.equ PRIORITY,	0x400		;@ 0x400=AGB OBJ priority 1
+;@----------------------------------------------------------------------------
+wsvConvertSprites:			;@ in r0 = destination.
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r7,lr}
+
+	add r1,geptr,#wsvSpriteRAM
+	ldrb r7,[geptr,#wsvLatchedSprCnt]
+	cmp r7,#0
 	rsb r6,r7,#128				;@ Max number of sprites minus used.
-	ble skipSprites
+	beq skipSprites
 
 	mov r2,#(SCREEN_WIDTH-GAME_WIDTH)/2		;@ GBA/NDS X offset
 	mov r5,#(SCREEN_HEIGHT-GAME_HEIGHT)/2	;@ GBA/NDS Y offset
@@ -1495,8 +1513,8 @@ dm5:
 skipSprites:
 	mov r2,#0x200+SCREEN_HEIGHT	;@ Double, y=SCREEN_HEIGHT
 skipSprLoop:
-	str r2,[r0],#8
 	subs r6,r6,#1
+	strpl r2,[r0],#8
 	bhi skipSprLoop
 	ldmfd sp!,{r4-r7,pc}
 
