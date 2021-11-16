@@ -1,6 +1,6 @@
 Bandai WonderSwan SOC To do
 -----------------------------
 
+	Add icons.
 	Fix Window.
-	Fix B&W sprites.
 

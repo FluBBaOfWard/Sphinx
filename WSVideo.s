@@ -1277,14 +1277,14 @@ T4Data:
 	.long BG_GFX+0x08000		;@ BGR tiles
 	.long BG_GFX+0x0C000		;@ BGR tiles 2
 	.long SPRITE_GFX			;@ SPR tiles
+	.long SPRITE_GFX+0x4000		;@ SPR tiles 2
 	.long 0x44444444			;@ Extra bitplane
 ;@----------------------------------------------------------------------------
 TransferVRAM4Planar:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r12,lr}
 	adr r0,T4Data
-	ldmia r0,{r4-r10}
-	mov r11,#-1
+	ldmia r0,{r4-r11}
 	mov r1,#0
 
 tileLoop4_0:
@@ -1317,9 +1317,10 @@ tileLoop4_1:
 	orrne r3,r3,r2,lsl#1
 
 	str r3,[r8,r1,lsl#1]
-	str r3,[r9,r1,lsl#1]
-	orr r3,r3,r10
+	str r3,[r10,r1,lsl#1]
+	orr r3,r3,r11
 	str r3,[r7,r1,lsl#1]
+	str r3,[r9,r1,lsl#1]
 	add r1,r1,#2
 
 	ands r3,r0,#0x00FF0000
@@ -1329,9 +1330,10 @@ tileLoop4_1:
 	orrne r3,r3,r2,lsl#1
 
 	str r3,[r8,r1,lsl#1]
-	str r3,[r9,r1,lsl#1]
-	orr r3,r3,r10
+	str r3,[r10,r1,lsl#1]
+	orr r3,r3,r11
 	str r3,[r7,r1,lsl#1]
+	str r3,[r9,r1,lsl#1]
 	add r1,r1,#2
 
 	tst r1,#0x1C
@@ -1403,7 +1405,7 @@ bgm4Loop:
 	orr r4,r4,r4,lsr#7			;@ Switch palette vs flip + bank
 	and r4,r5,r4,lsl#3			;@ Mask again
 	orr r3,r3,r4				;@ Add palette, flip + bank.
-	and r4,r3,r6,lsl#14			;@ Mask out palette bit 3
+	and r4,r3,r6,lsl#14			;@ Mask out palette bit 2
 	orr r3,r3,r4,lsr#5			;@ Add as bank bit (GBA/NDS)
 
 	str r3,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, background
@@ -1474,10 +1476,14 @@ wsvDMASprites:
 ;@----------------------------------------------------------------------------
 wsvConvertSprites:			;@ in r0 = destination.
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r7,lr}
+	stmfd sp!,{r4-r8,lr}
 
 	add r1,geptr,#wsvSpriteRAM
 	ldrb r7,[geptr,#wsvLatchedSprCnt]
+	ldrb r2,[geptr,#wsvVideoMode]
+	tst r2,#0x40				;@ 4 bit planes?
+	movne r8,#0x0000
+	moveq r8,#0x0800			;@ Palette bit 2
 	cmp r7,#0
 	rsb r6,r7,#128				;@ Max number of sprites minus used.
 	beq skipSprites
@@ -1506,6 +1512,8 @@ dm5:
 	orr r3,r3,r4,lsl#3
 	tst r2,#0x2000				;@ Priority
 	orreq r3,r3,#PRIORITY
+	tst r2,r8					;@ Palette bit 2 for 2bitplane
+	orrne r3,r3,#0x200			;@ Opaque tiles
 
 	strh r3,[r0],#4				;@ Store OBJ Atr 2. Pattern, palette.
 	subs r7,r7,#1
@@ -1516,7 +1524,7 @@ skipSprLoop:
 	subs r6,r6,#1
 	strpl r2,[r0],#8
 	bhi skipSprLoop
-	ldmfd sp!,{r4-r7,pc}
+	ldmfd sp!,{r4-r8,pc}
 
 ;@----------------------------------------------------------------------------
 #ifdef GBA
