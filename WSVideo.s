@@ -60,7 +60,7 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=HWType 1=mono, r12=geptr
+wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=geptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
@@ -98,10 +98,10 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=HWType 1=mono, r
 	ldr r0,=SCROLL_BUFF
 	str r0,[geptr,#scrollBuff]
 
-	strb r3,[geptr,#wsvMachine]
-	cmp r3,#HW_ASWAN
-	movne r0,#0xC0				;@ Use Color mode.
-	moveq r0,#0x00				;@ Use B&W mode.
+	strb r3,[geptr,#wsvSOC]
+//	cmp r3,#SOC_ASWAN
+//	moveq r0,#0x00				;@ Use B&W mode.
+//	movne r0,#0xC0				;@ Use Color mode.
 //	strb r0,[geptr,#wsvVideoMode]
 
 	b wsvRegistersReset
@@ -502,8 +502,7 @@ wsvUnknownR:
 wsvWSUnmappedR:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldr r2,=debugIOUnimplR
-	blx r2
+	blx debugIOUnimplR
 	ldmfd sp!,{lr}
 	mov r0,#0x90
 	bx lr
@@ -513,8 +512,7 @@ wsvZeroR:
 wsvWSCUnmappedR:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldr r2,=debugIOUnimplR
-	blx r2
+	blx debugIOUnimplR
 	ldmfd sp!,{lr}
 	mov r0,#0x00
 	bx lr
@@ -522,8 +520,7 @@ wsvWSCUnmappedR:
 wsvImportantR:
 	mov r11,r11				;@ No$GBA breakpoint
 	stmfd sp!,{r0,geptr,lr}
-	ldr r2,=debugIOUnimplR
-	blx r2
+	blx debugIOUnimplR
 	ldmfd sp!,{r0,geptr,lr}
 ;@----------------------------------------------------------------------------
 wsvRegR:
@@ -540,8 +537,8 @@ wsvVCountR:					;@ 0x03
 wsvHWTypeR:					;@ 0xA0
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#wsvHardwareType]
-	ldrb r1,[geptr,#wsvMachine]
-	cmp r1,#HW_ASWAN
+	ldrb r1,[geptr,#wsvSOC]
+	cmp r1,#SOC_ASWAN
 	orrne r0,r0,#2
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -734,7 +731,7 @@ OUT_Table:
 	.long wsvReadOnlyW			;@ 0x9E
 	.long wsvUnmappedW			;@ 0x9F ---
 
-	.long wsvHW					;@ 0xA0 Hardware type, HW_ASWAN / HW_SPHINX.
+	.long wsvHW					;@ 0xA0 Hardware type, SOC_ASWAN / SOC_SPHINX.
 	.long wsvUnmappedW			;@ 0xA1 ---
 	.long wsvRegW				;@ 0xA2 Timer control
 	.long wsvUnknownW			;@ 0xA3 ???
@@ -973,8 +970,8 @@ wsvHW:					;@ 0xA0, Color/Mono, boot rom lock
 	eor r0,r0,r1
 	tst r1,#1			;@ Boot rom locked?
 	bxeq lr
-	mov r1,#0xff
-	b BankSwitch4_F_W	;@ Map back cartridge.
+	mov r0,#0			;@ Remove boot rom overlay
+	b setBootRomOverlay
 
 ;@----------------------------------------------------------------------------
 wsvTimerCtrlW:			;@ 0xA2 Timer control
@@ -1466,8 +1463,7 @@ wsvDMASprites:
 	ldmfdle sp!,{geptr,pc}
 	mov r2,r2,lsl#2
 
-	ldr r3,=memcpy
-	blx r3
+	blx memcpy
 
 	ldmfd sp!,{geptr,pc}
 

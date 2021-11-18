@@ -7,6 +7,9 @@
 #define HW_SPHINX2		(3)
 #define HW_SELECT_END	(4)
 
+#define SOC_ASWAN		(0)
+#define SOC_SPHINX		(1)
+#define SOC_SPHINX2		(2)
 
 /** Game screen width in pixels */
 #define GAME_WIDTH  (224)
@@ -179,7 +182,7 @@ wsvRTCData:			.byte 0		;@ 0xCB RTC Data
 
 wsvPadding14:		.space 52	;@ 0xCC - 0xFF ???
 
-wsvMachine:			.byte 0
+wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 kgeLedEnable:		.byte 0
 kgeLedBlink:		.byte 0

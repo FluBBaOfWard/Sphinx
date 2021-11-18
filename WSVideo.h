@@ -13,6 +13,10 @@ extern "C" {
 #define HW_SPHINX2		(3)
 #define HW_SELECT_END	(4)
 
+#define SOC_ASWAN		(0)
+#define SOC_SPHINX		(1)
+#define SOC_SPHINX2		(2)
+
 /** Game screen width in pixels */
 #define GAME_WIDTH  (224)
 /** Game screen height in pixels */
