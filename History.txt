@@ -2,7 +2,7 @@ WSSOC revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.1.2 - 2021-11-16 (FluBBa)
+V0.1.2 - 2021-11-21 (FluBBa)
 	Fixed background and foreground.
 	Fixed mono background and foreground.
 	Fixed sprites.

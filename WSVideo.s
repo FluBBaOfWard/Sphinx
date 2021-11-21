@@ -436,7 +436,7 @@ IN_Table:
 	.long extEepromAdrHighR		;@ 0xC7 ext-eeprom address high
 	.long extEepromStatusR		;@ 0xC8 ext-eeprom status
 	.long wsvUnknownR			;@ 0xC9 ???
-	.long wsvImportantR			;@ 0xCA RTC status
+	.long wsvRTCStatusR			;@ 0xCA RTC status
 	.long wsvImportantR			;@ 0xCB RTC read
 	.long wsvImportantR			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantR			;@ 0xCD General purpose input/output data, bit 3-0.
@@ -545,13 +545,18 @@ wsvHWTypeR:					;@ 0xA0
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#wsvSerialStatus]
+	and r0,r0,#0xC0			;@ Mask out write bits
 	orr r0,r0,#4			;@ Hack, send buffer always empty
 	bx lr
-
 ;@----------------------------------------------------------------------------
 wsvBnk0SlctR:				;@ 0xC0
 ;@----------------------------------------------------------------------------
 	ldrb r0,[geptr,#wsvBnk0Slct]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvRTCStatusR:				;@ 0xCA
+;@----------------------------------------------------------------------------
+	mov r0,#0x80			;@ Hack, always ready
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -663,7 +668,7 @@ OUT_Table:
 	.long wsvUnmappedW			;@ 0x5E ---
 	.long wsvUnmappedW			;@ 0x5F ---
 
-	.long wsvRegW				;@ 0x60 Display mode
+	.long wsvVideoModeW			;@ 0x60 Display mode
 	.long wsvUnmappedW			;@ 0x61 ---
 	.long wsvImportantW			;@ 0x62 SwanCrystal/Power off
 	.long wsvUnmappedW			;@ 0x63 ---
@@ -960,6 +965,16 @@ dmaEnd:
 
 	ldmfd sp!,{r4-r7,lr}
 	bx lr
+;@----------------------------------------------------------------------------
+wsvVideoModeW:					;@ 0x60, Video mode, WSColor
+;@----------------------------------------------------------------------------
+	ldrb r0,[geptr,#wsvVideoMode]
+	strb r1,[geptr,#wsvVideoMode]
+	eor r0,r0,r1
+	tst r0,#0x80		;@ Color mode changed?
+	bxeq lr
+	and r0,r1,#0x80
+	b intEepromSetSize
 ;@----------------------------------------------------------------------------
 wsvHW:					;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
