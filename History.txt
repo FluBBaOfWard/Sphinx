@@ -1,8 +1,8 @@
-WSSOC revision history
+Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.1.2 - 2021-11-21 (FluBBa)
+V0.1.2 - 2021-11-23 (FluBBa)
 	Fixed background and foreground.
 	Fixed mono background and foreground.
 	Fixed sprites.

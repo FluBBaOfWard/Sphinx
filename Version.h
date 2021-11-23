@@ -1,1 +1,1 @@
-#define WSSOCVERSION "V0.1.2"
+#define SPHINXVERSION "V0.1.2"

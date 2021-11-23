@@ -1,6 +1,0 @@
-Bandai WonderSwan SOC To do
------------------------------
-
-	Add icons.
-	Fix Window.
-

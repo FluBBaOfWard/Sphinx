@@ -1,0 +1,6 @@
+Bandai WonderSwan/Sphinx To do
+------------------------------
+
+	Add icons.
+	Fix Window.
+

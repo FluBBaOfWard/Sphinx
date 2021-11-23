@@ -1,2 +1,2 @@
-# WSVideo
-Bandai WonderSwan video emulator for GBA/NDS.
+# Sphinx
+Bandai WonderSwan System On a Chip emulator for GBA/NDS.
