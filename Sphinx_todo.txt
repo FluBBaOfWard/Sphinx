@@ -1,6 +1,8 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Add sound.
 	Add icons.
+	Only enable appropriate registers on the different versions of the SOC.
 	Fix Window.
 

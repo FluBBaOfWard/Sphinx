@@ -1,4 +1,4 @@
-// Bandai WonderSwan video emulation
+// Bandai WonderSwan SOC emulation
 
 #ifndef WSVIDEO_HEADER
 #define WSVIDEO_HEADER
@@ -7,11 +7,12 @@
 extern "C" {
 #endif
 
-#define HW_AUTO			(0)
-#define HW_ASWAN		(1)
-#define HW_SPHINX		(2)
-#define HW_SPHINX2		(3)
-#define HW_SELECT_END	(4)
+#define HW_AUTO              (0)
+#define HW_WONDERSWAN        (1)
+#define HW_WONDERSWANCOLOR   (2)
+#define HW_SWANCRYSTAL       (3)
+#define HW_POCKETCHALLENGEV2 (4)
+#define HW_SELECT_END        (5)
 
 #define SOC_ASWAN		(0)
 #define SOC_SPHINX		(1)

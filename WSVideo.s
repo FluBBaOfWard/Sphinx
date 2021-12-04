@@ -7,7 +7,7 @@
 #elif NDS
 	#include "../Shared/nds_asm.h"
 #endif
-#include "WSVideo.i"
+#include "Sphinx.i"
 
 	.global wsVideoInit
 	.global wsVideoReset
@@ -502,7 +502,7 @@ wsvUnknownR:
 wsvWSUnmappedR:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	blx debugIOUnimplR
+	blx debugIOUnmappedR
 	ldmfd sp!,{lr}
 	mov r0,#0x90
 	bx lr
@@ -512,7 +512,7 @@ wsvZeroR:
 wsvWSCUnmappedR:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	blx debugIOUnimplR
+	blx debugIOUnmappedR
 	ldmfd sp!,{lr}
 	mov r0,#0x00
 	bx lr
@@ -846,15 +846,18 @@ OUT_Table:
 wsvUnknownW:
 ;@----------------------------------------------------------------------------
 wsvImportantW:
+;@----------------------------------------------------------------------------
 	add r2,geptr,#wsvRegs
 	strb r1,[r2,r0]
+	ldr r2,=debugIOUnimplW
+	bx r2
 ;@----------------------------------------------------------------------------
 wsvReadOnlyW:
 ;@----------------------------------------------------------------------------
 wsvUnmappedW:
 ;@----------------------------------------------------------------------------
 	mov r11,r11				;@ No$GBA breakpoint
-	ldr r2,=debugIOUnimplW
+	ldr r2,=debugIOUnmappedW
 	bx r2
 ;@----------------------------------------------------------------------------
 wsvRegW:

@@ -2,8 +2,8 @@ Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.1.2 - 2021-11-23 (FluBBa)
-	Fixed background and foreground.
+V0.1.2 - 2021-12-04 (FluBBa)
+	Fixed color background and foreground.
 	Fixed mono background and foreground.
 	Fixed sprites.
 	Fixed interrupts and timers.
@@ -18,4 +18,3 @@ V0.1.0 - 2006-07-28 (FluBBa)
 
 V0.0.0 - 2006-07-23 (FluBBa)
 	Started Coding.
-

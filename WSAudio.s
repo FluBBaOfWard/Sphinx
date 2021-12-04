@@ -1,7 +1,7 @@
 // Bandai WonderSwan Sound emulation
 
 #ifdef __arm__
-#include "WSVideo.i"
+#include "Sphinx.i"
 
 #define PSGDIVIDE 20*4
 #define PSGADDITION 0x00004000*PSGDIVIDE
@@ -35,6 +35,7 @@ vol0_R:
 	orrs r1,r2,#0xFF0000		;@ volume right
 	ldrsbne r0,[r12,r0]			;@ Channel 0
 	mulne r2,r1,r0
+
 	add r4,r4,#PSGADDITION
 	movs r0,r4,lsr#27
 	add r0,r0,#0x20
@@ -46,7 +47,6 @@ vol1_R:
 	orrs r1,r1,#0xFF0000		;@ volume right
 	ldrsbne r0,[r12,r0]			;@ Channel 1
 	mlane r2,r1,r0,r2
-
 
 	add r5,r5,#PSGADDITION
 	movs r0,r5,lsr#27
@@ -60,25 +60,11 @@ vol2_R:
 	ldrsbne r0,[r12,r0]			;@ Channel 2
 	mlane r2,r1,r0,r2
 
-
 	add r6,r6,#PSGADDITION
 	movs r0,r6,lsr#27
-	add r0,r0,#0x60
+	add r0,r0,#0x80
 	mov r1,r6,lsl#18
 	subcs r6,r6,r1,asr#4
-vol3_L:
-	mov r1,#0x00				;@ volume left
-vol3_R:
-	orrs r1,r1,#0xFF0000		;@ volume right
-	ldrsbne r0,[r12,r0]			;@ Channel 3
-	mlane r2,r1,r0,r2
-
-
-	add r7,r7,#PSGADDITION
-	movs r0,r7,lsr#27
-	add r0,r0,#0x80
-	mov r1,r7,lsl#18
-	subcs r7,r7,r1,asr#4
 
 	movcs r1,r9,lsr#14
 	addscs r9,r9,r1,lsl#14
@@ -88,32 +74,9 @@ vol3_R:
 	ldrsbeq r0,[r12,r0]			;@ Channel 4
 	andsne r0,r9,#0x00000001
 	movne r0,#0x1F
-
-vol4_L:
+vol3_L:
 	mov r1,#0x00				;@ volume left
-vol4_R:
-	orrs r1,r1,#0xFF0000		;@ volume right
-	mlane r2,r1,r0,r2
-
-
-	adds r8,r8,#PSGADDITION
-	movs r0,r8,lsr#27
-	add r0,r0,#0xA0
-	mov r1,r8,lsl#18
-	subcs r8,r8,r1,asr#4
-
-	movcs r1,r10,lsr#14
-	addscs r10,r10,r1,lsl#14
-	ldrcs r1,=PSGNOISEFEED
-	eorcs r10,r10,r1
-	tst r10,#0x80				;@ Noise 5 enabled?
-	ldrsbeq r0,[r12,r0]			;@ Channel 5
-	andsne r0,r10,#0x00000001
-	movne r0,#0x1F
-
-vol5_L:
-	mov r1,#0x00				;@ volume left
-vol5_R:
+vol3_R:
 	orrs r1,r1,#0xFF0000		;@ volume right
 	mlane r2,r1,r0,r2
 
