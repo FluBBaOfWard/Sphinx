@@ -1,7 +1,7 @@
 // Bandai WonderSwan SOC emulation
 
-#ifndef WSVIDEO_HEADER
-#define WSVIDEO_HEADER
+#ifndef SPHINX_HEADER
+#define SPHINX_HEADER
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,31 +73,31 @@ typedef struct {
 	void *gfxRAMSwap;
 	u32 *scrollBuff;
 
-} WSVideo;
+} Sphinx;
 
 void wsVideoReset(void *frameIrqFunc(), void *periodicIrqFunc(), void *ram);
 
 /**
  * Saves the state of the chip to the destination.
  * @param  *destination: Where to save the state.
- * @param  *chip: The WSVideo chip to save.
+ * @param  *chip: The Sphinx chip to save.
  * @return The size of the state.
  */
-int wsVideoSaveState(void *destination, const WSVideo *chip);
+int sphinxSaveState(void *destination, const Sphinx *chip);
 
 /**
  * Loads the state of the chip from the source.
- * @param  *chip: The WSVideo chip to load a state into.
+ * @param  *chip: The Sphinx chip to load a state into.
  * @param  *source: Where to load the state from.
  * @return The size of the state.
  */
-int wsVideoLoadState(WSVideo *chip, const void *source);
+int sphinxLoadState(Sphinx *chip, const void *source);
 
 /**
- * Gets the state size of a WSVideo chip.
+ * Gets the state size of a Sphinx chip.
  * @return The size of the state.
  */
-int wsVideoGetStateSize(void);
+int sphinxGetStateSize(void);
 
 void wsvDoScanline(void);
 void wsvConvertTileMaps(void *destination);
@@ -108,4 +108,4 @@ void wsvConvertTiles(void);
 } // extern "C"
 #endif
 
-#endif // WSVIDEO_HEADER
+#endif // SPHINX_HEADER

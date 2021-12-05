@@ -11,9 +11,9 @@
 
 	.global wsVideoInit
 	.global wsVideoReset
-	.global wsVideoSaveState
-	.global wsVideoLoadState
-	.global wsVideoGetStateSize
+	.global sphinxSaveState
+	.global sphinxLoadState
+	.global sphinxGetStateSize
 	.global wsvDoScanline
 	.global copyScrollValues
 	.global wsvConvertTileMaps
@@ -60,13 +60,13 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=geptr
+wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=spxptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
-	mov r0,geptr
-	ldr r1,=wsVideoSize/4
-	bl memclr_					;@ Clear WSVideo state
+	mov r0,spxptr
+	ldr r1,=sphinxSize/4
+	bl memclr_					;@ Clear Sphinx state
 
 //	ldr r0,=DIRTYTILES
 //	mov r1,#0
@@ -76,33 +76,33 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=col
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
 	mov r0,#0
-	stmia geptr,{r0-r2}			;@ Reset scanline, nextChange & lineState
+	stmia spxptr,{r0-r2}			;@ Reset scanline, nextChange & lineState
 
 	ldmfd sp!,{r0-r3,lr}
 	cmp r0,#0
 	adreq r0,dummyIrqFunc
 	cmp r1,#0
 	adreq r1,dummyIrqFunc
-	str r0,[geptr,#frameIrqFunc]
-	str r1,[geptr,#periodicIrqFunc]
+	str r0,[spxptr,#frameIrqFunc]
+	str r1,[spxptr,#periodicIrqFunc]
 
-	str r2,[geptr,#gfxRAM]
+	str r2,[spxptr,#gfxRAM]
 	add r0,r2,#0xFE00
-	str r0,[geptr,#paletteRAM]
+	str r0,[spxptr,#paletteRAM]
 	add r2,r2,#0x3000
 	add r2,r2,#0x140
-	str r2,[geptr,#paletteMonoRAM]
+	str r2,[spxptr,#paletteMonoRAM]
 	add r2,r2,#0x20
 	add r2,r2,#0x200
-	str r2,[geptr,#gfxRAMSwap]
+	str r2,[spxptr,#gfxRAMSwap]
 	ldr r0,=SCROLL_BUFF
-	str r0,[geptr,#scrollBuff]
+	str r0,[spxptr,#scrollBuff]
 
-	strb r3,[geptr,#wsvSOC]
+	strb r3,[spxptr,#wsvSOC]
 //	cmp r3,#SOC_ASWAN
 //	moveq r0,#0x00				;@ Use B&W mode.
 //	movne r0,#0xC0				;@ Use Color mode.
-//	strb r0,[geptr,#wsvVideoMode]
+//	strb r0,[spxptr,#wsvVideoMode]
 
 	b wsvRegistersReset
 
@@ -112,25 +112,25 @@ dummyIrqFunc:
 wsvRegistersReset:
 ;@----------------------------------------------------------------------------
 //	mov r0,#0xC0
-//	strb r0,[geptr,#wsvInterruptEnable]
+//	strb r0,[spxptr,#wsvInterruptEnable]
 //	mov r0,#0xC6
-//	strb r0,[geptr,#wsvTotalLines]	;@ Total number of scanlines?
+//	strb r0,[spxptr,#wsvTotalLines]	;@ Total number of scanlines?
 	mov r0,#0xFF
-	strb r0,[geptr,#wsvWinXSize]	;@ Window size
-	strb r0,[geptr,#wsvWinYSize]
+	strb r0,[spxptr,#wsvWinXSize]	;@ Window size
+	strb r0,[spxptr,#wsvWinYSize]
 	mov r0,#0x80
-	strb r0,[geptr,#kgeLedBlink]	;@ Flash cycle = 1.3s
-	ldr r1,[geptr,#paletteMonoRAM]
+	strb r0,[spxptr,#kgeLedBlink]	;@ Flash cycle = 1.3s
+	ldr r1,[spxptr,#paletteMonoRAM]
 	strb r0,[r1,#0x18]				;@ BGC on!
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoSaveState:		;@ In r0=destination, r1=geptr. Out r0=state size.
+sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
 	.type   wsVideoSaveState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
 	mov r4,r0					;@ Store destination
-	mov r5,r1					;@ Store geptr (r1)
+	mov r5,r1					;@ Store spxptr (r1)
 
 	ldr r1,[r5,#gfxRAM]
 	ldr r2,=0x3360
@@ -146,11 +146,11 @@ wsVideoSaveState:		;@ In r0=destination, r1=geptr. Out r0=state size.
 	ldr r0,=0x3360+(wsVideoStateEnd-wsVideoState)
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoLoadState:		;@ In r0=geptr, r1=source. Out r0=state size.
+sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 	.type   wsVideoLoadState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
-	mov r5,r0					;@ Store geptr (r0)
+	mov r5,r0					;@ Store spxptr (r0)
 	mov r4,r1					;@ Store source
 
 	ldr r0,[r5,#gfxRAM]
@@ -168,11 +168,11 @@ wsVideoLoadState:		;@ In r0=geptr, r1=source. Out r0=state size.
 	mov r2,#0x800
 	bl memset
 
-	mov geptr,r5
+	mov spxptr,r5
 	bl endFrame
 	ldmfd sp!,{r4,r5,lr}
 ;@----------------------------------------------------------------------------
-wsVideoGetStateSize:	;@ Out r0=state size.
+sphinxGetStateSize:	;@ Out r0=state size.
 	.type   wsVideoGetStateSize STT_FUNC
 ;@----------------------------------------------------------------------------
 	ldr r0,=0x3360+(wsVideoStateEnd-wsVideoState)
@@ -186,7 +186,7 @@ wsVideoGetStateSize:	;@ Out r0=state size.
 ;@----------------------------------------------------------------------------
 wsvBufferWindows:
 ;@----------------------------------------------------------------------------
-	ldr r0,[geptr,#wsvWinXPos]	;@ Win pos/size
+	ldr r0,[spxptr,#wsvWinXPos]	;@ Win pos/size
 	and r1,r0,#0x000000FF		;@ H start
 	and r2,r0,#0x00FF0000		;@ H end
 	cmp r1,#GAME_WIDTH
@@ -197,7 +197,7 @@ wsvBufferWindows:
 	add r2,r2,#((SCREEN_WIDTH-GAME_WIDTH)/2)<<16
 	orr r1,r1,r2,lsl#8
 	mov r1,r1,ror#24
-	strh r1,[geptr,#windowData]
+	strh r1,[spxptr,#windowData]
 
 	and r1,r0,#0x0000FF00		;@ V start
 	mov r2,r0,lsr#24			;@ V size
@@ -208,7 +208,7 @@ wsvBufferWindows:
 	movpl r2,#GAME_HEIGHT
 	add r2,r2,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
 	orr r1,r1,r2
-	strh r1,[geptr,#windowData+2]
+	strh r1,[spxptr,#windowData+2]
 
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -519,39 +519,39 @@ wsvWSCUnmappedR:
 ;@----------------------------------------------------------------------------
 wsvImportantR:
 	mov r11,r11				;@ No$GBA breakpoint
-	stmfd sp!,{r0,geptr,lr}
+	stmfd sp!,{r0,spxptr,lr}
 	blx debugIOUnimplR
-	ldmfd sp!,{r0,geptr,lr}
+	ldmfd sp!,{r0,spxptr,lr}
 ;@----------------------------------------------------------------------------
 wsvRegR:
-	add r2,geptr,#wsvRegs
+	add r2,spxptr,#wsvRegs
 	ldrb r0,[r2,r0]
 	bx lr
 
 ;@----------------------------------------------------------------------------
 wsvVCountR:					;@ 0x03
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#scanline]
+	ldrb r0,[spxptr,#scanline]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHWTypeR:					;@ 0xA0
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#wsvHardwareType]
-	ldrb r1,[geptr,#wsvSOC]
+	ldrb r0,[spxptr,#wsvHardwareType]
+	ldrb r1,[spxptr,#wsvSOC]
 	cmp r1,#SOC_ASWAN
 	orrne r0,r0,#2
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#wsvSerialStatus]
+	ldrb r0,[spxptr,#wsvSerialStatus]
 	and r0,r0,#0xC0			;@ Mask out write bits
 	orr r0,r0,#4			;@ Hack, send buffer always empty
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvBnk0SlctR:				;@ 0xC0
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#wsvBnk0Slct]
+	ldrb r0,[spxptr,#wsvBnk0Slct]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvRTCStatusR:				;@ 0xCA
@@ -847,7 +847,7 @@ wsvUnknownW:
 ;@----------------------------------------------------------------------------
 wsvImportantW:
 ;@----------------------------------------------------------------------------
-	add r2,geptr,#wsvRegs
+	add r2,spxptr,#wsvRegs
 	strb r1,[r2,r0]
 	ldr r2,=debugIOUnimplW
 	bx r2
@@ -861,7 +861,7 @@ wsvUnmappedW:
 	bx r2
 ;@----------------------------------------------------------------------------
 wsvRegW:
-	add r2,geptr,#wsvRegs
+	add r2,spxptr,#wsvRegs
 	strb r1,[r2,r0]
 	bx lr
 
@@ -869,46 +869,46 @@ wsvRegW:
 wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x7F
-	strb r1,[geptr,#wsvSpriteFirst]
+	strb r1,[spxptr,#wsvSpriteFirst]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[geptr,#wsvBGXScroll]
-	strb r1,[geptr,#wsvBGXScroll]
+	ldr r2,[spxptr,#wsvBGXScroll]
+	strb r1,[spxptr,#wsvBGXScroll]
 	b scrollCnt
 
 ;@----------------------------------------------------------------------------
 wsvBgScrYW:					;@ 0x11, Background Vertical Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[geptr,#wsvBGXScroll]
-	strb r1,[geptr,#wsvBGYScroll]
+	ldr r2,[spxptr,#wsvBGXScroll]
+	strb r1,[spxptr,#wsvBGYScroll]
 	b scrollCnt
 
 ;@----------------------------------------------------------------------------
 wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[geptr,#wsvBGXScroll]
-	strb r1,[geptr,#wsvFGXScroll]
+	ldr r2,[spxptr,#wsvBGXScroll]
+	strb r1,[spxptr,#wsvFGXScroll]
 	b scrollCnt
 
 ;@----------------------------------------------------------------------------
 wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[geptr,#wsvBGXScroll]
-	strb r1,[geptr,#wsvFGYScroll]
+	ldr r2,[spxptr,#wsvBGXScroll]
+	strb r1,[spxptr,#wsvFGYScroll]
 
 scrollCnt:
-	ldr r1,[geptr,#scanline]	;@ r1=scanline
+	ldr r1,[spxptr,#scanline]	;@ r1=scanline
 	add r1,r1,#1
 	cmp r1,#159
 	movhi r1,#159
-	ldr r0,[geptr,#scrollLine]
+	ldr r0,[spxptr,#scrollLine]
 	subs r0,r1,r0
-	strhi r1,[geptr,#scrollLine]
+	strhi r1,[spxptr,#scrollLine]
 
 	stmfd sp!,{r3}
-	ldr r3,[geptr,#scrollBuff]
+	ldr r3,[spxptr,#scrollBuff]
 	add r1,r3,r1,lsl#2
 	ldmfd sp!,{r3}
 sy2:
@@ -920,25 +920,25 @@ sy2:
 ;@----------------------------------------------------------------------------
 wsvRefW:					;@ 0x16, Total number of scanlines?
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#wsvTotalLines]
+	strb r1,[spxptr,#wsvTotalLines]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvDMAStartW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#wsvDMAStart]
+	strb r1,[spxptr,#wsvDMAStart]
 	tst r1,#0x80
 	bxeq lr
 
 	stmfd sp!,{r4-r7,lr}
 	and r1,r1,#0x40				;@ Inc/dec
-	mov r7,geptr
-	ldrh r4,[geptr,#wsvDMASource]
-	ldrb r0,[geptr,#wsvDMASrcBnk]
+	mov r7,spxptr
+	ldrh r4,[spxptr,#wsvDMASource]
+	ldrb r0,[spxptr,#wsvDMASrcBnk]
 	orr r4,r4,r0,lsl#16			;@ r4=source
 
-	ldrh r5,[geptr,#wsvDMADest]	;@ r5=destination
+	ldrh r5,[spxptr,#wsvDMADest]	;@ r5=destination
 
-	ldrh r6,[geptr,#wsvDMALength];@ r6=length
+	ldrh r6,[spxptr,#wsvDMALength];@ r6=length
 	cmp r6,#0
 	beq dmaEnd
 	;@ sub cycles,cycles,r6
@@ -954,15 +954,15 @@ dmaLoop:
 	subs r6,r6,#1
 	bne dmaLoop
 
-	mov geptr,r7
-	strh r4,[geptr,#wsvDMASource]
+	mov spxptr,r7
+	strh r4,[spxptr,#wsvDMASource]
 	mov r4,r4,lsr#16
-	strb r4,[geptr,#wsvDMASrcBnk]
-	strh r5,[geptr,#wsvDMADest]
+	strb r4,[spxptr,#wsvDMASrcBnk]
+	strh r5,[spxptr,#wsvDMADest]
 
-	strh r6,[geptr,#wsvDMALength]
+	strh r6,[spxptr,#wsvDMALength]
 	cmp r6,#0
-	strbeq r0,[geptr,#wsvDMAStart]
+	strbeq r0,[spxptr,#wsvDMAStart]
 dmaEnd:
 	;@ sub cycles,cycles,#5
 
@@ -971,8 +971,8 @@ dmaEnd:
 ;@----------------------------------------------------------------------------
 wsvVideoModeW:					;@ 0x60, Video mode, WSColor
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#wsvVideoMode]
-	strb r1,[geptr,#wsvVideoMode]
+	ldrb r0,[spxptr,#wsvVideoMode]
+	strb r1,[spxptr,#wsvVideoMode]
 	eor r0,r0,r1
 	tst r0,#0x80		;@ Color mode changed?
 	bxeq lr
@@ -981,10 +981,10 @@ wsvVideoModeW:					;@ 0x60, Video mode, WSColor
 ;@----------------------------------------------------------------------------
 wsvHW:					;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#wsvHardwareType]
+	ldrb r0,[spxptr,#wsvHardwareType]
 	and r0,r0,#0x81
 	orr r1,r1,r0
-	strb r1,[geptr,#wsvHardwareType]
+	strb r1,[spxptr,#wsvHardwareType]
 	eor r0,r0,r1
 	tst r1,#1			;@ Boot rom locked?
 	bxeq lr
@@ -994,44 +994,44 @@ wsvHW:					;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 wsvTimerCtrlW:			;@ 0xA2 Timer control
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#wsvTimerControl]
+	strb r1,[spxptr,#wsvTimerControl]
 	tst r1,#1
-	ldrhne r0,[geptr,#wsvHBlTimerFreq]
-	strhne r0,[geptr,#wsvHBlCounter]
+	ldrhne r0,[spxptr,#wsvHBlTimerFreq]
+	strhne r0,[spxptr,#wsvHBlCounter]
 	tst r1,#4
-	ldrhne r0,[geptr,#wsvVBlTimerFreq]
-	strhne r0,[geptr,#wsvVBlCounter]
+	ldrhne r0,[spxptr,#wsvVBlTimerFreq]
+	strhne r0,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerLowW:			;@ 0xA4 HBlank timer low
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#wsvHBlTimerFreq]
-	strb r1,[geptr,#wsvHBlCounter]
+	strb r1,[spxptr,#wsvHBlTimerFreq]
+	strb r1,[spxptr,#wsvHBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerHighW:			;@ 0xA5 HBlank timer high
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#wsvHBlTimerFreq+1]
-	strb r1,[geptr,#wsvHBlCounter+1]
+	strb r1,[spxptr,#wsvHBlTimerFreq+1]
+	strb r1,[spxptr,#wsvHBlCounter+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerLowW:			;@ 0xA6 VBlank timer low
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#wsvVBlTimerFreq]
-	strb r1,[geptr,#wsvVBlCounter]
+	strb r1,[spxptr,#wsvVBlTimerFreq]
+	strb r1,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerHighW:			;@ 0xA7 HBlank timer high
 ;@----------------------------------------------------------------------------
-	strb r1,[geptr,#wsvVBlTimerFreq+1]
-	strb r1,[geptr,#wsvVBlCounter+1]
+	strb r1,[spxptr,#wsvVBlTimerFreq+1]
+	strb r1,[spxptr,#wsvVBlCounter+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvIntAckW:				;@ 0xB6
 ;@----------------------------------------------------------------------------
-	ldrb r0,[geptr,#wsvInterruptStatus]
+	ldrb r0,[spxptr,#wsvInterruptStatus]
 	bic r0,r0,r1
-	strb r0,[geptr,#wsvInterruptStatus]
+	strb r0,[spxptr,#wsvInterruptStatus]
 	bx lr
 
 
@@ -1042,9 +1042,9 @@ wsvConvertTileMaps:		;@ r0 = destination
 
 	ldr r5,=0xFE00FE00
 	ldr r6,=0x00010001
-	ldr r10,[geptr,#gfxRAM]
+	ldr r10,[spxptr,#gfxRAM]
 
-	ldrb r1,[geptr,#wsvVideoMode]
+	ldrb r1,[spxptr,#wsvVideoMode]
 	adr lr,tMapRet
 	tst r1,#0x40				;@ 4 bit planes?
 	beq bgMono
@@ -1069,7 +1069,7 @@ endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 	bl wsvDMASprites
-	ldrb r0,[geptr,#wsvVideoMode]
+	ldrb r0,[spxptr,#wsvVideoMode]
 	adr lr,TransRet
 	ands r0,r0,#0xE0
 	tst r0,#0x40
@@ -1083,26 +1083,26 @@ TransRet:
 checkFrameIRQ:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldrb r1,[geptr,#wsvBGXScroll]
+	ldrb r1,[spxptr,#wsvBGXScroll]
 	bl wsvBgScrXW
 	ldmfd sp!,{lr}
 	bl endFrameGfx
 
-	ldrb r2,[geptr,#wsvInterruptStatus]
-	ldrb r0,[geptr,#wsvTimerControl]
+	ldrb r2,[spxptr,#wsvInterruptStatus]
+	ldrb r0,[spxptr,#wsvTimerControl]
 	tst r0,#0x4						;@ VBlank timer enabled?
 	beq noTimerVblIrq
-	ldrh r1,[geptr,#wsvVBlCounter]
+	ldrh r1,[spxptr,#wsvVBlCounter]
 	subs r1,r1,#1
 	bmi noTimerVblIrq
 	orreq r2,r2,#0x20				;@ #5 = VBlank timer
 	eor r0,r0,#0x8
 	tsteq r0,#0x8					;@ Repeat?
-	ldrheq r1,[geptr,#wsvVBlTimerFreq]
-	strh r1,[geptr,#wsvVBlCounter]
+	ldrheq r1,[spxptr,#wsvVBlTimerFreq]
+	strh r1,[spxptr,#wsvVBlCounter]
 noTimerVblIrq:
 	orr r2,r2,#0x40					;@ #6 = VBlank
-	strb r2,[geptr,#wsvInterruptStatus]
+	strb r2,[spxptr,#wsvInterruptStatus]
 
 	mov r0,#1
 	ldmfd sp!,{lr}
@@ -1110,12 +1110,12 @@ noTimerVblIrq:
 ;@----------------------------------------------------------------------------
 frameEndHook:
 	mov r0,#0
-	str r0,[geptr,#scrollLine]
+	str r0,[spxptr,#scrollLine]
 
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
 	mov r0,#0
-	stmia geptr,{r0-r2}			;@ Reset scanline, nextChange & lineState
+	stmia spxptr,{r0-r2}			;@ Reset scanline, nextChange & lineState
 
 //	mov r0,#0					;@ Must return 0 to end frame.
 	ldmfd sp!,{pc}
@@ -1140,9 +1140,9 @@ lineStateTable:
 ;@----------------------------------------------------------------------------
 redoScanline:
 ;@----------------------------------------------------------------------------
-	ldr r2,[geptr,#lineState]
+	ldr r2,[spxptr,#lineState]
 	ldmia r2!,{r0,r1}
-	stmib geptr,{r1,r2}			;@ Write nextLineChange & lineState
+	stmib spxptr,{r1,r2}			;@ Write nextLineChange & lineState
 	stmfd sp!,{lr}
 	mov lr,pc
 	bx r0
@@ -1150,32 +1150,32 @@ redoScanline:
 ;@----------------------------------------------------------------------------
 wsvDoScanline:
 ;@----------------------------------------------------------------------------
-	ldmia geptr,{r0,r1}			;@ Read scanLine & nextLineChange
+	ldmia spxptr,{r0,r1}			;@ Read scanLine & nextLineChange
 	cmp r0,r1
 	bpl redoScanline
 	add r0,r0,#1
-	str r0,[geptr,#scanline]
+	str r0,[spxptr,#scanline]
 ;@----------------------------------------------------------------------------
 checkScanlineIRQ:
 ;@----------------------------------------------------------------------------
-	ldrb r2,[geptr,#wsvInterruptStatus]
-	ldrb r1,[geptr,#wsvLineCompare]
+	ldrb r2,[spxptr,#wsvInterruptStatus]
+	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
 	orreq r2,r2,#0x10				;@ #4 = Line compare
 
-	ldrb r0,[geptr,#wsvTimerControl]
+	ldrb r0,[spxptr,#wsvTimerControl]
 	tst r0,#0x1						;@ HBlank timer enabled?
 	beq noTimerHblIrq
-	ldrh r1,[geptr,#wsvHBlCounter]
+	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
 	bmi noTimerHblIrq
 	orreq r2,r2,#0x80				;@ #7 = HBlank timer
 	eor r0,r0,#0x2
 	tsteq r0,#0x2					;@ Repeat?
-	ldrheq r1,[geptr,#wsvHBlTimerFreq]
-	strh r1,[geptr,#wsvHBlCounter]
+	ldrheq r1,[spxptr,#wsvHBlTimerFreq]
+	strh r1,[spxptr,#wsvHBlCounter]
 noTimerHblIrq:
-	strb r2,[geptr,#wsvInterruptStatus]
+	strb r2,[spxptr,#wsvInterruptStatus]
 
 	mov r0,#1
 	bx lr
@@ -1363,14 +1363,14 @@ tileLoop4_1:
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
 bgColor:
-	ldrb r1,[geptr,#wsvMapTblAdr]
+	ldrb r1,[spxptr,#wsvMapTblAdr]
 	and r1,r1,#0x07
 	add r1,r10,r1,lsl#11
 	stmfd sp!,{lr}
 	bl bgm16Start
 	ldmfd sp!,{lr}
 
-	ldrb r1,[geptr,#wsvMapTblAdr]
+	ldrb r1,[spxptr,#wsvMapTblAdr]
 	and r1,r1,#0x70
 	add r1,r10,r1,lsl#7
 
@@ -1399,14 +1399,14 @@ bgm16Loop:
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
 bgMono:
-	ldrb r1,[geptr,#wsvMapTblAdr]
+	ldrb r1,[spxptr,#wsvMapTblAdr]
 	and r1,r1,#0x03
 	add r1,r10,r1,lsl#11
 	stmfd sp!,{lr}
 	bl bgm4Start
 	ldmfd sp!,{lr}
 
-	ldrb r1,[geptr,#wsvMapTblAdr]
+	ldrb r1,[spxptr,#wsvMapTblAdr]
 	and r1,r1,#0x30
 	add r1,r10,r1,lsl#7
 
@@ -1433,7 +1433,7 @@ bgm4Loop:
 copyScrollValues:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r6}
-	ldr r1,[geptr,#scrollBuff]
+	ldr r1,[spxptr,#scrollBuff]
 
 	mov r2,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
 	add r0,r0,r2,lsl#3			;@ 8 bytes per row
@@ -1461,29 +1461,29 @@ setScrlLoop:
 ;@----------------------------------------------------------------------------
 wsvDMASprites:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{geptr,lr}
+	stmfd sp!,{spxptr,lr}
 
-	add r0,geptr,#wsvSpriteRAM
-	ldr r1,[geptr,#gfxRAM]
-	ldrb r2,[geptr,#wsvSprTblAdr]
+	add r0,spxptr,#wsvSpriteRAM
+	ldr r1,[spxptr,#gfxRAM]
+	ldrb r2,[spxptr,#wsvSprTblAdr]
 	and r2,r2,#0x3F
 	add r1,r1,r2,lsl#9
-	ldrb r2,[geptr,#wsvSpriteFirst]	;@ First sprite
+	ldrb r2,[spxptr,#wsvSpriteFirst]	;@ First sprite
 	add r1,r1,r2,lsl#2
 
-	ldrb r3,[geptr,#wsvSpriteCount]	;@ Sprite count
+	ldrb r3,[spxptr,#wsvSpriteCount]	;@ Sprite count
 	add r3,r3,r2
 	cmp r3,#128
 	movpl r3,#128
 	subs r2,r3,r2
 	movmi r2,#0
-	strb r2,[geptr,#wsvLatchedSprCnt]
-	ldmfdle sp!,{geptr,pc}
+	strb r2,[spxptr,#wsvLatchedSprCnt]
+	ldmfdle sp!,{spxptr,pc}
 	mov r2,r2,lsl#2
 
 	blx memcpy
 
-	ldmfd sp!,{geptr,pc}
+	ldmfd sp!,{spxptr,pc}
 
 ;@----------------------------------------------------------------------------
 	.equ PRIORITY,	0x400		;@ 0x400=AGB OBJ priority 1
@@ -1492,9 +1492,9 @@ wsvConvertSprites:			;@ in r0 = destination.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r8,lr}
 
-	add r1,geptr,#wsvSpriteRAM
-	ldrb r7,[geptr,#wsvLatchedSprCnt]
-	ldrb r2,[geptr,#wsvVideoMode]
+	add r1,spxptr,#wsvSpriteRAM
+	ldrb r7,[spxptr,#wsvLatchedSprCnt]
+	ldrb r2,[spxptr,#wsvVideoMode]
 	tst r2,#0x40				;@ 4 bit planes?
 	movne r8,#0x0000
 	moveq r8,#0x0800			;@ Palette bit 2

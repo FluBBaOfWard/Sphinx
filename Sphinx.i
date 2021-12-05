@@ -17,7 +17,7 @@
 /** Game screen height in pixels */
 #define GAME_HEIGHT (144)
 
-	geptr		.req r12
+	spxptr		.req r12
 						;@ WSVideo.s
 	.struct 0
 scanline:			.long 0		;@ These 3 must be first in state.
@@ -205,7 +205,7 @@ gfxRAMSwap:			.long 0		;@ 0x3000
 scrollBuff:			.long 0
 wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 
-wsVideoSize:
+sphinxSize:
 
 ;@----------------------------------------------------------------------------
 

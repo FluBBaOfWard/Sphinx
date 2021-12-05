@@ -21,8 +21,8 @@
 ;@ r1 = destination.
 ;@----------------------------------------------------------------------------
 pcmMix:				;@ r0=len, r1=dest, r12=snptr
-//IIIIIVCCCCCCCCCCCC10FFFFFFFFFFFF
-//I=sampleindex, V=overflow, C=counter, F=frequency
+// IIIIIVCCCCCCCCCCC0010FFFFFFFFFFF
+// I=sampleindex, V=overflow, C=counter, F=frequency
 ;@----------------------------------------------------------------------------
 pcmMixLoop:
 	add r3,r3,#PSGADDITION
@@ -30,9 +30,9 @@ pcmMixLoop:
 	mov r1,r3,lsl#18
 	subcs r3,r3,r1,asr#4
 vol0_L:
-	mov r2,#0x00				;@ volume left
+	mov r2,#0x00				;@ Volume left
 vol0_R:
-	orrs r1,r2,#0xFF0000		;@ volume right
+	orrs r1,r2,#0xFF0000		;@ Volume right
 	ldrsbne r0,[r12,r0]			;@ Channel 0
 	mulne r2,r1,r0
 
@@ -42,9 +42,9 @@ vol0_R:
 	mov r1,r4,lsl#18
 	subcs r4,r4,r1,asr#4
 vol1_L:
-	mov r1,#0x00				;@ volume left
+	mov r1,#0x00				;@ Volume left
 vol1_R:
-	orrs r1,r1,#0xFF0000		;@ volume right
+	orrs r1,r1,#0xFF0000		;@ Volume right
 	ldrsbne r0,[r12,r0]			;@ Channel 1
 	mlane r2,r1,r0,r2
 
@@ -54,9 +54,9 @@ vol1_R:
 	mov r1,r5,lsl#18
 	subcs r5,r5,r1,asr#4
 vol2_L:
-	mov r1,#0x00				;@ volume left
+	mov r1,#0x00				;@ Volume left
 vol2_R:
-	orrs r1,r1,#0xFF0000		;@ volume right
+	orrs r1,r1,#0xFF0000		;@ Volume right
 	ldrsbne r0,[r12,r0]			;@ Channel 2
 	mlane r2,r1,r0,r2
 
@@ -75,15 +75,15 @@ vol2_R:
 	andsne r0,r9,#0x00000001
 	movne r0,#0x1F
 vol3_L:
-	mov r1,#0x00				;@ volume left
+	mov r1,#0x00				;@ Volume left
 vol3_R:
-	orrs r1,r1,#0xFF0000		;@ volume right
+	orrs r1,r1,#0xFF0000		;@ Volume right
 	mlane r2,r1,r0,r2
 
 
 	subs r11,r11,#1
 	strpl r2,[lr],#4
-	bhi pcmMixLoop				;@ 91 cycles according to No$gba
+	bhi pcmMixLoop				;@ ?? cycles according to No$gba
 
 	b pcmMixReturn
 ;@----------------------------------------------------------------------------
@@ -101,33 +101,33 @@ WSAudioMixer:				;@ r0=len, r1=dest, r12=psgptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,r1,r4-r11,lr}
 ;@--------------------------
-//	ldr r10,=vol0_L
+	ldr r10,=vol0_L
 
 //	ldrb r1,[psgptr,#ch0balance]
 //	ldrb r0,[psgptr,#ch0control]
-	bl getVolumeDS				;@ volume in r1/r2, uses r0,r3&r4.
-//	strb r1,[r10],#vol0_R-vol0_L
-//	strb r2,[r10],#vol1_L-vol0_R
+	bl getVolumeDS				;@ Volume in r1/r2, uses r0,r3 & r4.
+	strb r1,[r10],#vol0_R-vol0_L
+	strb r2,[r10],#vol1_L-vol0_R
 
 //	ldrb r1,[psgptr,#ch1balance]
 //	ldrb r0,[psgptr,#ch1control]
-	bl getVolumeDS				;@ volume in r1/r2, uses r0,r3&r4.
-//	strb r1,[r10],#vol1_R-vol1_L
-//	strb r2,[r10],#vol2_L-vol1_R
+	bl getVolumeDS				;@ Volume in r1/r2, uses r0,r3 & r4.
+	strb r1,[r10],#vol1_R-vol1_L
+	strb r2,[r10],#vol2_L-vol1_R
 
 //	ldrb r1,[psgptr,#ch2balance]
 //	ldrb r0,[psgptr,#ch2control]
-	bl getVolumeDS				;@ volume in r1/r2, uses r0,r3&r4.
-//	strb r1,[r10],#vol2_R-vol2_L
-//	strb r2,[r10],#vol3_L-vol2_R
+	bl getVolumeDS				;@ Volume in r1/r2, uses r0,r3 & r4.
+	strb r1,[r10],#vol2_R-vol2_L
+	strb r2,[r10],#vol3_L-vol2_R
 
 //	ldrb r1,[psgptr,#ch3balance]
 //	ldrb r0,[psgptr,#ch3control]
-	bl getVolumeDS				;@ volume in r1/r2, uses r0,r3&r4.
-//	strb r1,[r10],#vol3_R-vol3_L
-//	strb r2,[r10],#vol4_L-vol3_R
+	bl getVolumeDS				;@ Volume in r1/r2, uses r0,r3 & r4.
+	strb r1,[r10],#vol3_R-vol3_L
+	strb r2,[r10]
 
-//	add r0,psgptr,#ch0freq		;@ original freq
+//	add r0,psgptr,#ch0freq		;@ Original freq
 	ldmia r0,{r3-r8}
 ;@--------------------------
 //	ldrh r1,[psgptr,#pcm0currentaddr]
@@ -160,8 +160,8 @@ WSAudioMixer:				;@ r0=len, r1=dest, r12=psgptr
 	b pcmMix
 pcmMixReturn:
 ;@	mov r11,r11					;@ no$gba break
-//	sub psgptr,psgptr,#ch0waveform	;@ get correct psgptr
-//	add r0,psgptr,#pcm0currentaddr	;@ counters
+//	sub psgptr,psgptr,#ch0waveform	;@ Get correct psgptr
+//	add r0,psgptr,#pcm0currentaddr	;@ Counters
 	stmia r0,{r3-r10}
 
 	ldmfd sp!,{r0,r1,r4-r11,pc}
@@ -169,22 +169,22 @@ pcmMixReturn:
 getVolumeDS:
 ;@----------------------------------------------------------------------------
 	and r2,r0,#0xc0
-	cmp r2,#0x80				;@ should channel be played?
+	cmp r2,#0x80				;@ Should channel be played?
 
-	and r0,r0,#0x1f				;@ channel master
+	and r0,r0,#0x1f				;@ Channel master
 ;@	mov r3,#103					;@ Maybe boost?
 	mov r3,#126					;@ Boost.
 	movne r3,#0
 	mul r0,r3,r0
 //	ldrb r3,[psgptr,#globalBalance]
 
-	and r2,r1,#0xf				;@ channel right
-	and r4,r3,#0xf				;@ main right
+	and r2,r1,#0xf				;@ Channel right
+	and r4,r3,#0xf				;@ Main right
 	mul r2,r4,r2
 	mul r2,r0,r2
 
-	mov r1,r1,lsr#4				;@ channel left
-	mov r3,r3,lsr#4				;@ main left
+	mov r1,r1,lsr#4				;@ Channel left
+	mov r3,r3,lsr#4				;@ Main left
 	mul r4,r3,r1
 	mul r1,r0,r4
 
