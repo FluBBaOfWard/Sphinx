@@ -138,12 +138,12 @@ sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
 
 	ldr r2,=0x3360
 	add r0,r4,r2
-	add r1,r5,#wsVideoState
-	mov r2,#(wsVideoStateEnd-wsVideoState)
+	add r1,r5,#sphinxState
+	mov r2,#(sphinxStateEnd-sphinxState)
 	bl memcpy
 
 	ldmfd sp!,{r4,r5,lr}
-	ldr r0,=0x3360+(wsVideoStateEnd-wsVideoState)
+	ldr r0,=0x3360+(sphinxStateEnd-sphinxState)
 	bx lr
 ;@----------------------------------------------------------------------------
 sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
@@ -158,9 +158,9 @@ sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 	bl memcpy
 
 	ldr r2,=0x3360
-	add r0,r5,#wsVideoState
+	add r0,r5,#sphinxState
 	add r1,r4,r2
-	mov r2,#(wsVideoStateEnd-wsVideoState)
+	mov r2,#(sphinxStateEnd-sphinxState)
 	bl memcpy
 
 	ldr r0,=DIRTYTILES
@@ -175,7 +175,7 @@ sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 sphinxGetStateSize:	;@ Out r0=state size.
 	.type   wsVideoGetStateSize STT_FUNC
 ;@----------------------------------------------------------------------------
-	ldr r0,=0x3360+(wsVideoStateEnd-wsVideoState)
+	ldr r0,=0x3360+(sphinxStateEnd-sphinxState)
 	bx lr
 
 	.pool
@@ -252,39 +252,39 @@ IN_Table:
 	.long wsvRegR				;@ 0x1E Pal mono pool 2
 	.long wsvRegR				;@ 0x1F Pal mono pool 3
 
-	.long wsvRegR				;@ 0x20 Pal mono
-	.long wsvRegR				;@ 0x21
-	.long wsvRegR				;@ 0x22
-	.long wsvRegR				;@ 0x23
-	.long wsvRegR				;@ 0x24
-	.long wsvRegR				;@ 0x25
-	.long wsvRegR				;@ 0x26
-	.long wsvRegR				;@ 0x27
-	.long wsvRegR				;@ 0x28
-	.long wsvRegR				;@ 0x29
-	.long wsvRegR				;@ 0x2A
-	.long wsvRegR				;@ 0x2B
-	.long wsvRegR				;@ 0x2C
-	.long wsvRegR				;@ 0x2D
-	.long wsvRegR				;@ 0x2E
-	.long wsvRegR				;@ 0x2F
+	.long wsvRegR				;@ 0x20 Pal mono 0 low
+	.long wsvRegR				;@ 0x21 Pal mono 0 high
+	.long wsvRegR				;@ 0x22 Pal mono 1 low
+	.long wsvRegR				;@ 0x23 Pal mono 1 high
+	.long wsvRegR				;@ 0x24 Pal mono 2 low
+	.long wsvRegR				;@ 0x25 Pal mono 2 high
+	.long wsvRegR				;@ 0x26 Pal mono 3 low
+	.long wsvRegR				;@ 0x27 Pal mono 3 high
+	.long wsvRegR				;@ 0x28 Pal mono 4 low
+	.long wsvRegR				;@ 0x29 Pal mono 4 high
+	.long wsvRegR				;@ 0x2A Pal mono 5 low
+	.long wsvRegR				;@ 0x2B Pal mono 5 high
+	.long wsvRegR				;@ 0x2C Pal mono 6 low
+	.long wsvRegR				;@ 0x2D Pal mono 6 high
+	.long wsvRegR				;@ 0x2E Pal mono 7 low
+	.long wsvRegR				;@ 0x2F Pal mono 7 high
 
-	.long wsvRegR				;@ 0x30
-	.long wsvRegR				;@ 0x31
-	.long wsvRegR				;@ 0x32
-	.long wsvRegR				;@ 0x33
-	.long wsvRegR				;@ 0x34
-	.long wsvRegR				;@ 0x35
-	.long wsvRegR				;@ 0x36
-	.long wsvRegR				;@ 0x37
-	.long wsvRegR				;@ 0x38
-	.long wsvRegR				;@ 0x39
-	.long wsvRegR				;@ 0x3A
-	.long wsvRegR				;@ 0x3B
-	.long wsvRegR				;@ 0x3C
-	.long wsvRegR				;@ 0x3D
-	.long wsvRegR				;@ 0x3E
-	.long wsvRegR				;@ 0x3F
+	.long wsvRegR				;@ 0x30 Pal mono 8 low
+	.long wsvRegR				;@ 0x31 Pal mono 8 high
+	.long wsvRegR				;@ 0x32 Pal mono 9 low
+	.long wsvRegR				;@ 0x33 Pal mono 9 high
+	.long wsvRegR				;@ 0x34 Pal mono A low
+	.long wsvRegR				;@ 0x35 Pal mono A high
+	.long wsvRegR				;@ 0x36 Pal mono B low
+	.long wsvRegR				;@ 0x37 Pal mono B high
+	.long wsvRegR				;@ 0x38 Pal mono C low
+	.long wsvRegR				;@ 0x39 Pal mono C high
+	.long wsvRegR				;@ 0x3A Pal mono D low
+	.long wsvRegR				;@ 0x3B Pal mono D high
+	.long wsvRegR				;@ 0x3C Pal mono E low
+	.long wsvRegR				;@ 0x3D Pal mono E high
+	.long wsvRegR				;@ 0x3E Pal mono F low
+	.long wsvRegR				;@ 0x3F Pal mono F high
 			;@ DMA registers, only WSC
 	.long wsvRegR				;@ 0x40 DMA source
 	.long wsvRegR				;@ 0x41 DMA source
@@ -354,18 +354,18 @@ IN_Table:
 	.long wsvWSUnmappedR		;@ 0x7E ---
 	.long wsvWSUnmappedR		;@ 0x7F ---
 
-	.long wsvRegR				;@ 0x80 Sound Registers
-	.long wsvRegR				;@ 0x81
-	.long wsvRegR				;@ 0x82
-	.long wsvRegR				;@ 0x83
-	.long wsvRegR				;@ 0x84
-	.long wsvRegR				;@ 0x85
-	.long wsvRegR				;@ 0x86
-	.long wsvRegR				;@ 0x87
-	.long wsvRegR				;@ 0x88
-	.long wsvRegR				;@ 0x89
-	.long wsvRegR				;@ 0x8A
-	.long wsvRegR				;@ 0x8B
+	.long wsvRegR				;@ 0x80 Sound Ch1 pitch low
+	.long wsvRegR				;@ 0x81 Sound Ch1 pitch high
+	.long wsvRegR				;@ 0x82 Sound Ch2 pitch low
+	.long wsvRegR				;@ 0x83 Sound Ch2 pitch high
+	.long wsvRegR				;@ 0x84 Sound Ch3 pitch low
+	.long wsvRegR				;@ 0x85 Sound Ch3 pitch high
+	.long wsvRegR				;@ 0x86 Sound Ch4 pitch low
+	.long wsvRegR				;@ 0x87 Sound Ch4 pitch high
+	.long wsvRegR				;@ 0x88 Sound Ch1 volume
+	.long wsvRegR				;@ 0x89 Sound Ch2 volume
+	.long wsvRegR				;@ 0x8A Sound Ch3 volume
+	.long wsvRegR				;@ 0x8B Sound Ch4 volume
 	.long wsvRegR				;@ 0x8C
 	.long wsvRegR				;@ 0x8D
 	.long wsvRegR				;@ 0x8E
@@ -703,13 +703,13 @@ OUT_Table:
 	.long wsvUnmappedW			;@ 0x7F ---
 
 	.long wsvRegW				;@ 0x80 Sound Ch1 pitch low
-	.long wsvRegW				;@ 0x81 Sound Ch1 pitch high
+	.long wsvFreqW				;@ 0x81 Sound Ch1 pitch high
 	.long wsvRegW				;@ 0x82 Sound Ch2 pitch low
-	.long wsvRegW				;@ 0x83 Sound Ch2 pitch high
+	.long wsvFreqW				;@ 0x83 Sound Ch2 pitch high
 	.long wsvRegW				;@ 0x84 Sound Ch3 pitch low
-	.long wsvRegW				;@ 0x85 Sound Ch3 pitch high
+	.long wsvFreqW				;@ 0x85 Sound Ch3 pitch high
 	.long wsvRegW				;@ 0x86 Sound Ch4 pitch low
-	.long wsvRegW				;@ 0x87 Sound Ch4 pitch high
+	.long wsvFreqW				;@ 0x87 Sound Ch4 pitch high
 	.long wsvRegW				;@ 0x88 Sound Ch1 volume
 	.long wsvRegW				;@ 0x89 Sound Ch2 volume
 	.long wsvRegW				;@ 0x8A Sound Ch3 volume
@@ -969,7 +969,7 @@ dmaEnd:
 	ldmfd sp!,{r4-r7,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvVideoModeW:					;@ 0x60, Video mode, WSColor
+wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvVideoMode]
 	strb r1,[spxptr,#wsvVideoMode]
@@ -979,7 +979,14 @@ wsvVideoModeW:					;@ 0x60, Video mode, WSColor
 	and r0,r1,#0x80
 	b intEepromSetSize
 ;@----------------------------------------------------------------------------
-wsvHW:					;@ 0xA0, Color/Mono, boot rom lock
+wsvFreqW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
+;@----------------------------------------------------------------------------
+	and r1,#7					;@ Only low 3 bits
+	add r2,spxptr,#wsvRegs
+	strb r1,[r2,r0]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvHardwareType]
 	and r0,r0,#0x81

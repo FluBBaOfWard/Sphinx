@@ -25,7 +25,7 @@ nextLineChange:		.long 0
 lineState:			.long 0
 
 windowData:			.long 0
-wsVideoState:					;@
+sphinxState:					;@
 wsvRegs:
 wsvDispCtrl:		.byte 0		;@ 0x00 Display control
 wsvBGColor:			.byte 0		;@ 0x01 Background color
@@ -94,11 +94,11 @@ wsvPaletteE1:		.byte 0		;@ 0x3D Palette E1
 wsvPaletteF0:		.byte 0		;@ 0x3E Palette F0
 wsvPaletteF1:		.byte 0		;@ 0x3F Palette F1
 
-wsvDMASource:		.short 0	;@ 0x40 DMA source adr bits 15-0
+wsvDMASource:		.short 0	;@ 0x40/0x41 DMA source adr bits 15-0
 wsvDMASrcBnk:		.byte 0		;@ 0x42 DMA source adr bits 19-16
 wsvDMAEmpty:		.byte 0		;@ 0x43 Nothing
-wsvDMADest:			.short 0	;@ 0x44 DMA destination adr bits 15-0
-wsvDMALength:		.short 0	;@ 0x46 DMA length bits 15-0
+wsvDMADest:			.short 0	;@ 0x44/0x45 DMA destination adr bits 15-0
+wsvDMALength:		.short 0	;@ 0x46/0x47 DMA length bits 15-0
 wsvDMAStart:		.byte 0		;@ 0x48 DMA control, bit 7 start
 
 wsvPadding1:		.space 1	;@ 0x49 ???
@@ -118,26 +118,22 @@ wsvVideoMode:		.byte 0		;@ 0x60 Video rendering mode
 
 wsvPadding5:		.space 31	;@ 0x61 - 0x7F ???
 
-wsvAudio1Freq0:		.byte 0		;@ 0x80 Audio 1 frequency bits 7-0
-wsvAudio1Freq1:		.byte 0		;@ 0x81 Audio 1 frequency bits 15-8
-wsvAudio2Freq0:		.byte 0		;@ 0x82 Audio 2 frequency bits 7-0
-wsvAudio2Freq1:		.byte 0		;@ 0x83 Audio 2 frequency bits 15-8
-wsvAudio3Freq0:		.byte 0		;@ 0x84 Audio 3 frequency bits 7-0
-wsvAudio3Freq1:		.byte 0		;@ 0x85 Audio 3 frequency bits 15-8
-wsvAudio4Freq0:		.byte 0		;@ 0x86 Audio 4 frequency bits 7-0
-wsvAudio4Freq1:		.byte 0		;@ 0x87 Audio 4 frequency bits 15-8
+wsvSound1Freq:		.short 0	;@ 0x80/0x81 Sound ch 1 pitch bits 10-0
+wsvSound2Freq:		.short 0	;@ 0x82/0x83 Sound ch 2 pitch bits 10-0
+wsvSound3Freq:		.short 0	;@ 0x84/0x85 Sound ch 3 pitch bits 10-0
+wsvSound4Freq:		.short 0	;@ 0x86/0x87 Sound ch 4 pitch bits 10-0
 
-wsvAudio1Vol:		.byte 0		;@ 0x88 Audio 1 volume
-wsvAudio2Vol:		.byte 0		;@ 0x89 Audio 2 volume
-wsvAudio3Vol:		.byte 0		;@ 0x8A Audio 3 volume
-wsvAudio4Vol:		.byte 0		;@ 0x8B Audio 4 volume
+wsvSound1Vol:		.byte 0		;@ 0x88 Sound ch 1 volume
+wsvSound2Vol:		.byte 0		;@ 0x89 Sound ch 2 volume
+wsvSound3Vol:		.byte 0		;@ 0x8A Sound ch 3 volume
+wsvSound4Vol:		.byte 0		;@ 0x8B Sound ch 4 volume
 wsvSweepValue:		.byte 0		;@ 0x8C Sweep value
 wsvSweepStep:		.byte 0		;@ 0x8D Sweep step
 wsvNoiseCtrl:		.byte 0		;@ 0x8E Noise control
-wsvSampleLoc:		.byte 0		;@ 0x8F Sample location
+wsvSampleBase:		.byte 0		;@ 0x8F Sound wave base
 
-wsvAudioCtrl:		.byte 0		;@ 0x90 Audio control
-wsvAudioOutput:		.byte 0		;@ 0x91 Audio output
+wsvSoundCtrl:		.byte 0		;@ 0x90 Sound control
+wsvSoundOutput:		.byte 0		;@ 0x91 Sound output
 wsvNoiseCntr:		.short 0	;@ 0x92/0x93 Noise Counter Shift Register (15 bits)
 wsvVolume:			.byte 0		;@ 0x94 Volume (4 bit)
 
@@ -183,6 +179,12 @@ wsvRTCData:			.byte 0		;@ 0xCB RTC Data
 
 wsvPadding14:		.space 52	;@ 0xCC - 0xFF ???
 
+pcm1CurrentAddr:	.long 0		;@ Ch1 Current addr
+pcm2CurrentAddr:	.long 0		;@ Ch2 Current addr
+pcm3CurrentAddr:	.long 0		;@ Ch3 Current addr
+pcm4CurrentAddr:	.long 0		;@ Ch4 Current addr
+noise4CurrentAddr:	.long 0		;@ Ch4 noise Current addr
+
 wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 kgeLedEnable:		.byte 0
@@ -192,7 +194,7 @@ kgePadding1:		.space 3
 
 scrollLine: 		.long 0		;@ Last line scroll was updated.
 ledCounter:			.long 0
-wsVideoStateEnd:
+sphinxStateEnd:
 
 frameIrqFunc:		.long 0		;@ V-Blank Irq
 periodicIrqFunc:	.long 0		;@ H-Blank Irq
