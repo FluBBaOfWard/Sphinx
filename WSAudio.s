@@ -30,25 +30,33 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 ;@--------------------------
 	ldr r10,=vol1_L
 
-	mov r3,#0xF0
+	ldrb r8,[spxptr,#wsvSoundCtrl]
+	ands r3,r8,#1					;@ Ch 1 on?
+	movne r3,#0xF0
 	ldrb r1,[spxptr,#wsvSound1Vol]
 	and r2,r3,r1,lsl#4
 	and r1,r3,r1
 	strb r1,[r10],#vol1_R-vol1_L
 	strb r2,[r10],#vol2_L-vol1_R
 
+	ands r3,r8,#2					;@ Ch 2 on?
+	movne r3,#0xF0
 	ldrb r1,[spxptr,#wsvSound2Vol]
 	and r2,r3,r1,lsl#4
 	and r1,r3,r1
 	strb r1,[r10],#vol2_R-vol2_L
 	strb r2,[r10],#vol3_L-vol2_R
 
+	ands r3,r8,#4					;@ Ch 3 on?
+	movne r3,#0xF0
 	ldrb r1,[spxptr,#wsvSound3Vol]
 	and r2,r3,r1,lsl#4
 	and r1,r3,r1
 	strb r1,[r10],#vol3_R-vol3_L
 	strb r2,[r10],#vol4_L-vol3_R
 
+	ands r3,r8,#8					;@ Ch 4 on?
+	movne r3,#0xF0
 	ldrb r1,[spxptr,#wsvSound4Vol]
 	and r2,r3,r1,lsl#4
 	and r1,r3,r1
@@ -70,11 +78,10 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 	mov r5,r5,lsr#11
 	orr r5,r1,r5,lsl#11
 ;@--------------------------
-	ldrb r2,[spxptr,#wsvSoundCtrl]
-	ands r0,r2,#0x80			;@ Noise on?
+	ands r0,r8,#0x80			;@ Ch 4 noise on?
 	bic r7,r7,#0x80
 	orr r7,r7,r0
-	and r0,r2,#0x1F
+	and r0,r8,#0x1F
 	rsb r0,r0,#0x1F
 
 	ldrh r1,[spxptr,#wsvSound4Freq]
@@ -84,10 +91,11 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 	movne r6,r6,ror#21
 ;@--------------------------
 
-	ldr r8,=wsSRAM
+	ldr r8,[spxptr,#gfxRAM]
 	ldrb r2,[spxptr,#wsvSampleBase]
 	add r8,r8,r2,lsl#6
 	ldmfd sp,{r11,lr}			;@ r11=len, lr=dest buffer
+	mov r11,r11,lsl#2
 ;@	mov r11,r11					;@ no$gba break
 	b pcmMix
 pcmMixReturn:
@@ -105,7 +113,7 @@ pcmMixReturn:
 #endif
 	.align 2
 
-#define PSGDIVIDE 32
+#define PSGDIVIDE 16
 #define PSGADDITION 0x00008000*PSGDIVIDE
 #define PSGNOISEFEED 0x8600C001
 
@@ -117,20 +125,22 @@ pcmMix:				;@ r0=len, r1=dest, r12=snptr
 // IIIIIVCCCCCCCCCCC0001FFFFFFFFFFF
 // I=sampleindex, V=overflow, C=counter, F=frequency
 ;@----------------------------------------------------------------------------
-pcmMixLoop:
+mixLoop:
+	mov r2,#0x80000000
+innerMixLoop:
 	add r3,r3,#PSGADDITION
 	movs r9,r3,lsr#27
 	mov r1,r3,lsl#20
 	addcs r3,r3,r1,lsr#5
 vol1_L:
-	mov r2,#0x00				;@ Volume left
+	mov r1,#0x00				;@ Volume left
 vol1_R:
-	orrs r1,r2,#0xFF0000		;@ Volume right
+	orrs r1,r1,#0xFF0000		;@ Volume right
 	ldrb r0,[r8,r9,lsr#1]		;@ Channel 1
 	tst r9,#1
 	moveq r0,r0,lsr#4
 	andne r0,r0,#0xF
-	mul r2,r1,r0
+	mla r2,r1,r0,r2
 
 	add r4,r4,#PSGADDITION
 	movs r9,r4,lsr#27
@@ -185,9 +195,13 @@ vol4_R:
 	orrs r1,r1,#0xFF0000		;@ Volume right
 	mla r2,r1,r0,r2
 
-	subs r11,r11,#1
+	sub r11,r11,#1
+	tst r11,#3
+	bne innerMixLoop
+	eor r2,#0x00008000
+	cmp r11,#0
 	strpl r2,[lr],#4
-	bhi pcmMixLoop				;@ ?? cycles according to No$gba
+	bhi mixLoop				;@ ?? cycles according to No$gba
 
 	b pcmMixReturn
 ;@----------------------------------------------------------------------------
