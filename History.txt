@@ -9,6 +9,7 @@ V0.1.2 - 2021-12-04 (FluBBa)
 	Fixed interrupts and timers.
 	Fixed handling of register 0xA0.
 	Fixed opaque 2bit plane sprites.
+	Added sound.
 
 V0.1.1 - 2021-10-17 (FluBBa)
 	Started port to Nintendo DS & devkitPro.

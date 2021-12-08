@@ -33,7 +33,7 @@
 #endif
 	.align 2
 ;@----------------------------------------------------------------------------
-wsVideoInit:					;@ Only need to be called once
+wsVideoInit:				;@ Only need to be called once
 ;@----------------------------------------------------------------------------
 	mov r1,#0xffffff00			;@ Build chr decode tbl
 	ldr r2,=CHR_DECODE			;@ 0x400
@@ -76,7 +76,7 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=col
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
 	mov r0,#0
-	stmia spxptr,{r0-r2}			;@ Reset scanline, nextChange & lineState
+	stmia spxptr,{r0-r2}		;@ Reset scanline, nextChange & lineState
 
 	ldmfd sp!,{r0-r3,lr}
 	cmp r0,#0
@@ -99,31 +99,50 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=col
 	str r0,[spxptr,#scrollBuff]
 
 	strb r3,[spxptr,#wsvSOC]
-//	cmp r3,#SOC_ASWAN
-//	moveq r0,#0x00				;@ Use B&W mode.
-//	movne r0,#0xC0				;@ Use Color mode.
-//	strb r0,[spxptr,#wsvVideoMode]
 
 	b wsvRegistersReset
 
 dummyIrqFunc:
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvRegistersReset:
+wsvRegistersReset:				;@ in r3=SOC
 ;@----------------------------------------------------------------------------
-//	mov r0,#0xC0
-//	strb r0,[spxptr,#wsvInterruptEnable]
-//	mov r0,#0xC6
-//	strb r0,[spxptr,#wsvTotalLines]	;@ Total number of scanlines?
-	mov r0,#0xFF
-	strb r0,[spxptr,#wsvWinXSize]	;@ Window size
-	strb r0,[spxptr,#wsvWinYSize]
-	mov r0,#0x80
-	strb r0,[spxptr,#kgeLedBlink]	;@ Flash cycle = 1.3s
-	ldr r1,[spxptr,#paletteMonoRAM]
-	strb r0,[r1,#0x18]				;@ BGC on!
-
+	add r0,spxptr,#wsvRegs
+	adr r1,IO_Default
+//	cmp r3,#SOC_SPHINX
+//	adreq r1,WSC_IO_Default
+//	adrhi r1,SC_IO_Default
+	mov r2,#0x100
+	stmfd sp!,{spxptr,lr}
+	blx memcpy
+	ldmfd sp!,{spxptr,lr}
+	ldrb r1,[spxptr,#wsvSOC]
+	cmp r1,#SOC_ASWAN
+	mov r0,#0x84
+	movne r0,#0x86
+	strb r0,[spxptr,#wsvHardwareType]
 	bx lr
+
+;@----------------------------------------------------------------------------
+IO_Default:
+	.byte 0x00, 0x00, 0x9d, 0xbb, 0x00, 0x00, 0x00, 0x26, 0xfe, 0xde, 0xf9, 0xfb, 0xdb, 0xd7, 0x7f, 0xf5
+	.byte 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x9e, 0x9b, 0x00, 0x00, 0x00, 0x00, 0x99, 0xfd, 0xb7, 0xdf
+	.byte 0x30, 0x57, 0x75, 0x76, 0x15, 0x73, 0x77, 0x77, 0x20, 0x75, 0x50, 0x36, 0x70, 0x67, 0x50, 0x77
+	.byte 0x57, 0x54, 0x75, 0x77, 0x75, 0x17, 0x37, 0x73, 0x50, 0x57, 0x60, 0x77, 0x70, 0x77, 0x10, 0x73
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	.byte 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x00
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00
+	.byte 0x84, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4f, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	.byte 0x00, 0xdb, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x42, 0x00, 0x83, 0x00
+// Cartridge
+	.byte 0x2f, 0x3f, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1
+	.byte 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1
+	.byte 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1
+	.byte 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1
+
 ;@----------------------------------------------------------------------------
 sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
 	.type   wsVideoSaveState STT_FUNC
@@ -388,7 +407,7 @@ IN_Table:
 	.long wsvRegR				;@ 0x9E
 	.long wsvWSUnmappedR		;@ 0x9F ---
 
-	.long wsvHWTypeR			;@ 0xA0 Color or mono HW
+	.long wsvRegR				;@ 0xA0 Color or mono HW
 	.long wsvWSUnmappedR		;@ 0xA1 ---
 	.long wsvRegR				;@ 0xA2 Timer Control
 	.long wsvUnknownR			;@ 0xA3 ???
@@ -494,22 +513,18 @@ IN_Table:
 	.long wsvUnknownR			;@ 0xFE ???
 	.long wsvUnknownR			;@ 0xFF ???
 ;@----------------------------------------------------------------------------
-wsvUnknownR:
-;@----------------------------------------------------------------------------
-	mov r11,r11				;@ No$GBA breakpoint
-	ldr r2,=0x826EBAD0
-;@----------------------------------------------------------------------------
 wsvWSUnmappedR:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
+	stmfd sp!,{spxptr,lr}
 	blx debugIOUnmappedR
-	ldmfd sp!,{lr}
-	mov r0,#0x90
+	ldmfd sp!,{spxptr,lr}
+	ldrb r0,[spxptr,#wsvSOC]
+	cmp r0,#SOC_ASWAN
+	moveq r0,#0x90
+	movne r0,#0x00
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvZeroR:
-;@----------------------------------------------------------------------------
-wsvWSCUnmappedR:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 	blx debugIOUnmappedR
@@ -517,8 +532,12 @@ wsvWSCUnmappedR:
 	mov r0,#0x00
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvUnknownR:
+;@----------------------------------------------------------------------------
+	ldr r2,=0x826EBAD0
+;@----------------------------------------------------------------------------
 wsvImportantR:
-	mov r11,r11				;@ No$GBA breakpoint
+	mov r11,r11					;@ No$GBA breakpoint
 	stmfd sp!,{r0,spxptr,lr}
 	blx debugIOUnimplR
 	ldmfd sp!,{r0,spxptr,lr}
@@ -534,19 +553,11 @@ wsvVCountR:					;@ 0x03
 	ldrb r0,[spxptr,#scanline]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvHWTypeR:					;@ 0xA0
-;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvHardwareType]
-	ldrb r1,[spxptr,#wsvSOC]
-	cmp r1,#SOC_ASWAN
-	orrne r0,r0,#2
-	bx lr
-;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
-	and r0,r0,#0xC0			;@ Mask out write bits
-	orr r0,r0,#4			;@ Hack, send buffer always empty
+	and r0,r0,#0xC0				;@ Mask out write bits
+	orr r0,r0,#4				;@ Hack, send buffer always empty
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvBnk0SlctR:				;@ 0xC0
@@ -556,7 +567,7 @@ wsvBnk0SlctR:				;@ 0xC0
 ;@----------------------------------------------------------------------------
 wsvRTCStatusR:				;@ 0xCA
 ;@----------------------------------------------------------------------------
-	mov r0,#0x80			;@ Hack, always ready
+	mov r0,#0x80				;@ Hack, always ready
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -715,7 +726,7 @@ OUT_Table:
 	.long wsvRegW				;@ 0x8A Sound Ch3 volume
 	.long wsvRegW				;@ 0x8B Sound Ch4 volume
 	.long wsvRegW				;@ 0x8C Sweeep value
-	.long wsvRegW				;@ 0x8D Sweep time
+	.long wsvSweepTimeW			;@ 0x8D Sweep time
 	.long wsvRegW				;@ 0x8E Noise control
 	.long wsvRegW				;@ 0x8F Wave base
 
@@ -729,11 +740,11 @@ OUT_Table:
 	.long wsvImportantW			;@ 0x97 SND9697
 	.long wsvImportantW			;@ 0x98 SND9899
 	.long wsvImportantW			;@ 0x99 SND9899
-	.long wsvReadOnlyW			;@ 0x9A
-	.long wsvReadOnlyW			;@ 0x9B
-	.long wsvReadOnlyW			;@ 0x9C
-	.long wsvReadOnlyW			;@ 0x9D
-	.long wsvReadOnlyW			;@ 0x9E
+	.long wsvReadOnlyW			;@ 0x9A SND9A
+	.long wsvReadOnlyW			;@ 0x9B SND9B
+	.long wsvReadOnlyW			;@ 0x9C SND9C
+	.long wsvReadOnlyW			;@ 0x9D SND9D
+	.long wsvImportantW			;@ 0x9E SND9E
 	.long wsvUnmappedW			;@ 0x9F ---
 
 	.long wsvHW					;@ 0xA0 Hardware type, SOC_ASWAN / SOC_SPHINX.
@@ -856,7 +867,7 @@ wsvReadOnlyW:
 ;@----------------------------------------------------------------------------
 wsvUnmappedW:
 ;@----------------------------------------------------------------------------
-	mov r11,r11				;@ No$GBA breakpoint
+	mov r11,r11					;@ No$GBA breakpoint
 	ldr r2,=debugIOUnmappedW
 	bx r2
 ;@----------------------------------------------------------------------------
@@ -974,7 +985,7 @@ wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 	ldrb r0,[spxptr,#wsvVideoMode]
 	strb r1,[spxptr,#wsvVideoMode]
 	eor r0,r0,r1
-	tst r0,#0x80		;@ Color mode changed?
+	tst r0,#0x80				;@ Color mode changed?
 	bxeq lr
 	and r0,r1,#0x80
 	b intEepromSetSize
@@ -986,16 +997,23 @@ wsvFreqW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
 	strb r1,[r2,r0]
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvSweepTimeW:				;@ 0x8B Sound sweep time
+;@----------------------------------------------------------------------------
+	and r1,#0x1F				;@ Only low 5 bits
+	strb r1,[spxptr,#wsvSweepTime]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvHardwareType]
-	and r0,r0,#0x81
+	and r0,r0,#0x83				;@ These can't be changed once set.
+	and r1,r1,#0x8D				;@ Only these bits can be set.
 	orr r1,r1,r0
 	strb r1,[spxptr,#wsvHardwareType]
 	eor r0,r0,r1
-	tst r1,#1			;@ Boot rom locked?
+	tst r1,#1					;@ Boot rom locked?
 	bxeq lr
-	mov r0,#0			;@ Remove boot rom overlay
+	mov r0,#0					;@ Remove boot rom overlay
 	b setBootRomOverlay
 
 ;@----------------------------------------------------------------------------
@@ -1028,7 +1046,7 @@ wsvVTimerLowW:			;@ 0xA6 VBlank timer low
 	strb r1,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvVTimerHighW:			;@ 0xA7 HBlank timer high
+wsvVTimerHighW:			;@ 0xA7 VBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvVBlTimerFreq+1]
 	strb r1,[spxptr,#wsvVBlCounter+1]
@@ -1122,7 +1140,7 @@ frameEndHook:
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
 	mov r0,#0
-	stmia spxptr,{r0-r2}			;@ Reset scanline, nextChange & lineState
+	stmia spxptr,{r0-r2}		;@ Reset scanline, nextChange & lineState
 
 //	mov r0,#0					;@ Must return 0 to end frame.
 	ldmfd sp!,{pc}
@@ -1149,7 +1167,7 @@ redoScanline:
 ;@----------------------------------------------------------------------------
 	ldr r2,[spxptr,#lineState]
 	ldmia r2!,{r0,r1}
-	stmib spxptr,{r1,r2}			;@ Write nextLineChange & lineState
+	stmib spxptr,{r1,r2}		;@ Write nextLineChange & lineState
 	stmfd sp!,{lr}
 	mov lr,pc
 	bx r0
@@ -1157,7 +1175,7 @@ redoScanline:
 ;@----------------------------------------------------------------------------
 wsvDoScanline:
 ;@----------------------------------------------------------------------------
-	ldmia spxptr,{r0,r1}			;@ Read scanLine & nextLineChange
+	ldmia spxptr,{r0,r1}		;@ Read scanLine & nextLineChange
 	cmp r0,r1
 	bpl redoScanline
 	add r0,r0,#1
@@ -1168,17 +1186,17 @@ checkScanlineIRQ:
 	ldrb r2,[spxptr,#wsvInterruptStatus]
 	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
-	orreq r2,r2,#0x10				;@ #4 = Line compare
+	orreq r2,r2,#0x10			;@ #4 = Line compare
 
 	ldrb r0,[spxptr,#wsvTimerControl]
-	tst r0,#0x1						;@ HBlank timer enabled?
+	tst r0,#0x1					;@ HBlank timer enabled?
 	beq noTimerHblIrq
 	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
 	bmi noTimerHblIrq
-	orreq r2,r2,#0x80				;@ #7 = HBlank timer
+	orreq r2,r2,#0x80			;@ #7 = HBlank timer
 	eor r0,r0,#0x2
-	tsteq r0,#0x2					;@ Repeat?
+	tsteq r0,#0x2				;@ Repeat?
 	ldrheq r1,[spxptr,#wsvHBlTimerFreq]
 	strh r1,[spxptr,#wsvHBlCounter]
 noTimerHblIrq:

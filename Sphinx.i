@@ -128,7 +128,7 @@ wsvSound2Vol:		.byte 0		;@ 0x89 Sound ch 2 volume
 wsvSound3Vol:		.byte 0		;@ 0x8A Sound ch 3 volume
 wsvSound4Vol:		.byte 0		;@ 0x8B Sound ch 4 volume
 wsvSweepValue:		.byte 0		;@ 0x8C Sweep value
-wsvSweepStep:		.byte 0		;@ 0x8D Sweep step
+wsvSweepTime:		.byte 0		;@ 0x8D Sweep time
 wsvNoiseCtrl:		.byte 0		;@ 0x8E Noise control
 wsvSampleBase:		.byte 0		;@ 0x8F Sound wave base
 
@@ -184,6 +184,7 @@ pcm2CurrentAddr:	.long 0		;@ Ch2 Current addr
 pcm3CurrentAddr:	.long 0		;@ Ch3 Current addr
 pcm4CurrentAddr:	.long 0		;@ Ch4 Current addr
 noise4CurrentAddr:	.long 0		;@ Ch4 noise Current addr
+sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current addr
 
 wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
