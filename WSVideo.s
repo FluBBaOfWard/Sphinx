@@ -1389,14 +1389,14 @@ tileLoop4_1:
 ;@ hvbppppnnnnnnnnn
 bgColor:
 	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0x07
+	and r1,r1,#0x0f
 	add r1,r10,r1,lsl#11
 	stmfd sp!,{lr}
 	bl bgm16Start
 	ldmfd sp!,{lr}
 
 	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0x70
+	and r1,r1,#0xf0
 	add r1,r10,r1,lsl#7
 
 bgm16Start:
@@ -1425,14 +1425,14 @@ bgm16Loop:
 ;@ hvbppppnnnnnnnnn
 bgMono:
 	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0x03
+	and r1,r1,#0x07
 	add r1,r10,r1,lsl#11
 	stmfd sp!,{lr}
 	bl bgm4Start
 	ldmfd sp!,{lr}
 
 	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0x30
+	and r1,r1,#0x70
 	add r1,r10,r1,lsl#7
 
 bgm4Start:
