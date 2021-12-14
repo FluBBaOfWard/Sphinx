@@ -1571,6 +1571,7 @@ skipSprLoop:
 #else
 	.section .bss
 #endif
+	.align 2
 CHR_DECODE:
 	.space 0x400
 SCROLL_BUFF:
