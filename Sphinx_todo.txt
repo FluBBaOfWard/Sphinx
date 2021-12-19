@@ -2,6 +2,7 @@ Bandai WonderSwan/Sphinx To do
 ------------------------------
 
 	Buffer graphics conversion to get rid of glitches.
+	Check interrupts in WSVideo instead of CPU.
 	Fix noise:
 		Different taps.
 		Frequency.

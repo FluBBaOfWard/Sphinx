@@ -1107,10 +1107,10 @@ TransRet:
 ;@----------------------------------------------------------------------------
 checkFrameIRQ:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
+//	stmfd sp!,{lr}
 	ldrb r1,[spxptr,#wsvBGXScroll]
 	bl wsvBgScrXW
-	ldmfd sp!,{lr}
+//	ldmfd sp!,{lr}
 	bl endFrameGfx
 
 	ldrb r2,[spxptr,#wsvInterruptStatus]
@@ -1130,8 +1130,7 @@ noTimerVblIrq:
 	strb r2,[spxptr,#wsvInterruptStatus]
 
 	mov r0,#1
-	ldmfd sp!,{lr}
-	bx lr
+	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 frameEndHook:
 	mov r0,#0

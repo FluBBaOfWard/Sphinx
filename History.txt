@@ -2,6 +2,8 @@ Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
+V0.1.3 - 2021-12-19 (FluBBa)
+
 V0.1.2 - 2021-12-11 (FluBBa)
 	Fixed color background and foreground.
 	Fixed mono background and foreground.
