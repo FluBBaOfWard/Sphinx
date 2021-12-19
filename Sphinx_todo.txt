@@ -1,6 +1,7 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Buffer graphics conversion to get rid of glitches.
 	Fix noise:
 		Different taps.
 		Frequency.
