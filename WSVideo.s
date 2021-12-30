@@ -1067,9 +1067,12 @@ wsvConvertTileMaps:		;@ r0 = destination
 
 	ldr r5,=0xFE00FE00
 	ldr r6,=0x00010001
+	ldrb r7,[spxptr,#wsvMapTblAdr]
 	ldr r10,[spxptr,#gfxRAM]
 
 	ldrb r1,[spxptr,#wsvVideoMode]
+	tst r1,#0x80				;@ 64kB RAM?
+	andeq r7,r7,#0x77
 	adr lr,tMapRet
 	tst r1,#0x40				;@ 4 bit planes?
 	beq bgMono
@@ -1387,15 +1390,13 @@ tileLoop4_1:
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
 bgColor:
-	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0x0f
+	and r1,r7,#0x0f
 	add r1,r10,r1,lsl#11
 	stmfd sp!,{lr}
 	bl bgm16Start
 	ldmfd sp!,{lr}
 
-	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0xf0
+	and r1,r7,#0xf0
 	add r1,r10,r1,lsl#7
 
 bgm16Start:
@@ -1423,15 +1424,13 @@ bgm16Loop:
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
 bgMono:
-	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0x07
+	and r1,r7,#0x0f
 	add r1,r10,r1,lsl#11
 	stmfd sp!,{lr}
 	bl bgm4Start
 	ldmfd sp!,{lr}
 
-	ldrb r1,[spxptr,#wsvMapTblAdr]
-	and r1,r1,#0x70
+	and r1,r7,#0xf0
 	add r1,r10,r1,lsl#7
 
 bgm4Start:
