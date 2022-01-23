@@ -21,7 +21,8 @@
 	.global wsvBufferWindows
 	.global wsvRead
 	.global wsVideoW
-
+	.global wsvGetInterruptVector
+	.global wsvSetInterruptExternal
 
 	.syntax unified
 	.arm
@@ -766,7 +767,7 @@ OUT_Table:
 
 	.long wsvRegW				;@ 0xB0 Interrupt base
 	.long wsvRegW				;@ 0xB1 Serial data
-	.long wsvRegW				;@ 0xB2 Interrupt enable
+	.long wsvIntEnableW			;@ 0xB2 Interrupt enable
 	.long wsvImportantW			;@ 0xB3 Serial status
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
 	.long wsvRegW				;@ 0xB5 Input Controls
@@ -949,10 +950,11 @@ wsvDMAStartW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 
 	ldrh r5,[spxptr,#wsvDMADest]	;@ r5=destination
 
+	;@ sub v30cyc,v30cyc,#5*CYCLE
 	ldrh r6,[spxptr,#wsvDMALength];@ r6=length
 	cmp r6,#0
 	beq dmaEnd
-	;@ sub cycles,cycles,r6
+	;@ sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT+1
 
 dmaLoop:
 	mov r0,r4
@@ -975,7 +977,6 @@ dmaLoop:
 	cmp r6,#0
 	strbeq r0,[spxptr,#wsvDMAStart]
 dmaEnd:
-	;@ sub cycles,cycles,#5
 
 	ldmfd sp!,{r4-r7,lr}
 	bx lr
@@ -1017,7 +1018,7 @@ wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 	b setBootRomOverlay
 
 ;@----------------------------------------------------------------------------
-wsvTimerCtrlW:			;@ 0xA2 Timer control
+wsvTimerCtrlW:				;@ 0xA2 Timer control
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvTimerControl]
 	tst r1,#1
@@ -1028,40 +1029,43 @@ wsvTimerCtrlW:			;@ 0xA2 Timer control
 	strhne r0,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvHTimerLowW:			;@ 0xA4 HBlank timer low
+wsvHTimerLowW:				;@ 0xA4 HBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvHBlTimerFreq]
 	strb r1,[spxptr,#wsvHBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvHTimerHighW:			;@ 0xA5 HBlank timer high
+wsvHTimerHighW:				;@ 0xA5 HBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvHBlTimerFreq+1]
 	strb r1,[spxptr,#wsvHBlCounter+1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvVTimerLowW:			;@ 0xA6 VBlank timer low
+wsvVTimerLowW:				;@ 0xA6 VBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvVBlTimerFreq]
 	strb r1,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvVTimerHighW:			;@ 0xA7 VBlank timer high
+wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvVBlTimerFreq+1]
 	strb r1,[spxptr,#wsvVBlCounter+1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvIntAckW:				;@ 0xB6
+wsvIntEnableW:				;@ 0xB2
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvInterruptEnable]
+	b wsvUpdateIrqPin
+;@----------------------------------------------------------------------------
+wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 	bic r0,r0,r1
 	strb r0,[spxptr,#wsvInterruptStatus]
-	bx lr
-
-
+	b wsvAssertIrqPin
 ;@----------------------------------------------------------------------------
-wsvConvertTileMaps:		;@ r0 = destination
+wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
@@ -1116,21 +1120,24 @@ checkFrameIRQ:
 //	ldmfd sp!,{lr}
 	bl endFrameGfx
 
-	ldrb r2,[spxptr,#wsvInterruptStatus]
-	ldrb r0,[spxptr,#wsvTimerControl]
-	tst r0,#0x4						;@ VBlank timer enabled?
+	ldrb r0,[spxptr,#wsvInterruptStatus]
+	ldrb r2,[spxptr,#wsvTimerControl]
+	tst r2,#0x4						;@ VBlank timer enabled?
 	beq noTimerVblIrq
 	ldrh r1,[spxptr,#wsvVBlCounter]
 	subs r1,r1,#1
 	bmi noTimerVblIrq
-	orreq r2,r2,#0x20				;@ #5 = VBlank timer
-	eor r0,r0,#0x8
-	tsteq r0,#0x8					;@ Repeat?
+	orreq r0,r0,#0x20				;@ #5 = VBlank timer
+	eor r2,r2,#0x8
+	tsteq r2,#0x8					;@ Repeat?
 	ldrheq r1,[spxptr,#wsvVBlTimerFreq]
 	strh r1,[spxptr,#wsvVBlCounter]
 noTimerVblIrq:
-	orr r2,r2,#0x40					;@ #6 = VBlank
-	strb r2,[spxptr,#wsvInterruptStatus]
+	orr r0,r0,#0x40					;@ #6 = VBlank
+	strb r0,[spxptr,#wsvInterruptStatus]
+	stmfd sp!,{lr}
+	bl wsvAssertIrqPin
+	ldmfd sp!,{lr}
 
 	mov r0,#1
 	ldmfd sp!,{pc}
@@ -1185,28 +1192,63 @@ wsvDoScanline:
 ;@----------------------------------------------------------------------------
 checkScanlineIRQ:
 ;@----------------------------------------------------------------------------
-	ldrb r2,[spxptr,#wsvInterruptStatus]
 	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
-	orreq r2,r2,#0x10			;@ #4 = Line compare
+	ldrb r0,[spxptr,#wsvInterruptStatus]
+	orreq r0,r0,#0x10			;@ #4 = Line compare
 
-	ldrb r0,[spxptr,#wsvTimerControl]
-	tst r0,#0x1					;@ HBlank timer enabled?
+	ldrb r2,[spxptr,#wsvTimerControl]
+	tst r2,#0x1					;@ HBlank timer enabled?
 	beq noTimerHblIrq
 	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
 	bmi noTimerHblIrq
-	orreq r2,r2,#0x80			;@ #7 = HBlank timer
-	eor r0,r0,#0x2
-	tsteq r0,#0x2				;@ Repeat?
+	orreq r0,r0,#0x80			;@ #7 = HBlank timer
+	eor r2,r2,#0x2
+	tsteq r2,#0x2				;@ Repeat?
 	ldrheq r1,[spxptr,#wsvHBlTimerFreq]
 	strh r1,[spxptr,#wsvHBlCounter]
 noTimerHblIrq:
-	strb r2,[spxptr,#wsvInterruptStatus]
-
+	strb r0,[spxptr,#wsvInterruptStatus]
+	stmfd sp!,{lr}
+	bl wsvAssertIrqPin
 	mov r0,#1
-	bx lr
+	ldmfd sp!,{pc}
 
+;@----------------------------------------------------------------------------
+wsvUpdateIrqPin:
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvInterruptStatus]
+;@----------------------------------------------------------------------------
+wsvAssertIrqPin:					;@ r0 = interrupt status
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvInterruptEnable]
+	and r0,r0,r1
+	b V30SetIRQPin
+;@----------------------------------------------------------------------------
+wsvSetInterruptExternal:			;@ r0=int number
+;@----------------------------------------------------------------------------
+	cmp r0,#7
+	bxls lr
+	mov r2,#1
+	ldrb r1,[spxptr,#wsvInterruptStatus]
+	orr r1,r1,r2,lsl r0
+	strb r1,[spxptr,#wsvInterruptStatus]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvGetInterruptVector:				;@ return vector in r0, #-1 if error
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvInterruptStatus]
+	ldrb r0,[spxptr,#wsvInterruptEnable]
+	ands r1,r1,r0
+	moveq r0,#-1
+	bxeq lr
+	clz r0,r1
+	rsb r0,r0,#31
+	ldrb r1,[spxptr,#wsvInterruptBase]
+	bic r1,r1,#7
+	orr r0,r0,r1
+	bx lr
 ;@----------------------------------------------------------------------------
 T_data:
 	.long DIRTYTILES+0x200
