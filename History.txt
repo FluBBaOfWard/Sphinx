@@ -2,6 +2,9 @@ Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
+V0.1.4 - 2022-01-24 (FluBBa)
+	Fixed banking of SRAM.
+
 V0.1.3 - 2021-12-30 (FluBBa)
 	Fixed map table address handling.
 

@@ -787,7 +787,7 @@ OUT_Table:
 ;@----------------------------------------------------------------------------
 
 	.long BankSwitch4_F_W		;@ 0xC0 Bank switch 0x40000-0xF0000
-	.long wsvImportantW			;@ 0xC1 Bank switch 0x10000 (SRAM)
+	.long BankSwitch1_W			;@ 0xC1 Bank switch 0x10000 (SRAM)
 	.long BankSwitch2_W			;@ 0xC2 Bank switch 0x20000
 	.long BankSwitch3_W			;@ 0xC3 Bank switch 0x30000
 	.long extEepromDataLowW		;@ 0xC4 ext-eeprom data low
