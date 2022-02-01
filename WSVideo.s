@@ -944,33 +944,31 @@ wsvDMAStartW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 	stmfd sp!,{r4-r7,lr}
 	and r1,r1,#0x40				;@ Inc/dec
 	mov r7,spxptr
-	ldrh r4,[spxptr,#wsvDMASource]
-	ldrb r0,[spxptr,#wsvDMASrcBnk]
-	orr r4,r4,r0,lsl#16			;@ r4=source
+	ldr r4,[spxptr,#wsvDMASource]
+	bic r4,r4,#1
 
 	ldrh r5,[spxptr,#wsvDMADest]	;@ r5=destination
+	bic r5,r5,#1
 
 	;@ sub v30cyc,v30cyc,#5*CYCLE
 	ldrh r6,[spxptr,#wsvDMALength];@ r6=length
-	cmp r6,#0
+	bics r6,r6,#1
 	beq dmaEnd
 	;@ sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT+1
 
 dmaLoop:
-	mov r0,r4
-	bl cpuReadByte
+	mov r0,r4,lsl#12
+	bl cpuReadMem20W
 	mov r1,r0
-	mov r0,r5
-	bl cpuWriteByte
-	add r4,r4,#1
-	add r5,r5,#1
-	subs r6,r6,#1
+	mov r0,r5,lsl#12
+	bl cpuWriteMem20W
+	add r4,r4,#2
+	add r5,r5,#2
+	subs r6,r6,#2
 	bne dmaLoop
 
 	mov spxptr,r7
-	strh r4,[spxptr,#wsvDMASource]
-	mov r4,r4,lsr#16
-	strb r4,[spxptr,#wsvDMASrcBnk]
+	str r4,[spxptr,#wsvDMASource]
 	strh r5,[spxptr,#wsvDMADest]
 
 	strh r6,[spxptr,#wsvDMALength]
