@@ -2,6 +2,9 @@ Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
+V0.1.5 - 2022-02-13 (FluBBa)
+	Added support for RTC.
+
 V0.1.4 - 2022-02-01 (FluBBa)
 	Fixed banking of SRAM.
 	DMA now uses Word access as it should.

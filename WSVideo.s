@@ -432,7 +432,7 @@ IN_Table:
 	.long wsvRegR				;@ 0xB4 Interrupt status
 	.long IOPortA_R				;@ 0xB5 keypad
 	.long wsvZeroR				;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownR			;@ 0xB7 ???
+	.long wsvUnknownR			;@ 0xB7 ??? NMI ack?
 	.long wsvWSUnmappedR		;@ 0xB8 ---
 	.long wsvWSUnmappedR		;@ 0xB9 ---
 	.long intEepromDataLowR		;@ 0xBA int-eeprom data low
@@ -456,8 +456,8 @@ IN_Table:
 	.long extEepromAdrHighR		;@ 0xC7 ext-eeprom address high
 	.long extEepromStatusR		;@ 0xC8 ext-eeprom status
 	.long wsvUnknownR			;@ 0xC9 ???
-	.long wsvRTCStatusR			;@ 0xCA RTC status
-	.long wsvImportantR			;@ 0xCB RTC read
+	.long cartRtcStatusR		;@ 0xCA RTC status
+	.long cartRtcDataR			;@ 0xCB RTC read
 	.long wsvImportantR			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantR			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantR			;@ 0xCE WonderWitch flash
@@ -559,16 +559,6 @@ wsvSerialStatusR:			;@ 0xB3
 	ldrb r0,[spxptr,#wsvSerialStatus]
 	and r0,r0,#0xC0				;@ Mask out write bits
 	orr r0,r0,#4				;@ Hack, send buffer always empty
-	bx lr
-;@----------------------------------------------------------------------------
-wsvBnk0SlctR:				;@ 0xC0
-;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvBnk0Slct]
-	bx lr
-;@----------------------------------------------------------------------------
-wsvRTCStatusR:				;@ 0xCA
-;@----------------------------------------------------------------------------
-	mov r0,#0x80				;@ Hack, always ready
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -772,7 +762,7 @@ OUT_Table:
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
 	.long wsvRegW				;@ 0xB5 Input Controls
 	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownW			;@ 0xB7 ???
+	.long wsvUnknownW			;@ 0xB7 ??? NMI ack?
 	.long wsvUnmappedW			;@ 0xB8 ---
 	.long wsvUnmappedW			;@ 0xB9 ---
 	.long intEepromDataLowW		;@ 0xBA int-eeprom data low
@@ -796,8 +786,8 @@ OUT_Table:
 	.long extEepromAdrHighW		;@ 0xC7 ext-eeprom address high
 	.long extEepromCommandW		;@ 0xC8 ext-eeprom command
 	.long wsvUnknownW			;@ 0xC9 ???
-	.long wsvImportantW			;@ 0xCA RTC command
-	.long wsvImportantW			;@ 0xCB RTC data
+	.long cartRtcCommandW		;@ 0xCA RTC command
+	.long cartRtcDataW			;@ 0xCB RTC data
 	.long wsvImportantW			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantW			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantW			;@ 0xCE WonderWitch flash
