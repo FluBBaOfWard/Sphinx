@@ -1214,13 +1214,12 @@ wsvAssertIrqPin:					;@ r0 = interrupt status
 	and r0,r0,r1
 	b V30SetIRQPin
 ;@----------------------------------------------------------------------------
-wsvSetInterruptExternal:			;@ r0=int number
+wsvSetInterruptExternal:			;@ r0 = irq state
 ;@----------------------------------------------------------------------------
-	cmp r0,#7
-	bxls lr
-	mov r2,#1
 	ldrb r1,[spxptr,#wsvInterruptStatus]
-	orr r1,r1,r2,lsl r0
+	cmp r0,#0
+	biceq r1,r1,#4
+	orrne r1,r1,#4						;@ external interrupt is bit/number 2.
 	strb r1,[spxptr,#wsvInterruptStatus]
 	bx lr
 ;@----------------------------------------------------------------------------
