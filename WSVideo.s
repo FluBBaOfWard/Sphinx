@@ -590,7 +590,7 @@ OUT_Table:
 	.long wsvFgScrXW			;@ 0x12 Fg scroll X
 	.long wsvFgScrYW			;@ 0x13 Fg scroll Y
 	.long wsvRegW				;@ 0x14 LCD control (on/off?)
-	.long wsvRegW				;@ 0x15 LCD icons
+	.long wsvLCDIconW			;@ 0x15 LCD icons
 	.long wsvRegW				;@ 0x16 Total scan lines
 	.long wsvRegW				;@ 0x17 Vsync line
 	.long wsvUnmappedW			;@ 0x18 ---
@@ -919,6 +919,16 @@ sy2:
 	bhi sy2
 	bx lr
 
+;@----------------------------------------------------------------------------
+wsvLCDIconW:				;@ 0x15, Enable/disable LCD icons
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvLCDIcons]
+	ands r1,r1,#6
+	bxeq lr
+	cmp r1,#2
+	movne r1,#0
+	strb r1,[spxptr,#wsvOrientation]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvRefW:					;@ 0x16, Total number of scanlines?
 ;@----------------------------------------------------------------------------

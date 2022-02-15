@@ -2,6 +2,7 @@ Bandai WonderSwan/Sphinx To do
 ------------------------------
 
 	Buffer graphics conversion to get rid of glitches.
+	Buffer writes to tile map register.
 	Fix noise:
 		Different taps.
 		Frequency.
