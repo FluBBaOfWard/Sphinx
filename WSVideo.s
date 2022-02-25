@@ -858,7 +858,6 @@ wsvReadOnlyW:
 ;@----------------------------------------------------------------------------
 wsvUnmappedW:
 ;@----------------------------------------------------------------------------
-	mov r11,r11					;@ No$GBA breakpoint
 	ldr r2,=debugIOUnmappedW
 	bx r2
 ;@----------------------------------------------------------------------------
@@ -941,8 +940,9 @@ wsvDMAStartW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 	tst r1,#0x80
 	bxeq lr
 
-	stmfd sp!,{r4-r7,lr}
-	and r1,r1,#0x40				;@ Inc/dec
+	stmfd sp!,{r4-r8,lr}
+	and r8,r1,#0x40				;@ Inc/dec
+	rsb r8,r8,#0x20
 	mov r7,spxptr
 	ldr r4,[spxptr,#wsvDMASource]
 	bic r4,r4,#1
@@ -962,8 +962,8 @@ dmaLoop:
 	mov r1,r0
 	mov r0,r5,lsl#12
 	bl cpuWriteMem20W
-	add r4,r4,#2
-	add r5,r5,#2
+	add r4,r4,r8,asr#4
+	add r5,r5,r8,asr#4
 	subs r6,r6,#2
 	bne dmaLoop
 
@@ -972,11 +972,11 @@ dmaLoop:
 	strh r5,[spxptr,#wsvDMADest]
 
 	strh r6,[spxptr,#wsvDMALength]
-	cmp r6,#0
-	strbeq r0,[spxptr,#wsvDMAStart]
+	rsb r8,r8,#0x20
+	strb r8,[spxptr,#wsvDMAStart]
 dmaEnd:
 
-	ldmfd sp!,{r4-r7,lr}
+	ldmfd sp!,{r4-r8,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVideoModeW:				;@ 0x60, Video mode, WSColor
@@ -1108,6 +1108,7 @@ endFrame:
 	bne TransferVRAM16Packed
 	b TransferVRAM16Planar
 TransRet:
+	bl wsvUpdateIcons
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 checkFrameIRQ:
@@ -1602,6 +1603,101 @@ skipSprLoop:
 	bhi skipSprLoop
 	ldmfd sp!,{r4-r8,pc}
 
+;@----------------------------------------------------------------------------
+wsvUpdateIcons:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r6,lr}
+
+	ldr r0,=BG_GFX+0x800*2
+	add r1,r0,#0x40*24
+	add r0,r0,#0x40*3+0x3C
+	ldrh r4,[r1]
+	ldrb r5,[spxptr,#wsvLCDIcons]
+	ldrb r6,[spxptr,#wsvHWVolume]
+	orr r5,r5,r6,lsl#8
+	ldrb r6,[spxptr,#wsvSoundOutput]
+	orr r5,r5,r6,lsl#16
+	ldrb r6,[spxptr,#wsvHardwareType]
+	orr r5,r5,r6,lsl#24
+	tst r5,#0x20			;@ Dot 3
+	ldrhne r3,[r1,#2]
+	moveq r3,r4
+	strh r3,[r0],#0x40
+
+	ldrhne r3,[r1,#4]
+	and r6,r5,#0x30
+	cmp r6,#0x30
+	ldrheq r3,[r1,#6]
+	cmp r6,#0x10			;@ Dot 2
+	ldrheq r3,[r1,#8]
+	strh r3,[r0],#0x40
+
+	ands r6,r5,#0x18
+	ldrhne r3,[r1,#10]
+	moveq r3,r4
+	cmp r6,#0x18
+	ldrheq r3,[r1,#12]
+	cmp r6,#0x08			;@ Dot 1
+	ldrheq r3,[r1,#14]
+	strh r3,[r0],#0x40
+
+	tst r5,#0x04			;@ Horizontal
+	moveq r3,r4
+	ldrhne r3,[r1,#16]
+	strh r3,[r0],#0x40
+	ldrhne r3,[r1,#18]
+	strh r3,[r0],#0x40
+
+	tst r5,#0x02			;@ Vertical
+	moveq r3,r4
+	ldrhne r3,[r1,#20]
+	strh r3,[r0],#0x40
+
+	tst r5,#0x800000		;@ HeadPhones
+	moveq r3,r4
+	ldrhne r3,[r1,#22]
+	strh r3,[r0],#0x40
+	ldrhne r3,[r1,#24]
+	strh r3,[r0],#0x40
+
+	ands r6,r5,#0x300		;@ HW Volume
+	ldrheq r3,[r1,#26]
+	ldrhne r3,[r1,#28]
+	cmp r6,#0x200
+	ldrheq r3,[r1,#30]
+	ldrhhi r3,[r1,#32]
+	strh r3,[r0],#0x40
+	ldrh r3,[r1,#34]
+	strh r3,[r0],#0x40
+
+	tst r5,#0x40000000		;@ Low battery
+	moveq r3,r4
+	ldrhne r3,[r1,#36]
+	strh r3,[r0],#0x40
+	ldrhne r3,[r1,#38]
+	strh r3,[r0],#0x40
+	ldrhne r3,[r1,#40]
+	strh r3,[r0],#0x40
+
+	tst r5,#0x01			;@ Sleep Mode
+	moveq r3,r4
+	ldrhne r3,[r1,#42]
+	strh r3,[r0],#0x40
+	ldrhne r3,[r1,#44]
+	strh r3,[r0],#0x40
+
+	tst r5,#0x01000000		;@ Cart OK?
+	movne r3,r4
+	ldrheq r3,[r1,#46]
+	strh r3,[r0],#0x40
+
+	//						;@ Power On?
+	ldrh r3,[r1,#48]
+	strh r3,[r0],#0x40
+	ldrh r3,[r1,#50]
+	strh r3,[r0],#0x40
+
+	ldmfd sp!,{r4-r6,pc}
 ;@----------------------------------------------------------------------------
 #ifdef GBA
 	.section .sbss				;@ For the GBA

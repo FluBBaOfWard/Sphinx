@@ -137,7 +137,9 @@ wsvSoundOutput:		.byte 0		;@ 0x91 Sound output
 wsvNoiseCntr:		.short 0	;@ 0x92/0x93 Noise Counter Shift Register (15 bits)
 wsvVolume:			.byte 0		;@ 0x94 Volume (4 bit)
 
-wsvPadding6:		.space 11	;@ 0x95 - 0x9F ???
+wsvPadding6:		.space 9	;@ 0x95 - 0x9D ???
+wsvHWVolume:		.byte 0		;@ 0x9E HW Volume (2 bit)
+wsvPadding6_1:		.space 1	;@ 0x9F ???
 
 wsvHardwareType:	.byte 0		;@ 0xA0 Hardware type, boot rom lock.
 
