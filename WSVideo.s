@@ -20,7 +20,7 @@
 //	.global wsvConvertSprites
 	.global wsvBufferWindows
 	.global wsvRead
-	.global wsVideoW
+	.global wsvWrite
 	.global wsvGetInterruptVector
 	.global wsvSetInterruptExternal
 
@@ -232,11 +232,18 @@ wsvBufferWindows:
 
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvReadHigh:				;@ I/O read (0x0100-0xFFFF)
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r0,spxptr,lr}
+	blx debugIOUnmappedR
+	ldmfd sp!,{r0,spxptr,lr}
+	and r0,r0,#0xFF
+;@----------------------------------------------------------------------------
 wsvRead:					;@ I/O read (0x00-0xBF)
 ;@----------------------------------------------------------------------------
-	and r0,r0,#0xFF
-	ldr pc,[pc,r0,lsl#2]
-	.long 0
+	cmp r0,#0x100
+	ldrmi pc,[pc,r0,lsl#2]
+	b wsvReadHigh
 IN_Table:
 	.long wsvRegR				;@ 0x00 Display control
 	.long wsvRegR				;@ 0x01 Background color
@@ -386,26 +393,26 @@ IN_Table:
 	.long wsvRegR				;@ 0x89 Sound Ch2 volume
 	.long wsvRegR				;@ 0x8A Sound Ch3 volume
 	.long wsvRegR				;@ 0x8B Sound Ch4 volume
-	.long wsvRegR				;@ 0x8C
-	.long wsvRegR				;@ 0x8D
-	.long wsvRegR				;@ 0x8E
-	.long wsvRegR				;@ 0x8F
+	.long wsvRegR				;@ 0x8C Sweeep value
+	.long wsvRegR				;@ 0x8D Sweep time
+	.long wsvRegR				;@ 0x8E Noise control
+	.long wsvRegR				;@ 0x8F Wave base
 
-	.long wsvRegR				;@ 0x90
-	.long wsvRegR				;@ 0x91
+	.long wsvRegR				;@ 0x90 Sound control
+	.long wsvRegR				;@ 0x91 Sound output
 	.long wsvImportantR			;@ 0x92 Noise LFSR value low
 	.long wsvImportantR			;@ 0x93 Noise LFSR value high
-	.long wsvRegR				;@ 0x94
-	.long wsvRegR				;@ 0x95
-	.long wsvRegR				;@ 0x96
-	.long wsvRegR				;@ 0x97
-	.long wsvRegR				;@ 0x98
-	.long wsvRegR				;@ 0x99
-	.long wsvRegR				;@ 0x9A
-	.long wsvRegR				;@ 0x9B
-	.long wsvRegR				;@ 0x9C
-	.long wsvRegR				;@ 0x9D
-	.long wsvRegR				;@ 0x9E
+	.long wsvRegR				;@ 0x94 Sound voice control
+	.long wsvRegR				;@ 0x95 Sound Hyper voice
+	.long wsvUnknownR			;@ 0x96 SND9697
+	.long wsvUnknownR			;@ 0x97 SND9697
+	.long wsvUnknownR			;@ 0x98 SND9899
+	.long wsvUnknownR			;@ 0x99 SND9899
+	.long wsvUnknownR			;@ 0x9A SND9A
+	.long wsvUnknownR			;@ 0x9B SND9B
+	.long wsvUnknownR			;@ 0x9C SND9C
+	.long wsvUnknownR			;@ 0x9D SND9D
+	.long wsvRegR				;@ 0x9E HW Volume
 	.long wsvWSUnmappedR		;@ 0x9F ---
 
 	.long wsvRegR				;@ 0xA0 Color or mono HW
@@ -432,7 +439,7 @@ IN_Table:
 	.long wsvRegR				;@ 0xB4 Interrupt status
 	.long IOPortA_R				;@ 0xB5 keypad
 	.long wsvZeroR				;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownR			;@ 0xB7 ??? NMI ack?
+	.long wsvUnknownR			;@ 0xB7 ??? NMI ctrl?
 	.long wsvWSUnmappedR		;@ 0xB8 ---
 	.long wsvWSUnmappedR		;@ 0xB9 ---
 	.long intEepromDataLowR		;@ 0xBA int-eeprom data low
@@ -562,11 +569,18 @@ wsvSerialStatusR:			;@ 0xB3
 	bx lr
 
 ;@----------------------------------------------------------------------------
-wsVideoW:					;@ I/O write (0x00-0xBF)
+wsvWriteHigh:				;@ I/O write (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{r0,r1,spxptr,lr}
+	blx debugIOUnmappedW
+	ldmfd sp!,{r0,r1,spxptr,lr}
 	and r0,r0,#0xFF
-	ldr pc,[pc,r0,lsl#2]
-	.long 0
+;@----------------------------------------------------------------------------
+wsvWrite:					;@ I/O write (0x00-0xBF)
+;@----------------------------------------------------------------------------
+	cmp r0,#0x100
+	ldrmi pc,[pc,r0,lsl#2]
+	b wsvWriteHigh
 OUT_Table:
 	.long wsvRegW				;@ 0x00 Display control
 	.long wsvRegW				;@ 0x01 Background color
@@ -591,7 +605,7 @@ OUT_Table:
 	.long wsvFgScrYW			;@ 0x13 Fg scroll Y
 	.long wsvRegW				;@ 0x14 LCD control (on/off?)
 	.long wsvLCDIconW			;@ 0x15 LCD icons
-	.long wsvRegW				;@ 0x16 Total scan lines
+	.long wsvRefW				;@ 0x16 Total scan lines
 	.long wsvRegW				;@ 0x17 Vsync line
 	.long wsvUnmappedW			;@ 0x18 ---
 	.long wsvUnmappedW			;@ 0x19 ---
@@ -735,7 +749,7 @@ OUT_Table:
 	.long wsvReadOnlyW			;@ 0x9B SND9B
 	.long wsvReadOnlyW			;@ 0x9C SND9C
 	.long wsvReadOnlyW			;@ 0x9D SND9D
-	.long wsvImportantW			;@ 0x9E SND9E
+	.long wsvHWVolumeW			;@ 0x9E HW Volume
 	.long wsvUnmappedW			;@ 0x9F ---
 
 	.long wsvHW					;@ 0xA0 Hardware type, SOC_ASWAN / SOC_SPHINX.
@@ -762,7 +776,7 @@ OUT_Table:
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
 	.long wsvRegW				;@ 0xB5 Input Controls
 	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownW			;@ 0xB7 ??? NMI ack?
+	.long wsvUnknownW			;@ 0xB7 ??? NMI ctrl?
 	.long wsvUnmappedW			;@ 0xB8 ---
 	.long wsvUnmappedW			;@ 0xB9 ---
 	.long intEepromDataLowW		;@ 0xBA int-eeprom data low
@@ -875,43 +889,30 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[spxptr,#wsvBGXScroll]
-	strb r1,[spxptr,#wsvBGXScroll]
-	b scrollCnt
-
 ;@----------------------------------------------------------------------------
 wsvBgScrYW:					;@ 0x11, Background Vertical Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[spxptr,#wsvBGXScroll]
-	strb r1,[spxptr,#wsvBGYScroll]
-	b scrollCnt
-
 ;@----------------------------------------------------------------------------
 wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[spxptr,#wsvBGXScroll]
-	strb r1,[spxptr,#wsvFGXScroll]
-	b scrollCnt
-
 ;@----------------------------------------------------------------------------
 wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
 	ldr r2,[spxptr,#wsvBGXScroll]
-	strb r1,[spxptr,#wsvFGYScroll]
+	add r0,r0,#wsvRegs
+	strb r1,[spxptr,r0]
 
 scrollCnt:
 	ldr r1,[spxptr,#scanline]	;@ r1=scanline
 	add r1,r1,#1
-	cmp r1,#159
-	movhi r1,#159
+	cmp r1,#146
+	movhi r1,#146
 	ldr r0,[spxptr,#scrollLine]
 	subs r0,r1,r0
 	strhi r1,[spxptr,#scrollLine]
 
-	stmfd sp!,{r3}
 	ldr r3,[spxptr,#scrollBuff]
 	add r1,r3,r1,lsl#2
-	ldmfd sp!,{r3}
 sy2:
 	stmdbhi r1!,{r2}			;@ Fill backwards from scanline to lastline
 	subs r0,r0,#1
@@ -932,6 +933,11 @@ wsvLCDIconW:				;@ 0x15, Enable/disable LCD icons
 wsvRefW:					;@ 0x16, Total number of scanlines?
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvTotalLines]
+	cmp r1,#0x9E
+	movmi r1,#0x9E
+	cmp r1,#0xC8
+	movpl r1,#0xC8
+	str r1,lineStateLastLine
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvDMAStartW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
@@ -1000,6 +1006,12 @@ wsvSweepTimeW:				;@ 0x8B Sound sweep time
 ;@----------------------------------------------------------------------------
 	and r1,#0x1F				;@ Only low 5 bits
 	strb r1,[spxptr,#wsvSweepTime]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvHWVolumeW:				;@ 0x9E HW Volume?
+;@----------------------------------------------------------------------------
+	and r1,#0x03				;@ Only low 2 bits
+	strb r1,[spxptr,#wsvHWVolume]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
@@ -1164,6 +1176,7 @@ lineStateTable:
 	.long 75, midFrame			;@ Middle of screen
 	.long 143, endFrame			;@ Last visible scanline
 	.long 144, checkFrameIRQ	;@ frameIRQ
+lineStateLastLine:
 	.long 158, frameEndHook		;@ totalScanlines
 ;@----------------------------------------------------------------------------
 #ifdef GBA
