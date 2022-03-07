@@ -12,6 +12,18 @@
 #define SOC_SPHINX		(1)
 #define SOC_SPHINX2		(2)
 
+#define LCD_ICON_SLEP	(1<<0)
+#define LCD_ICON_VERT	(1<<1)
+#define LCD_ICON_HORZ	(1<<2)
+#define LCD_ICON_DOT1	(1<<3)
+#define LCD_ICON_DOT2	(1<<4)
+#define LCD_ICON_DOT3	(1<<5)
+#define LCD_ICON_VOLU	(3<<6)
+#define LCD_ICON_HEAD	(1<<8)
+#define LCD_ICON_BATT	(1<<9)
+#define LCD_ICON_CART	(1<<10)
+#define LCD_ICON_POWR	(1<<11)
+
 /** Game screen width in pixels */
 #define GAME_WIDTH  (224)
 /** Game screen height in pixels */
@@ -195,6 +207,7 @@ kgeLedBlink:		.byte 0
 kgeLedOnOff:		.byte 0		;@ Bit 0, Led On/Off.
 kgePadding1:		.space 3
 
+enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.
 ledCounter:			.long 0
 sphinxStateEnd:

@@ -1617,100 +1617,206 @@ skipSprLoop:
 	ldmfd sp!,{r4-r8,pc}
 
 ;@----------------------------------------------------------------------------
-wsvUpdateIcons:
+wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r6,lr}
+	ldr r1,[spxptr,#enabledLCDIcons]
+	ldrb r0,[spxptr,#wsvLCDIcons]
+	and r0,r0,#0x3F
+	ldrb r2,[spxptr,#wsvHWVolume]
+	and r2,r2,#3
+	orr r0,r0,r2,lsl#6
+	ldrb r2,[spxptr,#wsvSoundOutput]
+	tst r2,#0x80
+	orrne r0,r0,#LCD_ICON_HEAD
+	ldrb r2,[spxptr,#wsvHardwareType]
+	tst r2,#0x01
+	orrne r0,r0,#LCD_ICON_CART
+//	orr r0,r0,#LCD_ICON_SLEP
+	orr r0,r0,#LCD_ICON_POWR
+	eors r1,r1,r0
+	bxeq lr
+;@----------------------------------------------------------------------------
+wsvRedrawLCDIcons:			;@ In r0=
+;@----------------------------------------------------------------------------
+	ldr r1,=gMachine
+	ldrb r1,[r1]
+	cmp r1,#HW_WONDERSWANCOLOR
+	bne redrawMonoIcons
+;@----------------------------------------------------------------------------
+redrawColorIcons:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r5,lr}
 
-	ldr r0,=BG_GFX+0x800*2
-	add r1,r0,#0x40*24
-	add r0,r0,#0x40*3+0x3C
+	ldr r2,=BG_GFX+0x800*2
+	add r1,r2,#0x40*24
+	add r2,r2,#0x40*3+0x3C
 	ldrh r4,[r1]
-	ldrb r5,[spxptr,#wsvLCDIcons]
-	ldrb r6,[spxptr,#wsvHWVolume]
-	orr r5,r5,r6,lsl#8
-	ldrb r6,[spxptr,#wsvSoundOutput]
-	orr r5,r5,r6,lsl#16
-	ldrb r6,[spxptr,#wsvHardwareType]
-	orr r5,r5,r6,lsl#24
-	tst r5,#0x20			;@ Dot 3
+	tst r0,#LCD_ICON_DOT3
 	ldrhne r3,[r1,#2]
 	moveq r3,r4
-	strh r3,[r0],#0x40
+	strh r3,[r2],#0x40
 
 	ldrhne r3,[r1,#4]
-	and r6,r5,#0x30
-	cmp r6,#0x30
+	and r5,r0,#LCD_ICON_DOT3|LCD_ICON_DOT2
+	cmp r5,#LCD_ICON_DOT3|LCD_ICON_DOT2
 	ldrheq r3,[r1,#6]
-	cmp r6,#0x10			;@ Dot 2
+	cmp r5,#LCD_ICON_DOT2
 	ldrheq r3,[r1,#8]
-	strh r3,[r0],#0x40
+	strh r3,[r2],#0x40
 
-	ands r6,r5,#0x18
+	ands r5,r0,#LCD_ICON_DOT2|LCD_ICON_DOT1
 	ldrhne r3,[r1,#10]
 	moveq r3,r4
-	cmp r6,#0x18
+	cmp r5,#LCD_ICON_DOT2|LCD_ICON_DOT1
 	ldrheq r3,[r1,#12]
-	cmp r6,#0x08			;@ Dot 1
+	cmp r5,#LCD_ICON_DOT1
 	ldrheq r3,[r1,#14]
-	strh r3,[r0],#0x40
+	strh r3,[r2],#0x40
 
-	tst r5,#0x04			;@ Horizontal
-	moveq r3,r4
+	ands r5,r0,#LCD_ICON_DOT1|LCD_ICON_HORZ
 	ldrhne r3,[r1,#16]
-	strh r3,[r0],#0x40
-	ldrhne r3,[r1,#18]
-	strh r3,[r0],#0x40
-
-	tst r5,#0x02			;@ Vertical
 	moveq r3,r4
-	ldrhne r3,[r1,#20]
-	strh r3,[r0],#0x40
-
-	tst r5,#0x800000		;@ HeadPhones
-	moveq r3,r4
+	cmp r5,#LCD_ICON_DOT1|LCD_ICON_HORZ
+	ldrheq r3,[r1,#18]
+	cmp r5,#LCD_ICON_HORZ
+	ldrheq r3,[r1,#20]
+	strh r3,[r2],#0x40
+	tst r0,#LCD_ICON_HORZ
 	ldrhne r3,[r1,#22]
-	strh r3,[r0],#0x40
+	strh r3,[r2],#0x40
+
+	tst r0,#LCD_ICON_VERT	;@ Vertical
+	moveq r3,r4
 	ldrhne r3,[r1,#24]
-	strh r3,[r0],#0x40
+	strh r3,[r2],#0x40
 
-	ands r6,r5,#0x300		;@ HW Volume
-	ldrheq r3,[r1,#26]
+	tst r0,#LCD_ICON_HEAD	;@ HeadPhones
+	moveq r3,r4
+	ldrhne r3,[r1,#26]
+	strh r3,[r2],#0x40
 	ldrhne r3,[r1,#28]
-	cmp r6,#0x200
+	strh r3,[r2],#0x40
+
+	ands r5,r0,#LCD_ICON_VOLU	;@ HW Volume
 	ldrheq r3,[r1,#30]
-	ldrhhi r3,[r1,#32]
-	strh r3,[r0],#0x40
-	ldrh r3,[r1,#34]
-	strh r3,[r0],#0x40
+	ldrhne r3,[r1,#32]
+	cmp r5,#0x80
+	ldrheq r3,[r1,#34]
+	ldrhhi r3,[r1,#36]
+	strh r3,[r2],#0x40
+	ldrh r3,[r1,#38]
+	strh r3,[r2],#0x40
 
-	tst r5,#0x40000000		;@ Low battery
+	tst r0,#LCD_ICON_BATT	;@ Low battery
 	moveq r3,r4
-	ldrhne r3,[r1,#36]
-	strh r3,[r0],#0x40
-	ldrhne r3,[r1,#38]
-	strh r3,[r0],#0x40
 	ldrhne r3,[r1,#40]
-	strh r3,[r0],#0x40
-
-	tst r5,#0x01			;@ Sleep Mode
-	moveq r3,r4
+	strh r3,[r2],#0x40
 	ldrhne r3,[r1,#42]
-	strh r3,[r0],#0x40
+	strh r3,[r2],#0x40
 	ldrhne r3,[r1,#44]
-	strh r3,[r0],#0x40
+	strh r3,[r2],#0x40
 
-	tst r5,#0x01000000		;@ Cart OK?
+	tst r0,#LCD_ICON_SLEP	;@ Sleep Mode
+	moveq r3,r4
+	ldrhne r3,[r1,#46]
+	strh r3,[r2],#0x40
+	ldrhne r3,[r1,#48]
+	strh r3,[r2],#0x40
+
+	tst r0,#LCD_ICON_CART	;@ Cart OK?
 	movne r3,r4
-	ldrheq r3,[r1,#46]
-	strh r3,[r0],#0x40
+	ldrheq r3,[r1,#50]
+	strh r3,[r2],#0x40
 
-	//						;@ Power On?
-	ldrh r3,[r1,#48]
-	strh r3,[r0],#0x40
-	ldrh r3,[r1,#50]
-	strh r3,[r0],#0x40
+	tst r0,#LCD_ICON_POWR	;@ Power On?
+	moveq r3,r4
+	ldrh r3,[r1,#52]
+	strh r3,[r2],#0x40
+	ldrh r3,[r1,#54]
+	strh r3,[r2],#0x40
 
-	ldmfd sp!,{r4-r6,pc}
+	ldmfd sp!,{r4-r5,pc}
+;@----------------------------------------------------------------------------
+redrawMonoIcons:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4-r5,lr}
+
+	ldr r2,=BG_GFX+0x800*2
+	add r1,r2,#0x40*24
+	add r2,r2,#0x40*21
+	ldrh r4,[r1]
+
+	tst r0,#LCD_ICON_POWR	;@ Power On?
+	moveq r3,r4
+	ldrh r3,[r1,#0x02]
+	strh r3,[r2,#0x04]
+
+	tst r0,#LCD_ICON_CART	;@ Cart OK?
+	movne r3,r4
+	ldrheq r3,[r1,#0x06]
+	strh r3,[r2,#0x08]
+	ldrheq r3,[r1,#0x08]
+	strh r3,[r2,#0x0A]
+
+	tst r0,#LCD_ICON_SLEP	;@ Sleep Mode
+	moveq r3,r4
+	ldrhne r3,[r1,#0x0A]
+	strh r3,[r2,#0x0C]
+
+	tst r0,#LCD_ICON_BATT	;@ Low battery
+	moveq r3,r4
+	ldrhne r3,[r1,#0x10]
+	strh r3,[r2,#0x12]
+	ldrhne r3,[r1,#0x12]
+	strh r3,[r2,#0x14]
+	ldrhne r3,[r1,#0x14]
+	strh r3,[r2,#0x16]
+	ldrhne r3,[r1,#0x16]
+	strh r3,[r2,#0x18]
+
+	ands r5,r0,#LCD_ICON_VOLU	;@ HW Volume
+	moveq r3,r4
+	ldrhne r3,[r1,#0x18]
+	strh r3,[r2,#0x1A]
+	ldrhne r3,[r1,#0x1A]
+	strh r3,[r2,#0x1C]
+	ldrhne r3,[r1,#0x1C]
+	strh r3,[r2,#0x1E]
+
+	tst r0,#LCD_ICON_HEAD	;@ HeadPhones
+	moveq r3,r4
+	ldrhne r3,[r1,#0x24]
+	strh r3,[r2,#0x26]
+
+	tst r0,#LCD_ICON_HORZ
+	moveq r3,r4
+	ldrhne r3,[r1,#0x2A]
+	strh r3,[r2,#0x2C]
+	ldrhne r3,[r1,#0x2C]
+	strh r3,[r2,#0x2E]
+
+	tst r0,#LCD_ICON_VERT	;@ Vertical
+	moveq r3,r4
+	ldrhne r3,[r1,#0x2E]
+	strh r3,[r2,#0x30]
+
+	tst r0,#LCD_ICON_DOT1
+	moveq r3,r4
+	ldrhne r3,[r1,#0x32]
+	strh r3,[r2,#0x34]
+
+	tst r0,#LCD_ICON_DOT2
+	moveq r3,r4
+	ldrhne r3,[r1,#0x34]
+	strh r3,[r2,#0x36]
+
+	tst r0,#LCD_ICON_DOT3
+	moveq r3,r4
+	ldrhne r3,[r1,#0x36]
+	strh r3,[r2,#0x38]
+
+	ldmfd sp!,{r4-r5,pc}
+
 ;@----------------------------------------------------------------------------
 #ifdef GBA
 	.section .sbss				;@ For the GBA
