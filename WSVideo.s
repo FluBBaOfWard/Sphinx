@@ -17,7 +17,7 @@
 	.global wsvDoScanline
 	.global copyScrollValues
 	.global wsvConvertTileMaps
-//	.global wsvConvertSprites
+	.global wsvConvertSprites
 	.global wsvBufferWindows
 	.global wsvRead
 	.global wsvWrite
@@ -212,6 +212,7 @@ wsvBufferWindows:
 	cmp r1,#GAME_WIDTH
 	movpl r1,#GAME_WIDTH
 	add r1,r1,#(SCREEN_WIDTH-GAME_WIDTH)/2
+	add r2,r2,#0x10000
 	cmp r2,#GAME_WIDTH<<16
 	movpl r2,#GAME_WIDTH<<16
 	add r2,r2,#((SCREEN_WIDTH-GAME_WIDTH)/2)<<16
@@ -220,10 +221,11 @@ wsvBufferWindows:
 	strh r1,[spxptr,#windowData]
 
 	and r1,r0,#0x0000FF00		;@ V start
-	mov r2,r0,lsr#24			;@ V size
+	mov r2,r0,lsr#24			;@ V end
 	cmp r1,#GAME_HEIGHT<<8
 	movpl r1,#GAME_HEIGHT<<8
 	add r1,r1,#((SCREEN_HEIGHT-GAME_HEIGHT)/2)<<8
+	add r2,r2,#1
 	cmp r2,#GAME_HEIGHT
 	movpl r2,#GAME_HEIGHT
 	add r2,r2,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
@@ -1096,39 +1098,22 @@ tMapRet:
 	ldmfd sp!,{r4-r11,pc}
 
 ;@----------------------------------------------------------------------------
+newFrame:					;@ Called before line 0
+;@----------------------------------------------------------------------------
+	bx lr
+;@----------------------------------------------------------------------------
 midFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-//	bl wsvTransferVRAM
 	bl wsvBufferWindows
-	ldr r0,=tmpOamBuffer		;@ Destination
-	ldr r0,[r0]
-	bl wsvConvertSprites
 
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	bl wsvDMASprites
-	ldrb r0,[spxptr,#wsvVideoMode]
-	adr lr,TransRet
-	ands r0,r0,#0xE0
-	tst r0,#0x40
-	beq TransferVRAM4Planar
-	tst r0,#0x20
-	bne TransferVRAM16Packed
-	b TransferVRAM16Planar
-TransRet:
-	bl wsvUpdateIcons
-	ldmfd sp!,{pc}
-;@----------------------------------------------------------------------------
-checkFrameIRQ:
-;@----------------------------------------------------------------------------
-//	stmfd sp!,{lr}
 	ldrb r1,[spxptr,#wsvBGXScroll]
 	bl wsvBgScrXW
-//	ldmfd sp!,{lr}
 	bl endFrameGfx
 
 	ldrb r0,[spxptr,#wsvInterruptStatus]
@@ -1146,12 +1131,27 @@ checkFrameIRQ:
 noTimerVblIrq:
 	orr r0,r0,#0x40					;@ #6 = VBlank
 	strb r0,[spxptr,#wsvInterruptStatus]
-	stmfd sp!,{lr}
-	bl wsvAssertIrqPin
-	ldmfd sp!,{lr}
 
-	mov r0,#1
 	ldmfd sp!,{pc}
+;@----------------------------------------------------------------------------
+drawFrameGfx:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+
+	bl wsvDMASprites
+	ldrb r0,[spxptr,#wsvVideoMode]
+	adr lr,TransRet
+	ands r0,r0,#0xE0
+	tst r0,#0x40
+	beq TransferVRAM4Planar
+	tst r0,#0x20
+	bne TransferVRAM16Packed
+	b TransferVRAM16Planar
+TransRet:
+	bl wsvUpdateIcons
+
+	ldmfd sp!,{pc}
+
 ;@----------------------------------------------------------------------------
 frameEndHook:
 	mov r0,#0
@@ -1159,23 +1159,16 @@ frameEndHook:
 
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
-	mov r0,#0
+	mov r0,#-1
 	stmia spxptr,{r0-r2}		;@ Reset scanline, nextChange & lineState
-
-//	mov r0,#0					;@ Must return 0 to end frame.
-	ldmfd sp!,{pc}
-
-;@----------------------------------------------------------------------------
-newFrame:					;@ Called before line 0
-;@----------------------------------------------------------------------------
 	bx lr
 
 ;@----------------------------------------------------------------------------
 lineStateTable:
 	.long 0, newFrame			;@ zeroLine
 	.long 75, midFrame			;@ Middle of screen
-	.long 143, endFrame			;@ Last visible scanline
-	.long 144, checkFrameIRQ	;@ frameIRQ
+	.long 144, endFrame			;@ After Last visible scanline
+	.long 145, drawFrameGfx		;@ frameIRQ
 lineStateLastLine:
 	.long 158, frameEndHook		;@ totalScanlines
 ;@----------------------------------------------------------------------------
@@ -1197,9 +1190,9 @@ redoScanline:
 wsvDoScanline:
 ;@----------------------------------------------------------------------------
 	ldmia spxptr,{r0,r1}		;@ Read scanLine & nextLineChange
+	add r0,r0,#1
 	cmp r0,r1
 	bpl redoScanline
-	add r0,r0,#1
 	str r0,[spxptr,#scanline]
 ;@----------------------------------------------------------------------------
 checkScanlineIRQ:
@@ -1224,7 +1217,9 @@ noTimerHblIrq:
 	strb r0,[spxptr,#wsvInterruptStatus]
 	stmfd sp!,{lr}
 	bl wsvAssertIrqPin
-	mov r0,#1
+	ldr r0,[spxptr,#scanline]
+	subs r0,r0,#144				;@ Return from emulation loop here
+	movne r0,#1
 	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------

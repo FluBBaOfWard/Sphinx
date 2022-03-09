@@ -2,8 +2,11 @@ Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.1.5 - 2022-02-13 (FluBBa)
+V0.1.5 - 2022-03-09 (FluBBa)
 	Added support for RTC.
+	Fixed HBlank timer.
+	Fixed Window size.
+	Optimized graphic redraw.
 
 V0.1.4 - 2022-02-01 (FluBBa)
 	Fixed banking of SRAM.
