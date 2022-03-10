@@ -23,6 +23,7 @@
 	.global wsvWrite
 	.global wsvGetInterruptVector
 	.global wsvSetInterruptExternal
+	.global wsvPushVolumeButton
 
 	.syntax unified
 	.arm
@@ -414,7 +415,7 @@ IN_Table:
 	.long wsvUnknownR			;@ 0x9B SND9B
 	.long wsvUnknownR			;@ 0x9C SND9C
 	.long wsvUnknownR			;@ 0x9D SND9D
-	.long wsvRegR				;@ 0x9E HW Volume
+	.long wsvImportantR			;@ 0x9E HW Volume
 	.long wsvWSUnmappedR		;@ 0x9F ---
 
 	.long wsvRegR				;@ 0xA0 Color or mono HW
@@ -1076,6 +1077,16 @@ wsvIntAckW:					;@ 0xB6
 	bic r0,r0,r1
 	strb r0,[spxptr,#wsvInterruptStatus]
 	b wsvAssertIrqPin
+;@----------------------------------------------------------------------------
+wsvPushVolumeButton:
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvHWVolume]
+	subs r0,r0,#1
+	movmi r0,#0x03				;@ Max volume
+	strb r0,[spxptr,#wsvHWVolume]
+	bx lr
+
+
 ;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
