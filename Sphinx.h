@@ -63,8 +63,7 @@ typedef struct {
 	u32 ledCounter;
 	u32 windowData;
 
-	void *periodicIrqFunc;
-	void *frameIrqFunc;
+	void *irqFunction;
 
 	u8 dirtyTiles[4];
 	void *gfxRAM;
@@ -75,7 +74,7 @@ typedef struct {
 
 } Sphinx;
 
-void wsVideoReset(void *frameIrqFunc(), void *periodicIrqFunc(), void *ram);
+void wsVideoReset(void *irqFunction(), void *ram, int soc);
 
 /**
  * Saves the state of the chip to the destination.

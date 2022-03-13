@@ -106,25 +106,18 @@ wsvPaletteE1:		.byte 0		;@ 0x3D Palette E1
 wsvPaletteF0:		.byte 0		;@ 0x3E Palette F0
 wsvPaletteF1:		.byte 0		;@ 0x3F Palette F1
 
-wsvDMASource:		.short 0	;@ 0x40/0x41 DMA source adr bits 15-0
-wsvDMASrcBnk:		.byte 0		;@ 0x42 DMA source adr bits 19-16
-wsvDMAEmpty:		.byte 0		;@ 0x43 Nothing
+wsvDMASource:		.long 0		;@ 0x40-0x43 DMA source adr bits 19-0
 wsvDMADest:			.short 0	;@ 0x44/0x45 DMA destination adr bits 15-0
 wsvDMALength:		.short 0	;@ 0x46/0x47 DMA length bits 15-0
 wsvDMAStart:		.byte 0		;@ 0x48 DMA control, bit 7 start
-
 wsvPadding1:		.space 1	;@ 0x49 ???
-wsvSndDMASrc0:		.byte 0		;@ 0x4A Sound DMA source adr bits 7-0
-wsvSndDMASrc1:		.byte 0		;@ 0x4B Sound DMA source adr bits 15-8
-wsvSndDMASrc2:		.byte 0		;@ 0x4C Sound DMA source adr bits 19-16
-wsvPadding2:		.space 1	;@ 0x4D ???
-wsvSndDMALen0:		.byte 0		;@ 0x4E Sound DMA length bits 7-0
-wsvSndDMALen1:		.byte 0		;@ 0x4F Sound DMA length bits 15-8
-wsvSndDMALen2:		.byte 0		;@ 0x4F Sound DMA length bits 23-16
-wsvPadding3:		.space 1	;@ 0x51 ???
-wsvSndDMAStart:		.byte 0		;@ 0x52 Sound DMA control, bit 7 start
 
-wsvPadding4:		.space 13	;@ 0x53 - 0x5F ???
+wsvSndDMASrc:		.long 0		;@ 0x4A-0x4D Sound DMA source adr bits 19-0
+wsvSndDMALen:		.long 0		;@ 0x4E-0x51 Sound DMA length bits 19-0
+wsvSndDMACtrl:		.byte 0		;@ 0x52 Sound DMA control, bit 7 start
+wsvPadding2:		.space 1	;@ 0x53 ???
+
+wsvPadding4:		.space 12	;@ 0x54 - 0x5F ???
 
 wsvVideoMode:		.byte 0		;@ 0x60 Video rendering mode
 
@@ -180,6 +173,7 @@ wsvIntEEPROMData:	.short 0	;@ 0xBA/0xBB Internal EEPROM data
 wsvIntEEPROMAdr:	.short 0	;@ 0xBC/0xBD Internal EEPROM address
 wsvIntEEPROMCmd:	.short 0	;@ 0xBE Internal EEPROM command/status
 
+;@----------------------------------------------------------------------------
 wsvBnk0Slct:		.byte 0		;@ 0xC0 ROM Bank Base Selector for segments 4-$F
 wsvBnk1Slct:		.byte 0		;@ 0xC1 SRAM Bank selector
 wsvBnk2Slct:		.byte 0		;@ 0xC2 BNK2SLCT - ROM Bank selector for segment 2
@@ -192,6 +186,10 @@ wsvRTCCommand:		.byte 0		;@ 0xCA RTC Command
 wsvRTCData:			.byte 0		;@ 0xCB RTC Data
 
 wsvPadding14:		.space 52	;@ 0xCC - 0xFF ???
+
+;@----------------------------------------------------------------------------
+sndDmaSource:		.long 0		;@ Original Sound DMA source address
+sndDmaLength:		.long 0		;@ Original Sound DMA length
 
 pcm1CurrentAddr:	.long 0		;@ Ch1 Current addr
 pcm2CurrentAddr:	.long 0		;@ Ch2 Current addr
@@ -212,8 +210,7 @@ scrollLine: 		.long 0		;@ Last line scroll was updated.
 ledCounter:			.long 0
 sphinxStateEnd:
 
-frameIrqFunc:		.long 0		;@ V-Blank Irq
-periodicIrqFunc:	.long 0		;@ H-Blank Irq
+irqFunction:		.long 0		;@ IRQ function
 
 dirtyTiles:			.space 4
 gfxRAM:				.long 0		;@ 0x4000/0x10000

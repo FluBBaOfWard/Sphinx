@@ -62,7 +62,7 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=spxptr
+wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=spxptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
@@ -83,10 +83,7 @@ wsVideoReset:		;@ r0=frameIrqFunc, r1=hIrqFunc, r2=ram+LUTs, r3=SOC 0=mono,1=col
 	ldmfd sp!,{r0-r3,lr}
 	cmp r0,#0
 	adreq r0,dummyIrqFunc
-	cmp r1,#0
-	adreq r1,dummyIrqFunc
-	str r0,[spxptr,#frameIrqFunc]
-	str r1,[spxptr,#periodicIrqFunc]
+	str r0,[spxptr,#irqFunction]
 
 	str r2,[spxptr,#gfxRAM]
 	add r0,r2,#0xFE00
@@ -661,7 +658,7 @@ OUT_Table:
 	.long wsvRegW				;@ 0x45 DMA dst
 	.long wsvRegW				;@ 0x46 DMA length
 	.long wsvRegW				;@ 0x47 DMA len
-	.long wsvDMAStartW			;@ 0x48 DMA control
+	.long wsvDMACtrlW			;@ 0x48 DMA control
 	.long wsvUnmappedW			;@ 0x49 ---
 	.long wsvRegW				;@ 0x4A	Sound DMA source
 	.long wsvRegW				;@ 0x4B Sound DMA src
@@ -672,7 +669,7 @@ OUT_Table:
 
 	.long wsvRegW				;@ 0x50 Sound DMA len
 	.long wsvUnmappedW			;@ 0x51 ---
-	.long wsvRegW				;@ 0x52 Sound DMA control
+	.long wsvSndDMACtrlW		;@ 0x52 Sound DMA control
 	.long wsvUnmappedW			;@ 0x53 ---
 	.long wsvUnmappedW			;@ 0x54 ---
 	.long wsvUnmappedW			;@ 0x55 ---
@@ -940,13 +937,14 @@ wsvRefW:					;@ 0x16, Total number of scanlines?
 	movmi r1,#0x9E
 	cmp r1,#0xC8
 	movpl r1,#0xC8
+	add r1,r1,#1
 	str r1,lineStateLastLine
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvDMAStartW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
+wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvDMAStart]
-	tst r1,#0x80
+	tst r1,#0x80				;@ Start?
 	bxeq lr
 
 	stmfd sp!,{r4-r8,lr}
@@ -988,6 +986,17 @@ dmaEnd:
 	ldmfd sp!,{r4-r8,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSndDMACtrl]
+	tst r1,#0x80
+	bxeq lr
+	ldr r1,[spxptr,#wsvSndDMASrc]
+	str r1,[spxptr,#sndDmaSource]
+	ldr r1,[spxptr,#wsvSndDMALen]
+	str r1,[spxptr,#sndDmaLength]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvVideoMode]
@@ -1025,7 +1034,7 @@ wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 	orr r1,r1,r0
 	strb r1,[spxptr,#wsvHardwareType]
 	eor r0,r0,r1
-	tst r1,#1					;@ Boot rom locked?
+	tst r0,#1					;@ Boot rom locked?
 	bxeq lr
 	mov r0,#0					;@ Remove boot rom overlay
 	b setBootRomOverlay
@@ -1181,7 +1190,7 @@ lineStateTable:
 	.long 144, endFrame			;@ After Last visible scanline
 	.long 145, drawFrameGfx		;@ frameIRQ
 lineStateLastLine:
-	.long 158, frameEndHook		;@ totalScanlines
+	.long 159, frameEndHook		;@ totalScanlines
 ;@----------------------------------------------------------------------------
 #ifdef GBA
 	.section .iwram, "ax", %progbits	;@ For the GBA
@@ -1228,8 +1237,13 @@ noTimerHblIrq:
 	strb r0,[spxptr,#wsvInterruptStatus]
 	stmfd sp!,{lr}
 	bl wsvAssertIrqPin
+
+	ldrb r0,[spxptr,#wsvSndDMACtrl]
+	tst r0,#0x80
+	blne doSoundDMA
+
 	ldr r0,[spxptr,#scanline]
-	subs r0,r0,#144				;@ Return from emulation loop here
+	subs r0,r0,#144				;@ Return from emulation loop on this scanline
 	movne r0,#1
 	ldmfd sp!,{pc}
 
@@ -1238,22 +1252,22 @@ wsvUpdateIrqPin:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 ;@----------------------------------------------------------------------------
-wsvAssertIrqPin:					;@ r0 = interrupt status
+wsvAssertIrqPin:			;@ r0 = interrupt status
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptEnable]
 	and r0,r0,r1
-	b V30SetIRQPin
+	ldr pc,[spxptr,#irqFunction]
 ;@----------------------------------------------------------------------------
-wsvSetInterruptExternal:			;@ r0 = irq state
+wsvSetInterruptExternal:	;@ r0 = irq state
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptStatus]
 	cmp r0,#0
 	biceq r1,r1,#4
-	orrne r1,r1,#4						;@ external interrupt is bit/number 2.
+	orrne r1,r1,#4				;@ external interrupt is bit/number 2.
 	strb r1,[spxptr,#wsvInterruptStatus]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvGetInterruptVector:				;@ return vector in r0, #-1 if error
+wsvGetInterruptVector:		;@ return vector in r0, #-1 if error
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptStatus]
 	ldrb r0,[spxptr,#wsvInterruptEnable]
@@ -1266,6 +1280,35 @@ wsvGetInterruptVector:				;@ return vector in r0, #-1 if error
 	bic r1,r1,#7
 	orr r0,r0,r1
 	bx lr
+;@----------------------------------------------------------------------------
+doSoundDMA:					;@ In r0=SndDmaCtrl
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4,lr}
+	mov r4,r0
+	ldr r1,[spxptr,#wsvSndDMALen]
+	ldr r2,[spxptr,#wsvSndDMASrc]
+	subs r1,r1,#1
+	bgt sndDmaCont
+	tst r4,#0x08				;@ Loop?
+	biceq r4,r4,#0x80
+	strb r4,[spxptr,#wsvSndDMACtrl]
+	ldrne r1,[spxptr,#sndDmaLength]
+	ldrne r2,[spxptr,#sndDmaSource]
+	moveq r1,#0
+	streq r1,[spxptr,#wsvSndDMALen]
+	ldmfdeq sp!,{r4,pc}
+sndDmaCont:
+	str r1,[spxptr,#wsvSndDMALen]
+	mov r0,r2,lsl#12
+	tst r4,#0x40				;@ Increase/decrease
+	addeq r2,r2,#1
+	subne r2,r2,#1
+	str r2,[spxptr,#wsvSndDMASrc]
+	bl cpuReadMem20
+	tst r4,#0x20				;@ Ch2Vol/HyperVoice
+	strbeq r0,[spxptr,#wsvSound2Vol]
+
+	ldmfd sp!,{r4,pc}
 ;@----------------------------------------------------------------------------
 T_data:
 	.long DIRTYTILES+0x200
@@ -1443,7 +1486,7 @@ tileLoop4_1:
 	bx lr
 
 ;@-------------------------------------------------------------------------------
-;@ bgChrFinish	;end of frame...
+;@ bgChrFinish				;end of frame...
 ;@-------------------------------------------------------------------------------
 ;@	ldr r5,=0xFE00FE00
 ;@ MSB          LSB
@@ -1476,7 +1519,7 @@ bgm16Loop:
 	bx lr
 
 ;@-------------------------------------------------------------------------------
-;@ bgChrFinish	;end of frame...
+;@ bgChrFinish				;end of frame...
 ;@-------------------------------------------------------------------------------
 ;@	ldr r5,=0xFE00FE00
 ;@	ldr r6,=0x00010001
@@ -1691,12 +1734,12 @@ redrawColorIcons:
 	ldrhne r3,[r1,#22]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_VERT	;@ Vertical
+	tst r0,#LCD_ICON_VERT		;@ Vertical
 	moveq r3,r4
 	ldrhne r3,[r1,#24]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_HEAD	;@ HeadPhones
+	tst r0,#LCD_ICON_HEAD		;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#26]
 	strh r3,[r2],#0x40
@@ -1713,7 +1756,7 @@ redrawColorIcons:
 	ldrh r3,[r1,#38]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_BATT	;@ Low battery
+	tst r0,#LCD_ICON_BATT		;@ Low battery
 	moveq r3,r4
 	ldrhne r3,[r1,#40]
 	strh r3,[r2],#0x40
@@ -1722,19 +1765,19 @@ redrawColorIcons:
 	ldrhne r3,[r1,#44]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_SLEP	;@ Sleep Mode
+	tst r0,#LCD_ICON_SLEP		;@ Sleep Mode
 	moveq r3,r4
 	ldrhne r3,[r1,#46]
 	strh r3,[r2],#0x40
 	ldrhne r3,[r1,#48]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_CART	;@ Cart OK?
+	tst r0,#LCD_ICON_CART		;@ Cart OK?
 	movne r3,r4
 	ldrheq r3,[r1,#50]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_POWR	;@ Power On?
+	tst r0,#LCD_ICON_POWR		;@ Power On?
 	moveq r3,r4
 	ldrh r3,[r1,#52]
 	strh r3,[r2],#0x40
@@ -1752,24 +1795,24 @@ redrawMonoIcons:
 	add r2,r2,#0x40*21
 	ldrh r4,[r1]
 
-	tst r0,#LCD_ICON_POWR	;@ Power On?
+	tst r0,#LCD_ICON_POWR		;@ Power On?
 	moveq r3,r4
 	ldrh r3,[r1,#0x02]
 	strh r3,[r2,#0x04]
 
-	tst r0,#LCD_ICON_CART	;@ Cart OK?
+	tst r0,#LCD_ICON_CART		;@ Cart OK?
 	movne r3,r4
 	ldrheq r3,[r1,#0x06]
 	strh r3,[r2,#0x08]
 	ldrheq r3,[r1,#0x08]
 	strh r3,[r2,#0x0A]
 
-	tst r0,#LCD_ICON_SLEP	;@ Sleep Mode
+	tst r0,#LCD_ICON_SLEP		;@ Sleep Mode
 	moveq r3,r4
 	ldrhne r3,[r1,#0x0A]
 	strh r3,[r2,#0x0C]
 
-	tst r0,#LCD_ICON_BATT	;@ Low battery
+	tst r0,#LCD_ICON_BATT		;@ Low battery
 	moveq r3,r4
 	ldrhne r3,[r1,#0x10]
 	strh r3,[r2,#0x12]
@@ -1789,7 +1832,7 @@ redrawMonoIcons:
 	ldrhne r3,[r1,#0x1C]
 	strh r3,[r2,#0x1E]
 
-	tst r0,#LCD_ICON_HEAD	;@ HeadPhones
+	tst r0,#LCD_ICON_HEAD		;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#0x24]
 	strh r3,[r2,#0x26]
@@ -1801,7 +1844,7 @@ redrawMonoIcons:
 	ldrhne r3,[r1,#0x2C]
 	strh r3,[r2,#0x2E]
 
-	tst r0,#LCD_ICON_VERT	;@ Vertical
+	tst r0,#LCD_ICON_VERT		;@ Vertical
 	moveq r3,r4
 	ldrhne r3,[r1,#0x2E]
 	strh r3,[r2,#0x30]
