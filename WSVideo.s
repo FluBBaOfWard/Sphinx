@@ -1327,8 +1327,8 @@ TransferVRAM16Packed:
 	mov r1,#0
 
 tileLoop16_0p:
-	ldr r10,[r4]
-	str r9,[r4],#4
+	ldr r10,[r4,r1,lsr#5]
+	str r9,[r4,r1,lsr#5]
 	tst r10,#0x000000FF
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
@@ -1370,27 +1370,27 @@ TransferVRAM16Planar:
 	mov r9,#-1
 	mov r1,#0
 
-tileLoop16_0:
-	ldr r10,[r4]
-	str r9,[r4],#4
+tx16ColTileLoop0:
+	ldr r10,[r4,r1,lsr#5]
+	str r9,[r4,r1,lsr#5]
 	tst r10,#0x000000FF
 	addne r1,r1,#0x20
-	bleq tileLoop16_1
+	bleq tx16ColTileLoop1
 	tst r10,#0x0000FF00
 	addne r1,r1,#0x20
-	bleq tileLoop16_1
+	bleq tx16ColTileLoop1
 	tst r10,#0x00FF0000
 	addne r1,r1,#0x20
-	bleq tileLoop16_1
+	bleq tx16ColTileLoop1
 	tst r10,#0xFF000000
 	addne r1,r1,#0x20
-	bleq tileLoop16_1
+	bleq tx16ColTileLoop1
 	cmp r1,#0x8000
-	bne tileLoop16_0
+	bne tx16ColTileLoop0
 
 	ldmfd sp!,{r4-r10,pc}
 
-tileLoop16_1:
+tx16ColTileLoop1:
 	ldr r0,[r5,r1]
 
 	ands r3,r0,#0x000000FF
@@ -1409,7 +1409,7 @@ tileLoop16_1:
 	str r3,[r8,r1]
 	add r1,r1,#4
 	tst r1,#0x1C
-	bne tileLoop16_1
+	bne tx16ColTileLoop1
 
 	bx lr
 
@@ -1431,27 +1431,27 @@ TransferVRAM4Planar:
 	ldmia r0,{r4-r11}
 	mov r1,#0
 
-tileLoop4_0:
-	ldr r12,[r4]
-	str r11,[r4],#4
+tx4ColTileLoop0:
+	ldr r12,[r4,r1,lsr#5]
+	str r11,[r4,r1,lsr#5]
 	tst r12,#0x000000FF
 	addne r1,r1,#0x20
-	bleq tileLoop4_1
+	bleq tx4ColTileLoop1
 	tst r12,#0x0000FF00
 	addne r1,r1,#0x20
-	bleq tileLoop4_1
+	bleq tx4ColTileLoop1
 	tst r12,#0x00FF0000
 	addne r1,r1,#0x20
-	bleq tileLoop4_1
+	bleq tx4ColTileLoop1
 	tst r12,#0xFF000000
 	addne r1,r1,#0x20
-	bleq tileLoop4_1
+	bleq tx4ColTileLoop1
 	cmp r1,#0x2000
-	bne tileLoop4_0
+	bne tx4ColTileLoop0
 
 	ldmfd sp!,{r4-r12,pc}
 
-tileLoop4_1:
+tx4ColTileLoop1:
 	ldr r0,[r5,r1]
 
 	ands r3,r0,#0x000000FF
@@ -1481,7 +1481,7 @@ tileLoop4_1:
 	add r1,r1,#2
 
 	tst r1,#0x1C
-	bne tileLoop4_1
+	bne tx4ColTileLoop1
 
 	bx lr
 
