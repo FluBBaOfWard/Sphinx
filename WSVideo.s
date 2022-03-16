@@ -70,11 +70,6 @@ wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal,
 	ldr r1,=sphinxSize/4
 	bl memclr_					;@ Clear Sphinx state
 
-//	ldr r0,=DIRTYTILES
-//	mov r1,#0
-//	mov r2,#0x800
-//	bl memset
-
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
 	mov r0,#0
@@ -104,6 +99,29 @@ wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal,
 dummyIrqFunc:
 	bx lr
 ;@----------------------------------------------------------------------------
+_debugIOUnmappedR:
+;@----------------------------------------------------------------------------
+	ldr r3,=debugIOUnmappedR
+	bx r3
+;@----------------------------------------------------------------------------
+_debugIOUnimplR:
+;@----------------------------------------------------------------------------
+	ldr r3,=debugIOUnimplR
+	bx r3
+;@----------------------------------------------------------------------------
+_debugIOUnmappedW:
+;@----------------------------------------------------------------------------
+	ldr r3,=debugIOUnmappedW
+	bx r3
+;@----------------------------------------------------------------------------
+memCopy:
+;@----------------------------------------------------------------------------
+	ldr r3,=memcpy
+;@----------------------------------------------------------------------------
+thumbCallR3:
+;@----------------------------------------------------------------------------
+	bx r3
+;@----------------------------------------------------------------------------
 wsvRegistersReset:				;@ in r3=SOC
 ;@----------------------------------------------------------------------------
 	add r0,spxptr,#wsvRegs
@@ -113,7 +131,7 @@ wsvRegistersReset:				;@ in r3=SOC
 //	adrhi r1,SC_IO_Default
 	mov r2,#0x100
 	stmfd sp!,{spxptr,lr}
-	blx memcpy
+	bl memCopy
 	ldmfd sp!,{spxptr,lr}
 	ldrb r1,[spxptr,#wsvSOC]
 	cmp r1,#SOC_ASWAN
@@ -152,13 +170,13 @@ sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
 
 	ldr r1,[r5,#gfxRAM]
 	ldr r2,=0x3360
-	bl memcpy
+	bl memCopy
 
 	ldr r2,=0x3360
 	add r0,r4,r2
 	add r1,r5,#sphinxState
 	mov r2,#(sphinxStateEnd-sphinxState)
-	bl memcpy
+	bl memCopy
 
 	ldmfd sp!,{r4,r5,lr}
 	ldr r0,=0x3360+(sphinxStateEnd-sphinxState)
@@ -173,13 +191,13 @@ sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 
 	ldr r0,[r5,#gfxRAM]
 	ldr r2,=0x3360
-	bl memcpy
+	bl memCopy
 
 	ldr r2,=0x3360
 	add r0,r5,#sphinxState
 	add r1,r4,r2
 	mov r2,#(sphinxStateEnd-sphinxState)
-	bl memcpy
+	bl memCopy
 
 	ldr r0,=DIRTYTILES
 	mov r1,#0
@@ -235,7 +253,7 @@ wsvBufferWindows:
 wsvReadHigh:				;@ I/O read (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,spxptr,lr}
-	blx debugIOUnmappedR
+	bl _debugIOUnmappedR
 	ldmfd sp!,{r0,spxptr,lr}
 	and r0,r0,#0xFF
 ;@----------------------------------------------------------------------------
@@ -524,7 +542,7 @@ IN_Table:
 wsvWSUnmappedR:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{spxptr,lr}
-	blx debugIOUnmappedR
+	bl _debugIOUnmappedR
 	ldmfd sp!,{spxptr,lr}
 	ldrb r0,[spxptr,#wsvSOC]
 	cmp r0,#SOC_ASWAN
@@ -535,7 +553,7 @@ wsvWSUnmappedR:
 wsvZeroR:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	blx debugIOUnmappedR
+	bl _debugIOUnmappedR
 	ldmfd sp!,{lr}
 	mov r0,#0x00
 	bx lr
@@ -547,7 +565,7 @@ wsvUnknownR:
 wsvImportantR:
 	mov r11,r11					;@ No$GBA breakpoint
 	stmfd sp!,{r0,spxptr,lr}
-	blx debugIOUnimplR
+	bl _debugIOUnimplR
 	ldmfd sp!,{r0,spxptr,lr}
 ;@----------------------------------------------------------------------------
 wsvRegR:
@@ -572,7 +590,7 @@ wsvSerialStatusR:			;@ 0xB3
 wsvWriteHigh:				;@ I/O write (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,r1,spxptr,lr}
-	blx debugIOUnmappedW
+	bl _debugIOUnmappedW
 	ldmfd sp!,{r0,r1,spxptr,lr}
 	and r0,r0,#0xFF
 ;@----------------------------------------------------------------------------
@@ -872,8 +890,7 @@ wsvReadOnlyW:
 ;@----------------------------------------------------------------------------
 wsvUnmappedW:
 ;@----------------------------------------------------------------------------
-	ldr r2,=debugIOUnmappedW
-	bx r2
+	b _debugIOUnmappedW
 ;@----------------------------------------------------------------------------
 wsvRegW:
 	add r2,spxptr,#wsvRegs
@@ -1132,8 +1149,8 @@ midFrame:
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldrb r1,[spxptr,#wsvBGXScroll]
-	bl wsvBgScrXW
+	ldr r2,[spxptr,#wsvBGXScroll]
+	bl scrollCnt
 	bl endFrameGfx
 
 	ldrb r0,[spxptr,#wsvInterruptStatus]
@@ -1274,8 +1291,19 @@ wsvGetInterruptVector:		;@ return vector in r0, #-1 if error
 	ands r1,r1,r0
 	moveq r0,#-1
 	bxeq lr
+#ifdef GBA
+	mov r1,r1,lsl#24
+	mov r0,#7
+intVecLoop:
+	movs r1,r1,lsl#1
+	bcs intFound
+	subs r0,r0,#1
+	bne intVecLoop
+intFound:
+#else
 	clz r0,r1
 	rsb r0,r0,#31
+#endif
 	ldrb r1,[spxptr,#wsvInterruptBase]
 	bic r1,r1,#7
 	orr r0,r0,r1
@@ -1606,7 +1634,7 @@ wsvDMASprites:
 	ldmfdle sp!,{spxptr,pc}
 	mov r2,r2,lsl#2
 
-	blx memcpy
+	bl memCopy
 
 	ldmfd sp!,{spxptr,pc}
 
@@ -1650,7 +1678,11 @@ dm5:
 	and r4,r2,#0x0E00			;@ Palette
 	orr r3,r3,r4,lsl#3
 	tst r2,#0x2000				;@ Priority
-	orreq r3,r3,#PRIORITY
+#ifdef NDS
+	orreq r3,r3,#PRIORITY		;@ Prio NDS
+#elif GBA
+	orreq r3,r3,#PRIORITY*2		;@ Prio GBA
+#endif
 	tst r2,r8					;@ Palette bit 2 for 2bitplane
 	orrne r3,r3,#0x200			;@ Opaque tiles
 
