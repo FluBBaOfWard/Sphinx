@@ -1178,9 +1178,9 @@ drawFrameGfx:
 	bl wsvDMASprites
 	ldrb r0,[spxptr,#wsvVideoMode]
 	adr lr,TransRet
-	ands r0,r0,#0xE0
-	tst r0,#0x40
-	beq TransferVRAM4Planar
+	and r1,r0,#0xC0
+	cmp r1,#0xC0
+	bne TransferVRAM4Planar
 	tst r0,#0x20
 	bne TransferVRAM16Packed
 	b TransferVRAM16Planar
