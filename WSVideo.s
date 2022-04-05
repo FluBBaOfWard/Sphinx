@@ -162,41 +162,29 @@ IO_Default:
 
 ;@----------------------------------------------------------------------------
 sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
-	.type   wsVideoSaveState STT_FUNC
+	.type   sphinxSaveState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
 	mov r4,r0					;@ Store destination
 	mov r5,r1					;@ Store spxptr (r1)
 
-	ldr r1,[r5,#gfxRAM]
-	ldr r2,=0x3360
-	bl memCopy
-
-	ldr r2,=0x3360
-	add r0,r4,r2
 	add r1,r5,#sphinxState
-	mov r2,#(sphinxStateEnd-sphinxState)
+	mov r2,#sphinxStateEnd-sphinxState
 	bl memCopy
 
 	ldmfd sp!,{r4,r5,lr}
-	ldr r0,=0x3360+(sphinxStateEnd-sphinxState)
+	mov r0,#sphinxStateEnd-sphinxState
 	bx lr
 ;@----------------------------------------------------------------------------
 sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
-	.type   wsVideoLoadState STT_FUNC
+	.type   sphinxLoadState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
 	mov r5,r0					;@ Store spxptr (r0)
 	mov r4,r1					;@ Store source
 
-	ldr r0,[r5,#gfxRAM]
-	ldr r2,=0x3360
-	bl memCopy
-
-	ldr r2,=0x3360
 	add r0,r5,#sphinxState
-	add r1,r4,r2
-	mov r2,#(sphinxStateEnd-sphinxState)
+	mov r2,#sphinxStateEnd-sphinxState
 	bl memCopy
 
 	ldr r0,=DIRTYTILES
@@ -205,13 +193,13 @@ sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 	bl memset
 
 	mov spxptr,r5
-	bl endFrame
+	bl drawFrameGfx
 	ldmfd sp!,{r4,r5,lr}
 ;@----------------------------------------------------------------------------
 sphinxGetStateSize:	;@ Out r0=state size.
-	.type   wsVideoGetStateSize STT_FUNC
+	.type   sphinxGetStateSize STT_FUNC
 ;@----------------------------------------------------------------------------
-	ldr r0,=0x3360+(sphinxStateEnd-sphinxState)
+	mov r0,#sphinxStateEnd-sphinxState
 	bx lr
 
 	.pool
@@ -451,7 +439,7 @@ IN_Table:
 	.long wsvWSUnmappedR		;@ 0xAF ---
 
 	.long wsvRegR				;@ 0xB0 Interrupt base
-	.long wsvRegR				;@ 0xB1 Serial data
+	.long wsvImportantR			;@ 0xB1 Serial data
 	.long wsvRegR				;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusR		;@ 0xB3 Serial status
 	.long wsvRegR				;@ 0xB4 Interrupt status
@@ -582,7 +570,7 @@ wsvVCountR:					;@ 0x03
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
-	and r0,r0,#0xC0				;@ Mask out write bits
+	and r0,r0,#0xE0				;@ Mask out write bits
 	orr r0,r0,#4				;@ Hack, send buffer always empty
 	bx lr
 
@@ -772,7 +760,7 @@ OUT_Table:
 
 	.long wsvHW					;@ 0xA0 Hardware type, SOC_ASWAN / SOC_SPHINX.
 	.long wsvUnmappedW			;@ 0xA1 ---
-	.long wsvRegW				;@ 0xA2 Timer control
+	.long wsvTimerCtrlW			;@ 0xA2 Timer control
 	.long wsvUnknownW			;@ 0xA3 ???
 	.long wsvHTimerLowW			;@ 0xA4 HBlank timer low
 	.long wsvHTimerHighW		;@ 0xA5 HBlank timer high
@@ -788,9 +776,9 @@ OUT_Table:
 	.long wsvUnmappedW			;@ 0xAF ---
 
 	.long wsvRegW				;@ 0xB0 Interrupt base
-	.long wsvRegW				;@ 0xB1 Serial data
+	.long wsvImportantW			;@ 0xB1 Serial data
 	.long wsvIntEnableW			;@ 0xB2 Interrupt enable
-	.long wsvImportantW			;@ 0xB3 Serial status
+	.long wsvSerialStatusW			;@ 0xB3 Serial status
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
 	.long wsvRegW				;@ 0xB5 Input Controls
 	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
@@ -1096,6 +1084,20 @@ wsvIntEnableW:				;@ 0xB2
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvInterruptEnable]
 	b wsvUpdateIrqPin
+;@----------------------------------------------------------------------------
+wsvSerialStatusW:			;@ 0xB3
+;@----------------------------------------------------------------------------
+//	and r1,r1,#0xE0				;@ Mask out write bits
+//	ldrb r2,[spxptr,#wsvSerialStatus]
+//	strb r1,[spxptr,#wsvSerialStatus]
+//	eor r2,r2,r1
+//	and r2,r2,r1
+//	tst r2,#0x80
+//	ldrb r2,[spxptr,#wsvInterruptStatus]
+//	orrne r2,r2,#0x08
+//	strb r2,[spxptr,#wsvInterruptStatus]
+	b wsvImportantW
+//	bx lr
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
