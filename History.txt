@@ -1,8 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.1.6 - 2022-03-13 (FluBBa)
+V0.1.6 - 2022-04-05 (FluBBa)
 	Fixed sound DMA a bit.
+	Fixed load/save state.
 
 V0.1.5 - 2022-03-09 (FluBBa)
 	Added support for RTC.
