@@ -201,7 +201,7 @@ sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current addr
 wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvOrientation:		.byte 0
-kgeLedBlink:		.byte 0
+wsvLowBattery:		.byte 0
 kgeLedOnOff:		.byte 0		;@ Bit 0, Led On/Off.
 kgePadding1:		.space 3
 

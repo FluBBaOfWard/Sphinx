@@ -1,7 +1,7 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
-	Add interface for setting headphone on/off.
+	Handle LCD on/off.
 	Fix icons.
 	Fix noise:
 		Different taps.

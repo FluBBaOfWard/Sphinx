@@ -24,6 +24,8 @@
 	.global wsvGetInterruptVector
 	.global wsvSetInterruptExternal
 	.global wsvPushVolumeButton
+	.global wsvSetHeadphones
+	.global wsvSetLowBattery
 
 	.syntax unified
 	.arm
@@ -742,7 +744,7 @@ OUT_Table:
 	.long wsvRegW				;@ 0x8F Wave base
 
 	.long wsvRegW				;@ 0x90 Sound control
-	.long wsvRegW				;@ 0x91 Sound output
+	.long wsvSoundOutputW		;@ 0x91 Sound output
 	.long wsvReadOnlyW			;@ 0x92 Noise LFSR value low
 	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
 	.long wsvRegW				;@ 0x94 Sound voice control
@@ -1014,20 +1016,29 @@ wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 ;@----------------------------------------------------------------------------
 wsvFreqW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
 ;@----------------------------------------------------------------------------
-	and r1,#7					;@ Only low 3 bits
+	and r1,r1,#7				;@ Only low 3 bits
 	add r2,spxptr,#wsvRegs
 	strb r1,[r2,r0]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSweepTimeW:				;@ 0x8B Sound sweep time
 ;@----------------------------------------------------------------------------
-	and r1,#0x1F				;@ Only low 5 bits
+	and r1,r1,#0x1F				;@ Only low 5 bits
 	strb r1,[spxptr,#wsvSweepTime]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSoundOutputW:			;@ 0x91 Sound ouput
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSoundOutput]
+	and r1,r1,#0x0F				;@ Only low 4 bits
+	and r0,r0,#0x80				;@ Keep Headphones bit
+	orr r1,r1,r0
+	strb r1,[spxptr,#wsvSoundOutput]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
-	and r1,#0x03				;@ Only low 2 bits
+	and r1,r1,#0x03				;@ Only low 2 bits
 	strb r1,[spxptr,#wsvHWVolume]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1113,8 +1124,20 @@ wsvPushVolumeButton:
 	movmi r0,#0x03				;@ Max volume
 	strb r0,[spxptr,#wsvHWVolume]
 	bx lr
-
-
+;@----------------------------------------------------------------------------
+wsvSetHeadphones:			;@ r0 = on/off
+;@----------------------------------------------------------------------------
+	cmp r0,#0
+	ldrb r0,[spxptr,#wsvSoundOutput]
+	biceq r0,r0,#0x80
+	orrne r0,r0,#0x80
+	strb r0,[spxptr,#wsvSoundOutput]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSetLowBattery:			;@ r0 = on/off
+;@----------------------------------------------------------------------------
+	strb r0,[spxptr,#wsvLowBattery]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
@@ -1716,8 +1739,12 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	orrne r0,r0,#LCD_ICON_CART
 //	orr r0,r0,#LCD_ICON_SLEP
 	orr r0,r0,#LCD_ICON_POWR
+	ldrb r2,[spxptr,#wsvLowBattery]
+	cmp r2,#0
+	orrne r0,r0,#LCD_ICON_BATT
 	eors r1,r1,r0
 	bxeq lr
+	str r0,[spxptr,#enabledLCDIcons]
 ;@----------------------------------------------------------------------------
 wsvRedrawLCDIcons:			;@ In r0=
 ;@----------------------------------------------------------------------------
