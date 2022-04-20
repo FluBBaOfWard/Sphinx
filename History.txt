@@ -1,9 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.1.6 - 2022-04-05 (FluBBa)
+V0.1.6 - 2022-04-20 (FluBBa)
 	Fixed sound DMA a bit.
 	Fixed load/save state.
+	Added sound button handling.
 
 V0.1.5 - 2022-03-09 (FluBBa)
 	Added support for RTC.
@@ -31,7 +32,7 @@ V0.1.1 - 2021-10-17 (FluBBa)
 	Started port to Nintendo DS & devkitPro.
 
 V0.1.0 - 2006-07-28 (FluBBa)
-	Initial release.
+	Initial release (GBA).
 
 V0.0.0 - 2006-07-23 (FluBBa)
 	Started Coding.

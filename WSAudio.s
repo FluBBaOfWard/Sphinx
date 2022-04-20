@@ -30,36 +30,44 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 ;@--------------------------
 	ldr r10,=vol1_L
 
+	ldrb r4,[spxptr,#wsvHWVolume]
+	add r5,r4,#1
+	rsb r4,r4,#3
+	cmp r4,#3
+	mov r6,#0xF0
+	moveq r6,#0
+	mov r6,r6,lsr r4
 	ldrb r9,[spxptr,#wsvSoundCtrl]
+
 	ands r3,r9,#1					;@ Ch 1 on?
-	movne r3,#0xF0
+	movne r3,r6
 	ldrb r1,[spxptr,#wsvSound1Vol]
-	and r2,r3,r1,lsl#4
-	and r1,r3,r1
+	and r2,r3,r1,lsl r5
+	and r1,r3,r1,lsr r4
 	strb r1,[r10,#vol1_L-vol1_L]
 	strb r2,[r10,#vol1_R-vol1_L]
 
 	ands r3,r9,#2					;@ Ch 2 on?
-	movne r3,#0xF0
+	movne r3,r6
 	ldrb r1,[spxptr,#wsvSound2Vol]
-	and r2,r3,r1,lsl#4
-	and r1,r3,r1
+	and r2,r3,r1,lsl r5
+	and r1,r3,r1,lsr r4
 	strb r1,[r10,#vol2_L-vol1_L]
 	strb r2,[r10,#vol2_R-vol1_L]
 
 	ands r3,r9,#4					;@ Ch 3 on?
-	movne r3,#0xF0
+	movne r3,r6
 	ldrb r1,[spxptr,#wsvSound3Vol]
-	and r2,r3,r1,lsl#4
-	and r1,r3,r1
+	and r2,r3,r1,lsl r5
+	and r1,r3,r1,lsr r4
 	strb r1,[r10,#vol3_L-vol1_L]
 	strb r2,[r10,#vol3_R-vol1_L]
 
 	ands r3,r9,#8					;@ Ch 4 on?
-	movne r3,#0xF0
+	movne r3,r6
 	ldrb r1,[spxptr,#wsvSound4Vol]
-	and r2,r3,r1,lsl#4
-	and r1,r3,r1
+	and r2,r3,r1,lsl r5
+	and r1,r3,r1,lsr r4
 	strb r1,[r10,#vol4_L-vol1_L]
 	strb r2,[r10,#vol4_R-vol1_L]
 

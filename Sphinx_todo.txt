@@ -1,6 +1,7 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Add check for dirty tiles in tilemap renderer.
 	Handle LCD on/off.
 	Fix icons.
 	Fix noise:

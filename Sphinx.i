@@ -73,38 +73,22 @@ wsvColor23:			.byte 0		;@ 0x1D Color 2 & 3
 wsvColor45:			.byte 0		;@ 0x1E Color 4 & 5
 wsvColor67:			.byte 0		;@ 0x1F Color 6 & 7
 
-wsvPalette00:		.byte 0		;@ 0x20 Palette 00
-wsvPalette01:		.byte 0		;@ 0x21 Palette 01
-wsvPalette10:		.byte 0		;@ 0x22 Palette 10
-wsvPalette11:		.byte 0		;@ 0x23 Palette 11
-wsvPalette20:		.byte 0		;@ 0x24 Palette 20
-wsvPalette21:		.byte 0		;@ 0x25 Palette 21
-wsvPalette30:		.byte 0		;@ 0x26 Palette 30
-wsvPalette31:		.byte 0		;@ 0x27 Palette 31
-wsvPalette40:		.byte 0		;@ 0x28 Palette 40
-wsvPalette41:		.byte 0		;@ 0x29 Palette 41
-wsvPalette50:		.byte 0		;@ 0x2A Palette 50
-wsvPalette51:		.byte 0		;@ 0x2B Palette 51
-wsvPalette60:		.byte 0		;@ 0x2C Palette 60
-wsvPalette61:		.byte 0		;@ 0x2D Palette 61
-wsvPalette70:		.byte 0		;@ 0x2E Palette 70
-wsvPalette71:		.byte 0		;@ 0x2F Palette 71
-wsvPalette80:		.byte 0		;@ 0x30 Palette 80
-wsvPalette81:		.byte 0		;@ 0x31 Palette 81
-wsvPalette90:		.byte 0		;@ 0x32 Palette 90
-wsvPalette91:		.byte 0		;@ 0x33 Palette 91
-wsvPaletteA0:		.byte 0		;@ 0x34 Palette A0
-wsvPaletteA1:		.byte 0		;@ 0x35 Palette A1
-wsvPaletteB0:		.byte 0		;@ 0x36 Palette B0
-wsvPaletteB1:		.byte 0		;@ 0x37 Palette B1
-wsvPaletteC0:		.byte 0		;@ 0x38 Palette C0
-wsvPaletteC1:		.byte 0		;@ 0x39 Palette C1
-wsvPaletteD0:		.byte 0		;@ 0x3A Palette D0
-wsvPaletteD1:		.byte 0		;@ 0x3B Palette D1
-wsvPaletteE0:		.byte 0		;@ 0x3C Palette E0
-wsvPaletteE1:		.byte 0		;@ 0x3D Palette E1
-wsvPaletteF0:		.byte 0		;@ 0x3E Palette F0
-wsvPaletteF1:		.byte 0		;@ 0x3F Palette F1
+wsvPalette0:		.short 0	;@ 0x20/0x21 Palette 0
+wsvPalette1:		.short 0	;@ 0x22/0x23 Palette 1
+wsvPalette2:		.short 0	;@ 0x24/0x25 Palette 2
+wsvPalette3:		.short 0	;@ 0x26/0x27 Palette 3
+wsvPalette4:		.short 0	;@ 0x28/0x29 Palette 4
+wsvPalette5:		.short 0	;@ 0x2A/0x2B Palette 5
+wsvPalette6:		.short 0	;@ 0x2C/0x2D Palette 6
+wsvPalette7:		.short 0	;@ 0x2E/0x2F Palette 7
+wsvPalette8:		.short 0	;@ 0x30/0x31 Palette 8
+wsvPalette9:		.short 0	;@ 0x32/0x33 Palette 9
+wsvPaletteA:		.short 0	;@ 0x34/0x35 Palette A
+wsvPaletteB:		.short 0	;@ 0x36/0x37 Palette B
+wsvPaletteC:		.short 0	;@ 0x38/0x39 Palette C
+wsvPaletteD:		.short 0	;@ 0x3A/0x3B Palette D
+wsvPaletteE:		.short 0	;@ 0x3C/0x3D Palette E
+wsvPaletteF:		.short 0	;@ 0x3E/0x3F Palette F
 
 wsvDMASource:		.long 0		;@ 0x40-0x43 DMA source adr bits 19-0
 wsvDMADest:			.short 0	;@ 0x44/0x45 DMA destination adr bits 15-0
@@ -184,8 +168,10 @@ wsvExtEEPROMCmd:	.short 0	;@ 0xC8 External EEPROM command/status
 
 wsvRTCCommand:		.byte 0		;@ 0xCA RTC Command
 wsvRTCData:			.byte 0		;@ 0xCB RTC Data
+wsvGPIOEnable:		.byte 0		;@ 0xCC GP IO Enable
+wsvGPIOData:		.byte 0		;@ 0xCD GP IO Data
 
-wsvPadding14:		.space 52	;@ 0xCC - 0xFF ???
+wsvPadding14:		.space 50	;@ 0xCE - 0xFF ???
 
 ;@----------------------------------------------------------------------------
 sndDmaSource:		.long 0		;@ Original Sound DMA source address
@@ -202,7 +188,7 @@ wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
-kgeLedOnOff:		.byte 0		;@ Bit 0, Led On/Off.
+wsvSleepMode:		.byte 0
 kgePadding1:		.space 3
 
 enabledLCDIcons:	.long 0

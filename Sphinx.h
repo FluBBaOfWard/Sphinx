@@ -56,7 +56,6 @@ typedef struct {
 	u8 kgeLedBlink;
 	u8 wsvVideoMode;
 
-	u8 kgeLedOnOff;			// Bit 0, Led On/Off.
 	u8 wsvModel;
 	u8 koPadding1[2];
 

@@ -26,6 +26,7 @@
 	.global wsvPushVolumeButton
 	.global wsvSetHeadphones
 	.global wsvSetLowBattery
+	.global wsvSetSleepMode
 
 	.syntax unified
 	.arm
@@ -1139,6 +1140,11 @@ wsvSetLowBattery:			;@ r0 = on/off
 	strb r0,[spxptr,#wsvLowBattery]
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvSetSleepMode:
+;@----------------------------------------------------------------------------
+	strb r0,[spxptr,#wsvSleepMode]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
@@ -1737,11 +1743,13 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	ldrb r2,[spxptr,#wsvHardwareType]
 	tst r2,#0x01
 	orrne r0,r0,#LCD_ICON_CART
-//	orr r0,r0,#LCD_ICON_SLEP
 	orr r0,r0,#LCD_ICON_POWR
 	ldrb r2,[spxptr,#wsvLowBattery]
 	cmp r2,#0
 	orrne r0,r0,#LCD_ICON_BATT
+	ldrb r2,[spxptr,#wsvSleepMode]
+	cmp r2,#0
+	orrne r0,r0,#LCD_ICON_SLEP
 	eors r1,r1,r0
 	bxeq lr
 	str r0,[spxptr,#enabledLCDIcons]
