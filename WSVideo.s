@@ -26,7 +26,6 @@
 	.global wsvPushVolumeButton
 	.global wsvSetHeadphones
 	.global wsvSetLowBattery
-	.global wsvSetSleepMode
 
 	.syntax unified
 	.arm
@@ -140,7 +139,7 @@ wsvRegistersReset:				;@ in r3=SOC
 	cmp r1,#SOC_ASWAN
 	mov r0,#0x84
 	movne r0,#0x86
-	strb r0,[spxptr,#wsvHardwareType]
+	strb r0,[spxptr,#wsvSystemCtrl1]
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -477,14 +476,14 @@ IN_Table:
 	.long wsvImportantR			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantR			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantR			;@ 0xCE WonderWitch flash
-	.long wsvUnknownR			;@ 0xCF ???
+	.long wsvImportantR			;@ 0xCF Alias to 0xC0
 
-	.long wsvUnknownR			;@ 0xD0 ???
-	.long wsvUnknownR			;@ 0xD1 ???
-	.long wsvUnknownR			;@ 0xD2 ???
-	.long wsvUnknownR			;@ 0xD3 ???
-	.long wsvUnknownR			;@ 0xD4 ???
-	.long wsvUnknownR			;@ 0xD5 ???
+	.long wsvImportantR			;@ 0xD0 Alias to 0xC1
+	.long wsvImportantR			;@ 0xD1 2 more bits for 0xC1
+	.long wsvImportantR			;@ 0xD2 Alias to 0xC2
+	.long wsvImportantR			;@ 0xD3 2 more bits for 0xC2
+	.long wsvImportantR			;@ 0xD4 Alias to 0xC3
+	.long wsvImportantR			;@ 0xD5 2 more bits for 0xC3
 	.long wsvUnknownR			;@ 0xD6 ???
 	.long wsvUnknownR			;@ 0xD7 ???
 	.long wsvUnknownR			;@ 0xD8 ???
@@ -814,14 +813,14 @@ OUT_Table:
 	.long wsvImportantW			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantW			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantW			;@ 0xCE WonderWitch flash
-	.long wsvUnknownW			;@ 0xCF ???
+	.long wsvImportantW			;@ 0xCF Alias to 0xC0
 
-	.long wsvUnknownW			;@ 0xD0 ???
-	.long wsvUnknownW			;@ 0xD1 ???
-	.long wsvUnknownW			;@ 0xD2 ???
-	.long wsvUnknownW			;@ 0xD3 ???
-	.long wsvUnknownW			;@ 0xD4 ???
-	.long wsvUnknownW			;@ 0xD5 ???
+	.long wsvImportantW			;@ 0xD0 Alias to 0xC1
+	.long wsvImportantW			;@ 0xD1 2 more bits for 0xC1
+	.long wsvImportantW			;@ 0xD2 Alias to 0xC2
+	.long wsvImportantW			;@ 0xD3 2 more bits for 0xC2
+	.long wsvImportantW			;@ 0xD4 Alias to 0xC3
+	.long wsvImportantW			;@ 0xD5 2 more bits for 0xC3
 	.long wsvUnknownW			;@ 0xD6 ???
 	.long wsvUnknownW			;@ 0xD7 ???
 	.long wsvUnknownW			;@ 0xD8 ???
@@ -962,11 +961,12 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 	ldr r4,[spxptr,#wsvDMASource]
 	bic r4,r4,#1
 
-	ldrh r5,[spxptr,#wsvDMADest]	;@ r5=destination
+	ldrh r5,[spxptr,#wsvDMADest];@ r5=destination
 	bic r5,r5,#1
+	mov r5,r5,lsl#16
 
 	;@ sub v30cyc,v30cyc,#5*CYCLE
-	ldrh r6,[spxptr,#wsvDMALength];@ r6=length
+	ldrh r6,[spxptr,#wsvDMALength]	;@ r6=length
 	bics r6,r6,#1
 	beq dmaEnd
 	;@ sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT+1
@@ -975,10 +975,10 @@ dmaLoop:
 	mov r0,r4,lsl#12
 	bl cpuReadMem20W
 	mov r1,r0
-	mov r0,r5,lsl#12
+	mov r0,r5,lsr#4
 	bl cpuWriteMem20W
 	add r4,r4,r8,asr#4
-	add r5,r5,r8,asr#4
+	add r5,r5,r8,lsl#12
 	subs r6,r6,#2
 	bne dmaLoop
 
@@ -1045,11 +1045,11 @@ wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
 wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvHardwareType]
+	ldrb r0,[spxptr,#wsvSystemCtrl1]
 	and r0,r0,#0x83				;@ These can't be changed once set.
 	and r1,r1,#0x8D				;@ Only these bits can be set.
 	orr r1,r1,r0
-	strb r1,[spxptr,#wsvHardwareType]
+	strb r1,[spxptr,#wsvSystemCtrl1]
 	eor r0,r0,r1
 	tst r0,#1					;@ Boot rom locked?
 	bxeq lr
@@ -1138,11 +1138,6 @@ wsvSetHeadphones:			;@ r0 = on/off
 wsvSetLowBattery:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvLowBattery]
-	bx lr
-;@----------------------------------------------------------------------------
-wsvSetSleepMode:
-;@----------------------------------------------------------------------------
-	strb r0,[spxptr,#wsvSleepMode]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
@@ -1740,16 +1735,13 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	ldrb r2,[spxptr,#wsvSoundOutput]
 	tst r2,#0x80
 	orrne r0,r0,#LCD_ICON_HEAD
-	ldrb r2,[spxptr,#wsvHardwareType]
+	ldrb r2,[spxptr,#wsvSystemCtrl1]
 	tst r2,#0x01
 	orrne r0,r0,#LCD_ICON_CART
 	orr r0,r0,#LCD_ICON_POWR
 	ldrb r2,[spxptr,#wsvLowBattery]
 	cmp r2,#0
 	orrne r0,r0,#LCD_ICON_BATT
-	ldrb r2,[spxptr,#wsvSleepMode]
-	cmp r2,#0
-	orrne r0,r0,#LCD_ICON_SLEP
 	eors r1,r1,r0
 	bxeq lr
 	str r0,[spxptr,#enabledLCDIcons]

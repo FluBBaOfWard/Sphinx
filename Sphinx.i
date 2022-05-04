@@ -105,7 +105,9 @@ wsvPadding4:		.space 12	;@ 0x54 - 0x5F ???
 
 wsvVideoMode:		.byte 0		;@ 0x60 Video rendering mode
 
-wsvPadding5:		.space 31	;@ 0x61 - 0x7F ???
+wsvPadding5:		.space 1	;@ 0x61 ???
+wsvSystemCtrl3:		.byte 0		;@ 0x62 WSC / SC, Power off
+wsvPadding5_1:		.space 29	;@ 0x63 - 0x7F ???
 
 wsvSound1Freq:		.short 0	;@ 0x80/0x81 Sound ch 1 pitch bits 10-0
 wsvSound2Freq:		.short 0	;@ 0x82/0x83 Sound ch 2 pitch bits 10-0
@@ -130,7 +132,7 @@ wsvPadding6:		.space 9	;@ 0x95 - 0x9D ???
 wsvHWVolume:		.byte 0		;@ 0x9E HW Volume (2 bit)
 wsvPadding6_1:		.space 1	;@ 0x9F ???
 
-wsvHardwareType:	.byte 0		;@ 0xA0 Hardware type, boot rom lock.
+wsvSystemCtrl1:		.byte 0		;@ 0xA0 Hardware type, boot rom lock.
 
 wsvPadding7:		.space 1	;@ 0xA1 ???
 
@@ -161,17 +163,22 @@ wsvIntEEPROMCmd:	.short 0	;@ 0xBE Internal EEPROM command/status
 wsvBnk0Slct:		.byte 0		;@ 0xC0 ROM Bank Base Selector for segments 4-$F
 wsvBnk1Slct:		.byte 0		;@ 0xC1 SRAM Bank selector
 wsvBnk2Slct:		.byte 0		;@ 0xC2 BNK2SLCT - ROM Bank selector for segment 2
-wsvBnk3Slct:		.byte 0		;@ 0xC3 BNK2SLCT - ROM Bank selector for segment 3
+wsvBnk3Slct:		.byte 0		;@ 0xC3 BNK3SLCT - ROM Bank selector for segment 3
 wsvExtEEPROMData:	.short 0	;@ 0xC4/0xC5 External EEPROM data
 wsvExtEEPROMAdr:	.short 0	;@ 0xC6/0xC7 External EEPROM address
-wsvExtEEPROMCmd:	.short 0	;@ 0xC8 External EEPROM command/status
+wsvExtEEPROMCmd:	.short 0	;@ 0xC8/0xC9 External EEPROM command/status
 
 wsvRTCCommand:		.byte 0		;@ 0xCA RTC Command
 wsvRTCData:			.byte 0		;@ 0xCB RTC Data
 wsvGPIOEnable:		.byte 0		;@ 0xCC GP IO Enable
 wsvGPIOData:		.byte 0		;@ 0xCD GP IO Data
+wsvWWitch:			.byte 0		;@ 0xCE WonderWitch IO Data
 
-wsvPadding14:		.space 50	;@ 0xCE - 0xFF ???
+wsvBnk0SlctX:		.byte 0		;@ 0xCF ROM Bank Base Selector for segments 4-$F
+wsvBnk1SlctX:		.short 0	;@ 0xD0 SRAM Bank selector
+wsvBnk2SlctX:		.short 0	;@ 0xD2 BNK2SLCT - ROM Bank selector for segment 2
+wsvBnk3SlctX:		.short 0	;@ 0xD4 BNK3SLCT - ROM Bank selector for segment 3
+wsvPadding14:		.space 42	;@ 0xD6 - 0xFF ???
 
 ;@----------------------------------------------------------------------------
 sndDmaSource:		.long 0		;@ Original Sound DMA source address
@@ -188,7 +195,7 @@ wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
-wsvSleepMode:		.byte 0
+wsvSleepMode__:		.byte 0
 kgePadding1:		.space 3
 
 enabledLCDIcons:	.long 0
