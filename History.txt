@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.1.7 - 2022-06-05 (FluBBa)
+	Fixed DMA a bit.
+
 V0.1.6 - 2022-04-20 (FluBBa)
 	Fixed sound DMA a bit.
 	Fixed load/save state.

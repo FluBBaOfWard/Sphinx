@@ -984,6 +984,7 @@ dmaLoop:
 
 	mov spxptr,r7
 	str r4,[spxptr,#wsvDMASource]
+	mov r5,r5,lsr#16
 	strh r5,[spxptr,#wsvDMADest]
 
 	strh r6,[spxptr,#wsvDMALength]
