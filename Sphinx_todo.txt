@@ -1,6 +1,7 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Fix Window. D's Garage 21 Kuobo Game.
 	Add check for dirty tiles in tilemap renderer.
 	Handle LCD on/off.
 	Fix icons.
@@ -11,5 +12,4 @@ Bandai WonderSwan/Sphinx To do
 	Add voice to ch 2.
 	Add Sound DMA.
 	Only enable appropriate registers on the different versions of the SOC.
-	Fix Window.
 

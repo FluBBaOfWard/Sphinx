@@ -461,10 +461,10 @@ IN_Table:
 ;@Cartridge					;@ I/O read cart (0xC0-0xFF)
 ;@----------------------------------------------------------------------------
 
-	.long wsvRegR				;@ 0xC0 Bank ROM 0x40000-0xF0000
-	.long wsvRegR				;@ 0xC1 Bank SRAM 0x10000
-	.long wsvRegR				;@ 0xC2 Bank ROM 0x20000
-	.long wsvRegR				;@ 0xC3 Bank ROM 0x30000
+	.long BankSwitch4_F_R		;@ 0xC0 Bank ROM 0x40000-0xF0000
+	.long BankSwitch1_R			;@ 0xC1 Bank SRAM 0x10000
+	.long BankSwitch2_R			;@ 0xC2 Bank ROM 0x20000
+	.long BankSwitch3_R			;@ 0xC3 Bank ROM 0x30000
 	.long extEepromDataLowR		;@ 0xC4 ext-eeprom data low
 	.long extEepromDataHighR	;@ 0xC5 ext-eeprom data high
 	.long extEepromAdrLowR		;@ 0xC6 ext-eeprom address low
@@ -476,14 +476,14 @@ IN_Table:
 	.long wsvImportantR			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantR			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantR			;@ 0xCE WonderWitch flash
-	.long wsvImportantR			;@ 0xCF Alias to 0xC0
+	.long wsvRegR				;@ 0xCF Alias to 0xC0
 
-	.long wsvImportantR			;@ 0xD0 Alias to 0xC1
-	.long wsvImportantR			;@ 0xD1 2 more bits for 0xC1
-	.long wsvImportantR			;@ 0xD2 Alias to 0xC2
-	.long wsvImportantR			;@ 0xD3 2 more bits for 0xC2
-	.long wsvImportantR			;@ 0xD4 Alias to 0xC3
-	.long wsvImportantR			;@ 0xD5 2 more bits for 0xC3
+	.long wsvRegR				;@ 0xD0 Alias to 0xC1
+	.long wsvRegR				;@ 0xD1 2 more bits for 0xC1
+	.long wsvRegR				;@ 0xD2 Alias to 0xC2
+	.long wsvRegR				;@ 0xD3 2 more bits for 0xC2
+	.long wsvRegR				;@ 0xD4 Alias to 0xC3
+	.long wsvRegR				;@ 0xD5 2 more bits for 0xC3
 	.long wsvUnknownR			;@ 0xD6 ???
 	.long wsvUnknownR			;@ 0xD7 ???
 	.long wsvUnknownR			;@ 0xD8 ???
@@ -574,6 +574,27 @@ wsvSerialStatusR:			;@ 0xB3
 	ldrb r0,[spxptr,#wsvSerialStatus]
 	and r0,r0,#0xE0				;@ Mask out write bits
 	orr r0,r0,#4				;@ Hack, send buffer always empty
+	bx lr
+
+;@----------------------------------------------------------------------------
+BankSwitch4_F_R:			;@ 0xC0
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,wsvBnk0SlctX]
+	bx lr
+;@----------------------------------------------------------------------------
+BankSwitch1_R:				;@ 0xC1
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,wsvBnk1SlctX]
+	bx lr
+;@----------------------------------------------------------------------------
+BankSwitch2_R:				;@ 0xC2
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,wsvBnk2SlctX]
+	bx lr
+;@----------------------------------------------------------------------------
+BankSwitch3_R:				;@ 0xC3
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,wsvBnk3SlctX]
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -813,14 +834,14 @@ OUT_Table:
 	.long wsvImportantW			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantW			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantW			;@ 0xCE WonderWitch flash
-	.long wsvImportantW			;@ 0xCF Alias to 0xC0
+	.long BankSwitch4_F_W		;@ 0xCF Alias to 0xC0
 
-	.long wsvImportantW			;@ 0xD0 Alias to 0xC1
-	.long wsvImportantW			;@ 0xD1 2 more bits for 0xC1
-	.long wsvImportantW			;@ 0xD2 Alias to 0xC2
-	.long wsvImportantW			;@ 0xD3 2 more bits for 0xC2
-	.long wsvImportantW			;@ 0xD4 Alias to 0xC3
-	.long wsvImportantW			;@ 0xD5 2 more bits for 0xC3
+	.long BankSwitch1_L_W		;@ 0xD0 Alias to 0xC1
+	.long BankSwitch1_H_W		;@ 0xD1 2 more bits for 0xC1
+	.long BankSwitch2_L_W		;@ 0xD2 Alias to 0xC2
+	.long BankSwitch2_H_W		;@ 0xD3 2 more bits for 0xC2
+	.long BankSwitch3_L_W		;@ 0xD4 Alias to 0xC3
+	.long BankSwitch3_H_W		;@ 0xD5 2 more bits for 0xC3
 	.long wsvUnknownW			;@ 0xD6 ???
 	.long wsvUnknownW			;@ 0xD7 ???
 	.long wsvUnknownW			;@ 0xD8 ???

@@ -160,10 +160,10 @@ wsvIntEEPROMAdr:	.short 0	;@ 0xBC/0xBD Internal EEPROM address
 wsvIntEEPROMCmd:	.short 0	;@ 0xBE Internal EEPROM command/status
 
 ;@----------------------------------------------------------------------------
-wsvBnk0Slct:		.byte 0		;@ 0xC0 ROM Bank Base Selector for segments 4-$F
-wsvBnk1Slct:		.byte 0		;@ 0xC1 SRAM Bank selector
-wsvBnk2Slct:		.byte 0		;@ 0xC2 BNK2SLCT - ROM Bank selector for segment 2
-wsvBnk3Slct:		.byte 0		;@ 0xC3 BNK3SLCT - ROM Bank selector for segment 3
+wsvBnk0Slct_:		.byte 0		;@ 0xC0 ROM Bank Base Selector for segments 4-$F
+wsvBnk1Slct_:		.byte 0		;@ 0xC1 SRAM Bank selector
+wsvBnk2Slct_:		.byte 0		;@ 0xC2 BNK2SLCT - ROM Bank selector for segment 2
+wsvBnk3Slct_:		.byte 0		;@ 0xC3 BNK3SLCT - ROM Bank selector for segment 3
 wsvExtEEPROMData:	.short 0	;@ 0xC4/0xC5 External EEPROM data
 wsvExtEEPROMAdr:	.short 0	;@ 0xC6/0xC7 External EEPROM address
 wsvExtEEPROMCmd:	.short 0	;@ 0xC8/0xC9 External EEPROM command/status
@@ -175,9 +175,9 @@ wsvGPIOData:		.byte 0		;@ 0xCD GP IO Data
 wsvWWitch:			.byte 0		;@ 0xCE WonderWitch IO Data
 
 wsvBnk0SlctX:		.byte 0		;@ 0xCF ROM Bank Base Selector for segments 4-$F
-wsvBnk1SlctX:		.short 0	;@ 0xD0 SRAM Bank selector
-wsvBnk2SlctX:		.short 0	;@ 0xD2 BNK2SLCT - ROM Bank selector for segment 2
-wsvBnk3SlctX:		.short 0	;@ 0xD4 BNK3SLCT - ROM Bank selector for segment 3
+wsvBnk1SlctX:		.short 0	;@ 0xD0/0xD1 SRAM Bank selector
+wsvBnk2SlctX:		.short 0	;@ 0xD2/0xD3 BNK2SLCT - ROM Bank selector for segment 2
+wsvBnk3SlctX:		.short 0	;@ 0xD4/0xD5 BNK3SLCT - ROM Bank selector for segment 3
 wsvPadding14:		.space 42	;@ 0xD6 - 0xFF ???
 
 ;@----------------------------------------------------------------------------
