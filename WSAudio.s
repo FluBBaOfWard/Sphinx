@@ -49,6 +49,8 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 
 	ands r3,r9,#2					;@ Ch 2 on?
 	movne r3,r6
+	tst r9,#0x20					;@ Ch 2 voice?
+	movne r3,#0
 	ldrb r1,[spxptr,#wsvSound2Vol]
 	and r2,r3,r1,lsl r5
 	and r1,r3,r1,lsr r4

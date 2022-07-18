@@ -48,20 +48,20 @@ wsvSpriteFirst:		.byte 0		;@ 0x05 Sprite to start with
 wsvSpriteCount:		.byte 0		;@ 0x06 Sprite count
 wsvMapTblAdr:		.byte 0		;@ 0x07 Map table address
 
-wsvWinXPos:			.byte 0		;@ 0x08 Window X-Position
-wsvWinYPos:			.byte 0		;@ 0x09 Window Y-Position
-wsvWinXSize:		.byte 0		;@ 0x0A Window X-Size
-wsvWinYSize:		.byte 0		;@ 0x0B Window Y-Size
+wsvFgWinXPos:		.byte 0		;@ 0x08 Foreground window X-Position
+wsvFgWinYPos:		.byte 0		;@ 0x09 Foreground window Y-Position
+wsvFgWinXSize:		.byte 0		;@ 0x0A Foreground window X-Size
+wsvFgWinYSize:		.byte 0		;@ 0x0B Foreground window Y-Size
 
 wsvSprWinXPos:		.byte 0		;@ 0x0C Sprite window X-Position
 wsvSprWinYPos:		.byte 0		;@ 0x0D Sprite window Y-Position
 wsvSprWinXSize:		.byte 0		;@ 0x0E Sprite window X-Size
 wsvSprWinYSize:		.byte 0		;@ 0x0F Sprite window Y-Size
 
-wsvBGXScroll:		.byte 0		;@ 0x10 Background X-Scroll
-wsvBGYScroll:		.byte 0		;@ 0x11 Background Y-Scroll
-wsvFGXScroll:		.byte 0		;@ 0x12 Foreground X-Scroll
-wsvFGYScroll:		.byte 0		;@ 0x13 Foreground Y-Scroll
+wsvBgXScroll:		.byte 0		;@ 0x10 Background X-Scroll
+wsvBgYScroll:		.byte 0		;@ 0x11 Background Y-Scroll
+wsvFgXScroll:		.byte 0		;@ 0x12 Foreground X-Scroll
+wsvFgYScroll:		.byte 0		;@ 0x13 Foreground Y-Scroll
 
 wsvLCDControl:		.byte 0		;@ 0x14 LCD control (on/off?)
 wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
@@ -101,13 +101,13 @@ wsvSndDMALen:		.long 0		;@ 0x4E-0x51 Sound DMA length bits 19-0
 wsvSndDMACtrl:		.byte 0		;@ 0x52 Sound DMA control, bit 7 start
 wsvPadding2:		.space 1	;@ 0x53 ???
 
-wsvPadding4:		.space 12	;@ 0x54 - 0x5F ???
+wsvPadding3:		.space 12	;@ 0x54 - 0x5F ???
 
 wsvVideoMode:		.byte 0		;@ 0x60 Video rendering mode
 
-wsvPadding5:		.space 1	;@ 0x61 ???
+wsvPadding4:		.space 1	;@ 0x61 ???
 wsvSystemCtrl3:		.byte 0		;@ 0x62 WSC / SC, Power off
-wsvPadding5_1:		.space 29	;@ 0x63 - 0x7F ???
+wsvPadding5:		.space 29	;@ 0x63 - 0x7F ???
 
 wsvSound1Freq:		.short 0	;@ 0x80/0x81 Sound ch 1 pitch bits 10-0
 wsvSound2Freq:		.short 0	;@ 0x82/0x83 Sound ch 2 pitch bits 10-0
@@ -130,20 +130,20 @@ wsvVolume:			.byte 0		;@ 0x94 Volume (4 bit)
 
 wsvPadding6:		.space 9	;@ 0x95 - 0x9D ???
 wsvHWVolume:		.byte 0		;@ 0x9E HW Volume (2 bit)
-wsvPadding6_1:		.space 1	;@ 0x9F ???
+wsvPadding7:		.space 1	;@ 0x9F ???
 
 wsvSystemCtrl1:		.byte 0		;@ 0xA0 Hardware type, boot rom lock.
 
-wsvPadding7:		.space 1	;@ 0xA1 ???
+wsvPadding8:		.space 1	;@ 0xA1 ???
 
 wsvTimerControl:	.byte 0		;@ 0xA2 Timer control
-wsvPadding8:		.space 1	;@ 0xA3 ???
+wsvPadding9:		.space 1	;@ 0xA3 ???
 wsvHBlTimerFreq:	.short 0	;@ 0xA4/0xA5 Hblank Timer 'frequency'
 wsvVBlTimerFreq:	.short 0	;@ 0xA6/0xA7 Vblank Timer 'frequency'
 wsvHBlCounter:		.short 0	;@ 0xA8/0xA9 Hblank Counter - 1/12000s
 wsvVBlCounter:		.short 0	;@ 0xAA/0xAB Vblank Counter - 1/75s
 
-wsvPadding9:		.space 4	;@ 0xAC - 0xAF ???
+wsvPadding10:		.space 4	;@ 0xAC - 0xAF ???
 
 wsvInterruptBase:	.byte 0		;@ 0xB0 Interrupt base
 wsvComByte:			.byte 0		;@ 0xB1 Communication byte
@@ -178,7 +178,7 @@ wsvBnk0SlctX:		.byte 0		;@ 0xCF ROM Bank Base Selector for segments 4-$F
 wsvBnk1SlctX:		.short 0	;@ 0xD0/0xD1 SRAM Bank selector
 wsvBnk2SlctX:		.short 0	;@ 0xD2/0xD3 BNK2SLCT - ROM Bank selector for segment 2
 wsvBnk3SlctX:		.short 0	;@ 0xD4/0xD5 BNK3SLCT - ROM Bank selector for segment 3
-wsvPadding14:		.space 42	;@ 0xD6 - 0xFF ???
+wsvPadding12:		.space 42	;@ 0xD6 - 0xFF ???
 
 ;@----------------------------------------------------------------------------
 sndDmaSource:		.long 0		;@ Original Sound DMA source address
@@ -196,7 +196,7 @@ wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
 wsvSleepMode__:		.byte 0
-kgePadding1:		.space 3
+wsvPadding13:		.space 3
 
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.

@@ -196,6 +196,12 @@ sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 
 	mov spxptr,r5
 	bl drawFrameGfx
+
+	bl reBankSwitch4_F
+	bl reBankSwitch1
+	bl reBankSwitch2
+	bl reBankSwitch3
+
 	ldmfd sp!,{r4,r5,lr}
 ;@----------------------------------------------------------------------------
 sphinxGetStateSize:	;@ Out r0=state size.
@@ -212,7 +218,7 @@ sphinxGetStateSize:	;@ Out r0=state size.
 ;@----------------------------------------------------------------------------
 wsvBufferWindows:
 ;@----------------------------------------------------------------------------
-	ldr r0,[spxptr,#wsvWinXPos]	;@ Win pos/size
+	ldr r0,[spxptr,#wsvFgWinXPos]	;@ Win pos/size
 	and r1,r0,#0x000000FF		;@ H start
 	and r2,r0,#0x00FF0000		;@ H end
 	cmp r1,#GAME_WIDTH
@@ -222,8 +228,10 @@ wsvBufferWindows:
 	cmp r2,#GAME_WIDTH<<16
 	movpl r2,#GAME_WIDTH<<16
 	add r2,r2,#((SCREEN_WIDTH-GAME_WIDTH)/2)<<16
+	cmp r2,r1,lsl#16
 	orr r1,r1,r2,lsl#8
 	mov r1,r1,ror#24
+	movmi r1,#0
 	strh r1,[spxptr,#windowData]
 
 	and r1,r0,#0x0000FF00		;@ V start
@@ -235,7 +243,9 @@ wsvBufferWindows:
 	cmp r2,#GAME_HEIGHT
 	movpl r2,#GAME_HEIGHT
 	add r2,r2,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
+	cmp r2,r1,lsr#8
 	orr r1,r1,r2
+	movmi r1,#0
 	strh r1,[spxptr,#windowData+2]
 
 	bx lr
@@ -801,7 +811,7 @@ OUT_Table:
 	.long wsvRegW				;@ 0xB0 Interrupt base
 	.long wsvImportantW			;@ 0xB1 Serial data
 	.long wsvIntEnableW			;@ 0xB2 Interrupt enable
-	.long wsvSerialStatusW			;@ 0xB3 Serial status
+	.long wsvSerialStatusW		;@ 0xB3 Serial status
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
 	.long wsvRegW				;@ 0xB5 Input Controls
 	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
@@ -926,7 +936,7 @@ wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 ;@----------------------------------------------------------------------------
 wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[spxptr,#wsvBGXScroll]
+	ldr r2,[spxptr,#wsvBgXScroll]
 	add r0,r0,#wsvRegs
 	strb r1,[spxptr,r0]
 
@@ -1197,9 +1207,10 @@ midFrame:
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldr r2,[spxptr,#wsvBGXScroll]
+	ldr r2,[spxptr,#wsvBgXScroll]
 	bl scrollCnt
 	bl endFrameGfx
+	bl wsvDMASprites
 
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 	ldrb r2,[spxptr,#wsvTimerControl]
@@ -1223,7 +1234,6 @@ drawFrameGfx:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
-	bl wsvDMASprites
 	ldrb r0,[spxptr,#wsvVideoMode]
 	adr lr,TransRet
 	and r1,r0,#0xC0

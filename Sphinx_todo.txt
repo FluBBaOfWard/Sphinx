@@ -1,7 +1,6 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
-	Fix Window. D's Garage 21 Kuobo Game.
 	Add check for dirty tiles in tilemap renderer.
 	Handle LCD on/off.
 	Fix icons.
