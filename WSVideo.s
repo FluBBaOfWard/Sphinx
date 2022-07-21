@@ -1104,24 +1104,36 @@ wsvHTimerLowW:				;@ 0xA4 HBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvHBlTimerFreq]
 	strb r1,[spxptr,#wsvHBlCounter]
+	ldrb r2,[spxptr,#wsvTimerControl]
+	orr r2,r2,#0x3
+	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerHighW:				;@ 0xA5 HBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvHBlTimerFreq+1]
 	strb r1,[spxptr,#wsvHBlCounter+1]
+	ldrb r2,[spxptr,#wsvTimerControl]
+	orr r2,r2,#0x3
+	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerLowW:				;@ 0xA6 VBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvVBlTimerFreq]
 	strb r1,[spxptr,#wsvVBlCounter]
+	ldrb r2,[spxptr,#wsvTimerControl]
+	orr r2,r2,#0xC
+	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvVBlTimerFreq+1]
 	strb r1,[spxptr,#wsvVBlCounter+1]
+	ldrb r2,[spxptr,#wsvTimerControl]
+	orr r2,r2,#0xC
+	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvIntEnableW:				;@ 0xB2
@@ -1215,16 +1227,18 @@ endFrame:
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 	ldrb r2,[spxptr,#wsvTimerControl]
 	tst r2,#0x4						;@ VBlank timer enabled?
-	beq noTimerVblIrq
+	beq noTimerVBlIrq
 	ldrh r1,[spxptr,#wsvVBlCounter]
 	subs r1,r1,#1
-	bmi noTimerVblIrq
-	orreq r0,r0,#0x20				;@ #5 = VBlank timer
-	eor r2,r2,#0x8
-	tsteq r2,#0x8					;@ Repeat?
-	ldrheq r1,[spxptr,#wsvVBlTimerFreq]
-	strh r1,[spxptr,#wsvVBlCounter]
-noTimerVblIrq:
+	bne noVBlIrq
+	orr r0,r0,#0x20					;@ #5 = VBlank timer
+	tst r2,#0x8						;@ Repeat?
+	biceq r2,r2,#0x4
+	strbeq r2,[spxptr,#wsvTimerControl]
+	ldrhne r1,[spxptr,#wsvVBlTimerFreq]
+noVBlIrq:
+	strhpl r1,[spxptr,#wsvVBlCounter]
+noTimerVBlIrq:
 	orr r0,r0,#0x40					;@ #6 = VBlank
 	strb r0,[spxptr,#wsvInterruptStatus]
 
@@ -1292,6 +1306,7 @@ wsvDoScanline:
 ;@----------------------------------------------------------------------------
 checkScanlineIRQ:
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
 	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
 	ldrb r0,[spxptr,#wsvInterruptStatus]
@@ -1299,18 +1314,19 @@ checkScanlineIRQ:
 
 	ldrb r2,[spxptr,#wsvTimerControl]
 	tst r2,#0x1					;@ HBlank timer enabled?
-	beq noTimerHblIrq
+	beq noTimerHBlIrq
 	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
-	bmi noTimerHblIrq
-	orreq r0,r0,#0x80			;@ #7 = HBlank timer
-	eor r2,r2,#0x2
-	tsteq r2,#0x2				;@ Repeat?
-	ldrheq r1,[spxptr,#wsvHBlTimerFreq]
-	strh r1,[spxptr,#wsvHBlCounter]
-noTimerHblIrq:
+	bne noHBlIrq
+	orr r0,r0,#0x80				;@ #7 = HBlank timer
+	tst r2,#0x2					;@ Repeat?
+	biceq r2,r2,#0x1
+	strbeq r2,[spxptr,#wsvTimerControl]
+	ldrhne r1,[spxptr,#wsvHBlTimerFreq]
+noHBlIrq:
+	strhpl r1,[spxptr,#wsvHBlCounter]
+noTimerHBlIrq:
 	strb r0,[spxptr,#wsvInterruptStatus]
-	stmfd sp!,{lr}
 	bl wsvAssertIrqPin
 
 	ldrb r0,[spxptr,#wsvSndDMACtrl]
@@ -1338,7 +1354,7 @@ wsvSetInterruptExternal:	;@ r0 = irq state
 	ldrb r1,[spxptr,#wsvInterruptStatus]
 	cmp r0,#0
 	biceq r1,r1,#4
-	orrne r1,r1,#4				;@ external interrupt is bit/number 2.
+	orrne r1,r1,#4				;@ External interrupt is bit/number 2.
 	strb r1,[spxptr,#wsvInterruptStatus]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1391,7 +1407,7 @@ sndDmaCont:
 	subne r2,r2,#1
 	str r2,[spxptr,#wsvSndDMASrc]
 	bl cpuReadMem20
-	tst r4,#0x20				;@ Ch2Vol/HyperVoice
+	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	strbeq r0,[spxptr,#wsvSound2Vol]
 
 	ldmfd sp!,{r4,pc}

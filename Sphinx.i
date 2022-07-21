@@ -138,10 +138,10 @@ wsvPadding8:		.space 1	;@ 0xA1 ???
 
 wsvTimerControl:	.byte 0		;@ 0xA2 Timer control
 wsvPadding9:		.space 1	;@ 0xA3 ???
-wsvHBlTimerFreq:	.short 0	;@ 0xA4/0xA5 Hblank Timer 'frequency'
-wsvVBlTimerFreq:	.short 0	;@ 0xA6/0xA7 Vblank Timer 'frequency'
-wsvHBlCounter:		.short 0	;@ 0xA8/0xA9 Hblank Counter - 1/12000s
-wsvVBlCounter:		.short 0	;@ 0xAA/0xAB Vblank Counter - 1/75s
+wsvHBlTimerFreq:	.short 0	;@ 0xA4/0xA5 HBlank Timer 'frequency'
+wsvVBlTimerFreq:	.short 0	;@ 0xA6/0xA7 VBlank Timer 'frequency'
+wsvHBlCounter:		.short 0	;@ 0xA8/0xA9 HBlank Counter - 1/12000s
+wsvVBlCounter:		.short 0	;@ 0xAA/0xAB VBlank Counter - 1/75s
 
 wsvPadding10:		.space 4	;@ 0xAC - 0xAF ???
 
