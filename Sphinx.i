@@ -93,7 +93,7 @@ wsvPaletteF:		.short 0	;@ 0x3E/0x3F Palette F
 wsvDMASource:		.long 0		;@ 0x40-0x43 DMA source adr bits 19-0
 wsvDMADest:			.short 0	;@ 0x44/0x45 DMA destination adr bits 15-0
 wsvDMALength:		.short 0	;@ 0x46/0x47 DMA length bits 15-0
-wsvDMAStart:		.byte 0		;@ 0x48 DMA control, bit 7 start
+wsvDMACtrl:			.byte 0		;@ 0x48 DMA control, bit 7 start
 wsvPadding1:		.space 1	;@ 0x49 ???
 
 wsvSndDMASrc:		.long 0		;@ 0x4A-0x4D Sound DMA source adr bits 19-0
@@ -107,7 +107,16 @@ wsvVideoMode:		.byte 0		;@ 0x60 Video rendering mode
 
 wsvPadding4:		.space 1	;@ 0x61 ???
 wsvSystemCtrl3:		.byte 0		;@ 0x62 WSC / SC, Power off
-wsvPadding5:		.space 29	;@ 0x63 - 0x7F ???
+wsvPadding5:		.space 1	;@ 0x63 ???
+wsvHyperVLL:		.byte 0		;@ 0x64 HyperVoice Left channel (lower byte)
+wsvHyperVLH:		.byte 0		;@ 0x65 HyperVoice Left channel (upper byte)
+wsvHyperVRL:		.byte 0		;@ 0x66 HyperVoice Right channel (lower byte)
+wsvHyperVRH:		.byte 0		;@ 0x67 HyperVoice Right channel (upper byte)
+wsvHyperVSL:		.byte 0		;@ 0x68 HyperVoice Shadow (lower byte)
+wsvHyperVSH:		.byte 0		;@ 0x69 HyperVoice Shadow (upper byte)
+wsvHyperVCtrl:		.byte 0		;@ 0x6A HyperVoice control
+wsvHyperVChnCtrl:	.byte 0		;@ 0x6B HyperVoice channel control
+wsvPadding5_1:		.space 20	;@ 0x6C - 0x7F ???
 
 wsvSound1Freq:		.short 0	;@ 0x80/0x81 Sound ch 1 pitch bits 10-0
 wsvSound2Freq:		.short 0	;@ 0x82/0x83 Sound ch 2 pitch bits 10-0

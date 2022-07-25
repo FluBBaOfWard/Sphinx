@@ -74,7 +74,7 @@ wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal,
 
 	ldr r2,=lineStateTable
 	ldr r1,[r2],#4
-	mov r0,#0
+	mov r0,#-1
 	stmia spxptr,{r0-r2}		;@ Reset scanline, nextChange & lineState
 
 	ldmfd sp!,{r0-r3,lr}
@@ -541,6 +541,7 @@ IN_Table:
 ;@----------------------------------------------------------------------------
 wsvWSUnmappedR:
 ;@----------------------------------------------------------------------------
+	mov r11,r11					;@ No$GBA breakpoint
 	stmfd sp!,{spxptr,lr}
 	bl _debugIOUnmappedR
 	ldmfd sp!,{spxptr,lr}
@@ -572,7 +573,7 @@ wsvRegR:
 	add r2,spxptr,#wsvRegs
 	ldrb r0,[r2,r0]
 	bx lr
-
+	.pool
 ;@----------------------------------------------------------------------------
 wsvVCountR:					;@ 0x03
 ;@----------------------------------------------------------------------------
@@ -582,8 +583,8 @@ wsvVCountR:					;@ 0x03
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
-	and r0,r0,#0xE0				;@ Mask out write bits
-	orr r0,r0,#4				;@ Hack, send buffer always empty
+	and r0,r0,#0xE0				;@ Mask out write bits.
+	orr r0,r0,#4				;@ Hack! Send buffer always empty.
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -689,25 +690,25 @@ OUT_Table:
 	.long wsvRegW				;@ 0x3E Pal mono F low
 	.long wsvRegW				;@ 0x3F Pal mono F high
 			;@ DMA registers, only WSC
-	.long wsvRegW				;@ 0x40	DMA source
+	.long wsvDMASourceW			;@ 0x40	DMA source
 	.long wsvRegW				;@ 0x41 DMA src
 	.long wsvRegW				;@ 0x42 DMA src
 	.long wsvRegW				;@ 0x43 ---
-	.long wsvRegW				;@ 0x44 DMA destination
+	.long wsvDMADestW			;@ 0x44 DMA destination
 	.long wsvRegW				;@ 0x45 DMA dst
-	.long wsvRegW				;@ 0x46 DMA length
+	.long wsvDMALengthW			;@ 0x46 DMA length
 	.long wsvRegW				;@ 0x47 DMA len
 	.long wsvDMACtrlW			;@ 0x48 DMA control
-	.long wsvUnmappedW			;@ 0x49 ---
+	.long wsvRegW				;@ 0x49 DMA ctrl
 	.long wsvRegW				;@ 0x4A	Sound DMA source
 	.long wsvRegW				;@ 0x4B Sound DMA src
 	.long wsvRegW				;@ 0x4C Sound DMA src
-	.long wsvUnmappedW			;@ 0x4D ---
+	.long wsvRegW				;@ 0x4D Sound DMA src
 	.long wsvRegW				;@ 0x4E Sound DMA length
 	.long wsvRegW				;@ 0x4F Sound DMA len
 
 	.long wsvRegW				;@ 0x50 Sound DMA len
-	.long wsvUnmappedW			;@ 0x51 ---
+	.long wsvRegW				;@ 0x51 Sound DMA len
 	.long wsvSndDMACtrlW		;@ 0x52 Sound DMA control
 	.long wsvUnmappedW			;@ 0x53 ---
 	.long wsvUnmappedW			;@ 0x54 ---
@@ -727,14 +728,14 @@ OUT_Table:
 	.long wsvUnmappedW			;@ 0x61 ---
 	.long wsvImportantW			;@ 0x62 SwanCrystal/Power off
 	.long wsvUnmappedW			;@ 0x63 ---
-	.long wsvUnmappedW			;@ 0x64 ---
-	.long wsvUnmappedW			;@ 0x65 ---
-	.long wsvUnmappedW			;@ 0x66 ---
-	.long wsvUnmappedW			;@ 0x67 ---
-	.long wsvUnmappedW			;@ 0x68 ---
-	.long wsvUnmappedW			;@ 0x69 ---
+	.long wsvImportantW			;@ 0x64 Left channel Hyper Voice (lower byte)
+	.long wsvImportantW			;@ 0x65 Left channel Hyper Voice (upper byte)
+	.long wsvImportantW			;@ 0x66 Right channel Hyper Voice (lower byte)
+	.long wsvImportantW			;@ 0x67 Right channel Hyper Voice (upper byte)
+	.long wsvImportantW			;@ 0x68 Hyper Voice Shadow (lower byte)
+	.long wsvImportantW			;@ 0x69 Hyper Voice Shadow (upper byte)
 	.long wsvImportantW			;@ 0x6A Hyper control
-	.long wsvImportantW			;@ 0x6B Hyper Chan control
+	.long wsvHyperChanCtrlW		;@ 0x6B Hyper Chan control
 	.long wsvUnmappedW			;@ 0x6C ---
 	.long wsvUnmappedW			;@ 0x6D ---
 	.long wsvUnmappedW			;@ 0x6E ---
@@ -979,9 +980,28 @@ wsvRefW:					;@ 0x16, Total number of scanlines?
 	str r1,lineStateLastLine
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvDMASourceW:				;@ 0x40, only WSC.
+;@----------------------------------------------------------------------------
+	bic r1,r1,#0x01
+	strb r1,[spxptr,#wsvDMASource]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvDMADestW:				;@ 0x44, only WSC.
+;@----------------------------------------------------------------------------
+	bic r1,r1,#0x01
+	strb r1,[spxptr,#wsvDMADest]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvDMALengthW:				;@ 0x46, only WSC.
+;@----------------------------------------------------------------------------
+	bic r1,r1,#0x01
+	strb r1,[spxptr,#wsvDMALength]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvDMAStart]
+	and r1,r1,#0xC0
+	strb r1,[spxptr,#wsvDMACtrl]
 	tst r1,#0x80				;@ Start?
 	bxeq lr
 
@@ -990,24 +1010,22 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 	rsb r8,r8,#0x20
 	mov r7,spxptr
 	ldr r4,[spxptr,#wsvDMASource]
-	bic r4,r4,#1
 
 	ldrh r5,[spxptr,#wsvDMADest];@ r5=destination
-	bic r5,r5,#1
 	mov r5,r5,lsl#16
 
 	;@ sub v30cyc,v30cyc,#5*CYCLE
 	ldrh r6,[spxptr,#wsvDMALength]	;@ r6=length
-	bics r6,r6,#1
+	cmp r6,#0
 	beq dmaEnd
 	;@ sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT+1
 
 dmaLoop:
 	mov r0,r4,lsl#12
-	bl cpuReadMem20W
+	bl dmaReadMem20W
 	mov r1,r0
 	mov r0,r5,lsr#4
-	bl cpuWriteMem20W
+	bl dmaWriteMem20W
 	add r4,r4,r8,asr#4
 	add r5,r5,r8,lsl#12
 	subs r6,r6,#2
@@ -1020,7 +1038,7 @@ dmaLoop:
 
 	strh r6,[spxptr,#wsvDMALength]
 	rsb r8,r8,#0x20
-	strb r8,[spxptr,#wsvDMAStart]
+	strb r8,[spxptr,#wsvDMACtrl]
 dmaEnd:
 
 	ldmfd sp!,{r4-r8,lr}
@@ -1028,6 +1046,7 @@ dmaEnd:
 ;@----------------------------------------------------------------------------
 wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
 ;@----------------------------------------------------------------------------
+	and r1,r1,#0xDF
 	strb r1,[spxptr,#wsvSndDMACtrl]
 	tst r1,#0x80
 	bxeq lr
@@ -1035,6 +1054,12 @@ wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
 	str r1,[spxptr,#sndDmaSource]
 	ldr r1,[spxptr,#wsvSndDMALen]
 	str r1,[spxptr,#sndDmaLength]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvHyperChanCtrlW:			;@ 0x6B, only WSC
+;@----------------------------------------------------------------------------
+	and r1,r1,#0x6F
+	strb r1,[spxptr,#wsvHyperVChnCtrl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVideoModeW:				;@ 0x60, Video mode, WSColor
@@ -1091,6 +1116,7 @@ wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 wsvTimerCtrlW:				;@ 0xA2 Timer control
 ;@----------------------------------------------------------------------------
+	and r1,r1,#0x0F
 	strb r1,[spxptr,#wsvTimerControl]
 	tst r1,#1
 	ldrhne r0,[spxptr,#wsvHBlTimerFreq]
@@ -1266,7 +1292,7 @@ frameEndHook:
 	mov r0,#0
 	str r0,[spxptr,#scrollLine]
 
-	ldr r2,=lineStateTable
+	adr r2,lineStateTable
 	ldr r1,[r2],#4
 	mov r0,#-1
 	stmia spxptr,{r0-r2}		;@ Reset scanline, nextChange & lineState
@@ -1339,6 +1365,14 @@ noTimerHBlIrq:
 	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
+wsvSetInterruptExternal:	;@ r0 = irq state
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvInterruptStatus]
+	cmp r0,#0
+	biceq r0,r1,#4
+	orrne r0,r1,#4				;@ External interrupt is bit/number 2.
+	strb r0,[spxptr,#wsvInterruptStatus]
+;@----------------------------------------------------------------------------
 wsvUpdateIrqPin:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvInterruptStatus]
@@ -1348,15 +1382,6 @@ wsvAssertIrqPin:			;@ r0 = interrupt status
 	ldrb r1,[spxptr,#wsvInterruptEnable]
 	and r0,r0,r1
 	ldr pc,[spxptr,#irqFunction]
-;@----------------------------------------------------------------------------
-wsvSetInterruptExternal:	;@ r0 = irq state
-;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvInterruptStatus]
-	cmp r0,#0
-	biceq r1,r1,#4
-	orrne r1,r1,#4				;@ External interrupt is bit/number 2.
-	strb r1,[spxptr,#wsvInterruptStatus]
-	bx lr
 ;@----------------------------------------------------------------------------
 wsvGetInterruptVector:		;@ return vector in r0, #-1 if error
 ;@----------------------------------------------------------------------------

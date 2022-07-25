@@ -81,7 +81,7 @@ typedef struct {
 	u32 wsvDMASource;
 	u16 wsvDMADest;
 	u16 wsvDMALength;
-	u8 wsvDMAStart;
+	u8 wsvDMACtrl;
 	u8 wsvPadding1;
 
 	u32 wsvSndDMASrc;
@@ -95,7 +95,16 @@ typedef struct {
 
 	u8 wsvPadding4;
 	u8 wsvSystemCtrl3;
-	u8 wsvPadding5[29];
+	u8 wsvPadding5;
+	u8 wsvHyperVLL;			// 0x64 HyperVoice Left channel (lower byte)
+	u8 wsvHyperVLH;			// 0x65 HyperVoice Left channel (upper byte)
+	u8 wsvHyperVRL;			// 0x66 HyperVoice Right channel (lower byte)
+	u8 wsvHyperVRH;			// 0x67 HyperVoice Right channel (upper byte)
+	u8 wsvHyperVSL;			// 0x68 HyperVoice Shadow (lower byte)
+	u8 wsvHyperVSH;			// 0x69 HyperVoice Shadow (upper byte)
+	u8 wsvHyperVCtrl;		// 0x6A HyperVoice control
+	u8 wsvHyperVChnCtrl;	// 0x6B HyperVoice channel control
+	u8 wsvPadding5_1[20];
 
 	u16 wsvSound1Freq;
 	u16 wsvSound2Freq;
