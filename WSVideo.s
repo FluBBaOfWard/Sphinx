@@ -482,7 +482,7 @@ IN_Table:
 	.long extEepromStatusR		;@ 0xC8 ext-eeprom status
 	.long wsvUnknownR			;@ 0xC9 ???
 	.long cartRtcStatusR		;@ 0xCA RTC status
-	.long cartRtcDataR			;@ 0xCB RTC read
+	.long cartRtcDataR			;@ 0xCB RTC data read
 	.long wsvImportantR			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantR			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantR			;@ 0xCE WonderWitch flash
@@ -841,7 +841,7 @@ OUT_Table:
 	.long extEepromCommandW		;@ 0xC8 ext-eeprom command
 	.long wsvUnknownW			;@ 0xC9 ???
 	.long cartRtcCommandW		;@ 0xCA RTC command
-	.long cartRtcDataW			;@ 0xCB RTC data
+	.long cartRtcDataW			;@ 0xCB RTC data write
 	.long wsvImportantW			;@ 0xCC General purpose input/output enable, bit 3-0.
 	.long wsvImportantW			;@ 0xCD General purpose input/output data, bit 3-0.
 	.long wsvImportantW			;@ 0xCE WonderWitch flash
@@ -1165,7 +1165,8 @@ wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 wsvIntEnableW:				;@ 0xB2
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvInterruptEnable]
-	b wsvUpdateIrqPin
+	ldrb r0,[spxptr,#wsvInterruptStatus]
+	b wsvUpdateIrqEnable
 ;@----------------------------------------------------------------------------
 wsvSerialStatusW:			;@ 0xB3
 ;@----------------------------------------------------------------------------
@@ -1175,9 +1176,9 @@ wsvSerialStatusW:			;@ 0xB3
 //	eor r2,r2,r1
 //	and r2,r2,r1
 //	tst r2,#0x80
-//	ldrb r2,[spxptr,#wsvInterruptStatus]
-//	orrne r2,r2,#0x08
-//	strb r2,[spxptr,#wsvInterruptStatus]
+//	ldrb r0,[spxptr,#wsvInterruptStatus]
+//	orrne r0,r0,#0x08
+//	bl wsvSetInterruptStatus
 	b wsvImportantW
 //	bx lr
 ;@----------------------------------------------------------------------------
@@ -1185,8 +1186,7 @@ wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 	bic r0,r0,r1
-	strb r0,[spxptr,#wsvInterruptStatus]
-	b wsvAssertIrqPin
+	b wsvSetInterruptStatus
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
@@ -1220,7 +1220,7 @@ wsvConvertTileMaps:			;@ r0 = destination
 	ldr r10,[spxptr,#gfxRAM]
 
 	ldrb r1,[spxptr,#wsvVideoMode]
-	tst r1,#0x80				;@ 64kB RAM?
+	tst r1,#0x80				;@ Color Mode / 64kB RAM?
 	andeq r7,r7,#0x77
 	adr lr,tMapRet
 	tst r1,#0x40				;@ 4 bit planes?
@@ -1266,7 +1266,7 @@ noVBlIrq:
 	strhpl r1,[spxptr,#wsvVBlCounter]
 noTimerVBlIrq:
 	orr r0,r0,#0x40					;@ #6 = VBlank
-	strb r0,[spxptr,#wsvInterruptStatus]
+	bl wsvSetInterruptStatus
 
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
@@ -1352,8 +1352,7 @@ checkScanlineIRQ:
 noHBlIrq:
 	strhpl r1,[spxptr,#wsvHBlCounter]
 noTimerHBlIrq:
-	strb r0,[spxptr,#wsvInterruptStatus]
-	bl wsvAssertIrqPin
+	bl wsvSetInterruptStatus
 
 	ldrb r0,[spxptr,#wsvSndDMACtrl]
 	tst r0,#0x80
@@ -1371,15 +1370,15 @@ wsvSetInterruptExternal:	;@ r0 = irq state
 	cmp r0,#0
 	biceq r0,r1,#4
 	orrne r0,r1,#4				;@ External interrupt is bit/number 2.
+;@----------------------------------------------------------------------------
+wsvSetInterruptStatus:		;@ r0 = interrupt status
+;@----------------------------------------------------------------------------
+	ldrb r2,[spxptr,#wsvInterruptStatus]
+	cmp r0,r2
+	bxeq lr
 	strb r0,[spxptr,#wsvInterruptStatus]
-;@----------------------------------------------------------------------------
-wsvUpdateIrqPin:
-;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvInterruptStatus]
-;@----------------------------------------------------------------------------
-wsvAssertIrqPin:			;@ r0 = interrupt status
-;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptEnable]
+wsvUpdateIrqEnable:
 	and r0,r0,r1
 	ldr pc,[spxptr,#irqFunction]
 ;@----------------------------------------------------------------------------
@@ -1415,7 +1414,7 @@ doSoundDMA:					;@ In r0=SndDmaCtrl
 	ldr r1,[spxptr,#wsvSndDMALen]
 	ldr r2,[spxptr,#wsvSndDMASrc]
 	subs r1,r1,#1
-	bgt sndDmaCont
+	bpl sndDmaCont
 	tst r4,#0x08				;@ Loop?
 	biceq r4,r4,#0x80
 	strb r4,[spxptr,#wsvSndDMACtrl]
@@ -1434,7 +1433,7 @@ sndDmaCont:
 	bl cpuReadMem20
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	strbeq r0,[spxptr,#wsvSound2Vol]
-
+	;@ sub v30cyc,v30cyc,#2*CYCLE
 	ldmfd sp!,{r4,pc}
 ;@----------------------------------------------------------------------------
 T_data:
@@ -1668,6 +1667,7 @@ bgm4Loop:
 	ldr r3,[r1],#4				;@ Read from WonderSwan Tilemap RAM
 
 	and r4,r5,r3				;@ Mask out palette, flip & bank
+	bic r4,r4,r6,lsl#13			;@ Clear out bank bit
 	bic r3,r3,r5
 	orr r4,r4,r4,lsr#7			;@ Switch palette vs flip + bank
 	and r4,r5,r4,lsl#3			;@ Mask again
