@@ -208,9 +208,7 @@ typedef struct {
 
 	u8 dirtyTiles[4];
 	void *gfxRAM;
-	void *paletteMonoRAM;
 	void *paletteRAM;
-	void *gfxRAMSwap;
 	u32 *scrollBuff;
 	u8 wsvSpriteRAM[0x200];
 

@@ -222,9 +222,7 @@ irqFunction:		.long 0		;@ IRQ function
 
 dirtyTiles:			.space 4
 gfxRAM:				.long 0		;@ 0x4000/0x10000
-paletteMonoRAM:		.long 0		;@ 0x0020
 paletteRAM:			.long 0		;@ 0x0200
-gfxRAMSwap:			.long 0		;@ 0x3000
 scrollBuff:			.long 0
 wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 

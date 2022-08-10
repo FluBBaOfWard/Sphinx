@@ -7,7 +7,8 @@ V0.1.7 - 2022-08-10 (FluBBa)
 	Fixed window handling a bit.
 	Mute Ch2 when playing samples.
 	Tweaked Sprite DMA timing.
-	DMA now consumes cycles.
+	All DMA now consumes cycles.
+	Fixed reseting of total scan lines.
 
 V0.1.6 - 2022-04-20 (FluBBa)
 	Fixed sound DMA a bit.

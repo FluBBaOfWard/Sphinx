@@ -92,12 +92,6 @@ wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal,
 	str r2,[spxptr,#gfxRAM]
 	add r0,r2,#0xFE00
 	str r0,[spxptr,#paletteRAM]
-	add r2,r2,#0x3000
-	add r2,r2,#0x140
-	str r2,[spxptr,#paletteMonoRAM]
-	add r2,r2,#0x20
-	add r2,r2,#0x200
-	str r2,[spxptr,#gfxRAMSwap]
 	ldr r0,=SCROLL_BUFF
 	str r0,[spxptr,#scrollBuff]
 
@@ -133,12 +127,12 @@ thumbCallR3:
 ;@----------------------------------------------------------------------------
 wsvRegistersReset:				;@ in r3=SOC
 ;@----------------------------------------------------------------------------
-	add r0,spxptr,#wsvRegs
 	adr r1,IO_Default
 //	cmp r3,#SOC_SPHINX
 //	adreq r1,WSC_IO_Default
 //	adrhi r1,SC_IO_Default
 	mov r2,#0x100
+	add r0,spxptr,#wsvRegs
 	stmfd sp!,{spxptr,lr}
 	bl memCopy
 	ldmfd sp!,{spxptr,lr}
@@ -147,7 +141,8 @@ wsvRegistersReset:				;@ in r3=SOC
 	mov r0,#0x84
 	movne r0,#0x86
 	strb r0,[spxptr,#wsvSystemCtrl1]
-	bx lr
+	ldrb r1,[spxptr,#wsvTotalLines]
+	b wsvRefW
 
 ;@----------------------------------------------------------------------------
 IO_Default:
@@ -926,6 +921,15 @@ wsvRegW:
 	strb r1,[r2,r0]
 	bx lr
 
+;@----------------------------------------------------------------------------
+wsvSpriteTblAdrW:			;@ 0x04, Sprite Table Address
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvVideoMode]
+	tst r0,#0x80				;@ Color mode?
+	andne r1,r1,#0x3F
+	andeq r1,r1,#0x1F
+	strb r1,[spxptr,#wsvSprTblAdr]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
@@ -1725,7 +1729,6 @@ wsvDMASprites:
 	add r0,spxptr,#wsvSpriteRAM
 	ldr r1,[spxptr,#gfxRAM]
 	ldrb r2,[spxptr,#wsvSprTblAdr]
-	and r2,r2,#0x3F
 	add r1,r1,r2,lsl#9
 	ldrb r2,[spxptr,#wsvSpriteFirst]	;@ First sprite
 	add r1,r1,r2,lsl#2
@@ -1738,6 +1741,7 @@ wsvDMASprites:
 	movmi r2,#0
 	strb r2,[spxptr,#wsvLatchedSprCnt]
 	ldmfdle sp!,{spxptr,pc}
+	sub v30cyc,v30cyc,r2,lsl#CYC_SHIFT+1
 	mov r2,r2,lsl#2
 
 	bl memCopy
