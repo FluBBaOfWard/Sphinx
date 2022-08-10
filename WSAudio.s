@@ -1,4 +1,10 @@
-// Bandai WonderSwan Sound emulation
+//
+//  WSAudio.s
+//  Bandai WonderSwan Sound emulation for GBA/NDS.
+//
+//  Created by Fredrik Ahlström on 2006-07-23.
+//  Copyright © 2006-2022 Fredrik Ahlström. All rights reserved.
+//
 
 #ifdef __arm__
 #include "Sphinx.i"

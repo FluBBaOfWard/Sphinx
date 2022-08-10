@@ -1,5 +1,11 @@
+//
+//  Sphinx.i
+//  Bandai WonderSwan SOC emulation for GBA/NDS.
+//
+//  Created by Fredrik Ahlström on 2006-07-23.
+//  Copyright © 2006-2022 Fredrik Ahlström. All rights reserved.
+//
 ;@ ASM header for the Bandai WonderSwan SOC emulator
-;@
 
 #define HW_AUTO              (0)
 #define HW_WONDERSWAN        (1)

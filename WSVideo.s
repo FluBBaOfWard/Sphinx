@@ -1,4 +1,10 @@
-// Bandai WonderSwan Graphics emulation
+//
+//  WSVideo.s
+//  Bandai WonderSwan Video emulation for GBA/NDS.
+//
+//  Created by Fredrik Ahlström on 2006-07-23.
+//  Copyright © 2006-2022 Fredrik Ahlström. All rights reserved.
+//
 
 #ifdef __arm__
 
@@ -8,6 +14,7 @@
 	#include "../Shared/nds_asm.h"
 #endif
 #include "Sphinx.i"
+#include "../ARMV30MZ/ARMV30MZ.i"
 
 	.global wsVideoInit
 	.global wsVideoReset
@@ -1014,11 +1021,11 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 	ldrh r5,[spxptr,#wsvDMADest];@ r5=destination
 	mov r5,r5,lsl#16
 
-	;@ sub v30cyc,v30cyc,#5*CYCLE
+	sub v30cyc,v30cyc,#5*CYCLE
 	ldrh r6,[spxptr,#wsvDMALength]	;@ r6=length
 	cmp r6,#0
 	beq dmaEnd
-	;@ sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT+1
+	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT
 
 dmaLoop:
 	mov r0,r4,lsl#12
@@ -1433,7 +1440,7 @@ sndDmaCont:
 	bl cpuReadMem20
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	strbeq r0,[spxptr,#wsvSound2Vol]
-	;@ sub v30cyc,v30cyc,#2*CYCLE
+	sub v30cyc,v30cyc,#1*CYCLE
 	ldmfd sp!,{r4,pc}
 ;@----------------------------------------------------------------------------
 T_data:

@@ -1,12 +1,13 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.1.7 - 2022-07-18 (FluBBa)
+V0.1.7 - 2022-08-10 (FluBBa)
 	Fixed DMA a bit.
 	Added Luxsor 2 mapping registers.
 	Fixed window handling a bit.
 	Mute Ch2 when playing samples.
 	Tweaked Sprite DMA timing.
+	DMA now consumes cycles.
 
 V0.1.6 - 2022-04-20 (FluBBa)
 	Fixed sound DMA a bit.
