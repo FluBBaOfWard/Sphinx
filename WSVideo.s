@@ -1834,8 +1834,10 @@ wsvRedrawLCDIcons:			;@ In r0=
 ;@----------------------------------------------------------------------------
 	ldr r1,=gMachine
 	ldrb r1,[r1]
-	cmp r1,#HW_WONDERSWANCOLOR
-	bne redrawMonoIcons
+	cmp r1,#HW_WONDERSWAN
+	beq redrawMonoIcons
+	cmp r1,#HW_POCKETCHALLENGEV2
+	bxeq lr
 ;@----------------------------------------------------------------------------
 redrawColorIcons:
 ;@----------------------------------------------------------------------------
