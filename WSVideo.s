@@ -28,6 +28,7 @@
 	.global wsvBufferWindows
 	.global wsvRead
 	.global wsvWrite
+	.global wsvRefW
 	.global wsvGetInterruptVector
 	.global wsvSetInterruptExternal
 	.global wsvPushVolumeButton
@@ -980,7 +981,7 @@ wsvLCDIconW:				;@ 0x15, Enable/disable LCD icons
 	strb r1,[spxptr,#wsvOrientation]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvRefW:					;@ 0x16, Total number of scanlines?
+wsvRefW:					;@ 0x16, Last scan line.
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvTotalLines]
 	cmp r1,#0x9E
@@ -989,7 +990,8 @@ wsvRefW:					;@ 0x16, Total number of scanlines?
 	movpl r1,#0xC8
 	add r1,r1,#1
 	str r1,lineStateLastLine
-	bx lr
+	mov r0,r1
+	b setScreenRefresh
 ;@----------------------------------------------------------------------------
 wsvDMASourceW:				;@ 0x40, only WSC.
 ;@----------------------------------------------------------------------------
@@ -1312,8 +1314,8 @@ frameEndHook:
 ;@----------------------------------------------------------------------------
 lineStateTable:
 	.long 0, newFrame			;@ zeroLine
-	.long 75, midFrame			;@ Middle of screen
-	.long 144, endFrame			;@ After Last visible scanline
+	.long 72, midFrame			;@ Middle of screen
+	.long 144, endFrame			;@ After last visible scanline
 	.long 145, drawFrameGfx		;@ frameIRQ
 lineStateLastLine:
 	.long 159, frameEndHook		;@ totalScanlines
