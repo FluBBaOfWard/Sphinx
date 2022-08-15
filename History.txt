@@ -1,6 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.1.8 - 2022-08-15 (FluBBa)
+	Fixed LCD icons when in PCV2 mode.
+	WS refresh rate can control NDS refresh rate.
+
 V0.1.7 - 2022-08-10 (FluBBa)
 	Fixed DMA a bit.
 	Added Luxsor 2 mapping registers.

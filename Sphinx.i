@@ -208,10 +208,11 @@ sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current addr
 
 wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
+wsvLatchedDispCtrl:	.byte 0		;@ Latched Display Control
 wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding13:		.space 3
+wsvPadding13:		.space 2
 
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.

@@ -1252,6 +1252,8 @@ midFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 	bl wsvBufferWindows
+	ldrb r0,[spxptr,#wsvDispCtrl]
+	strb r0,[spxptr,#wsvLatchedDispCtrl]
 
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------

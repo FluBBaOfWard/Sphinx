@@ -195,10 +195,11 @@ typedef struct {
 
 	u8 wsvSOC;					// ASWAN, SPHINX or SPHINX2
 	u8 wsvLatchedSprCnt;		// Latched Sprite count
+	u8 wsvLatchedDispCtrl;		// Latched Display Control
 	u8 wsvOrientation;
 	u8 wsvLowBattery;
 	u8 wsvSleepMode__;
-	u8 wsvPadding13[3];
+	u8 wsvPadding13[2];
 
 	u32 enabledLCDIcons;
 	u32 scrollLine;
