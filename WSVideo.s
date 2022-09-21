@@ -1842,7 +1842,11 @@ redrawColorIcons:
 
 	ldr r2,=BG_GFX+0x800*2
 	add r1,r2,#0x40*24
+#ifdef GBA
+	add r2,r2,#0x40*1+0x3A
+#else
 	add r2,r2,#0x40*3+0x3C
+#endif
 	ldrh r4,[r1]
 	tst r0,#LCD_ICON_DOT3
 	ldrhne r3,[r1,#2]
@@ -1936,7 +1940,11 @@ redrawMonoIcons:
 
 	ldr r2,=BG_GFX+0x800*2
 	add r1,r2,#0x40*24
+#ifdef GBA
+	add r2,r2,#0x40*19
+#else
 	add r2,r2,#0x40*21
+#endif
 	ldrh r4,[r1]
 
 	tst r0,#LCD_ICON_POWR		;@ Power On?
