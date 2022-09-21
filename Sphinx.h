@@ -207,7 +207,6 @@ typedef struct {
 
 	void *irqFunction;			// IRQ callback
 
-	u8 dirtyTiles[4];
 	void *gfxRAM;
 	void *paletteRAM;
 	u32 *scrollBuff;

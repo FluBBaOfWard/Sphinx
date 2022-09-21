@@ -192,10 +192,7 @@ sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 	mov r2,#sphinxStateEnd-sphinxState
 	bl memCopy
 
-	ldr r0,=DIRTYTILES
-	mov r1,#0
-	mov r2,#0x800
-	bl memset
+	bl clearDirtyTiles
 
 	mov spxptr,r5
 	bl drawFrameGfx
@@ -214,10 +211,6 @@ sphinxGetStateSize:	;@ Out r0=state size.
 	bx lr
 
 	.pool
-;@----------------------------------------------------------------------------
-#ifdef GBA
-	.section .ewram,"ax"
-#endif
 ;@----------------------------------------------------------------------------
 wsvBufferWindows:
 ;@----------------------------------------------------------------------------
