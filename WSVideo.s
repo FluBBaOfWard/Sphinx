@@ -1789,11 +1789,12 @@ dm5:
 	orreq r3,r3,#PRIORITY		;@ Prio NDS
 #elif GBA
 	orreq r3,r3,#PRIORITY*2		;@ Prio GBA
+	orrne r3,r3,#PRIORITY		;@ Prio GBA
 #endif
 	tst r2,r8					;@ Palette bit 2 for 2bitplane
 	orrne r3,r3,#0x200			;@ Opaque tiles
 
-	strh r3,[r0],#4				;@ Store OBJ Atr 2. Pattern, palette.
+	strh r3,[r0],#4				;@ Store OBJ Atr 2. Pattern, palette, prio.
 	subs r7,r7,#1
 	bne dm5
 skipSprites:
