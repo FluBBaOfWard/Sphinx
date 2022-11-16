@@ -60,7 +60,9 @@ typedef struct {
 	u8 wsvLCDControl;
 	u8 wsvLCDIcons;
 	u8 wsvTotalLines;
-	u8 wsvPadding0[5];
+	u8 wsvPadding0[3];
+	u8 wsvLCDVolume;
+	u8 wsvPadding0_1[1];
 
 	u8 wsvColor01;
 	u8 wsvColor23;
@@ -155,8 +157,9 @@ typedef struct {
 	u8 wsvInterruptStatus;
 	u8 wsvControls;
 	u8 wsvInterruptAck;
+	u8 wsvNMIControl;
 
-	u8 wsvPadding11[3];
+	u8 wsvPadding11[2];
 
 	u16 wsvIntEEPROMData;
 	u16 wsvIntEEPROMAdr;
@@ -198,8 +201,9 @@ typedef struct {
 	u8 wsvLatchedDispCtrl;		// Latched Display Control
 	u8 wsvOrientation;
 	u8 wsvLowBattery;
+	u8 wsvLowBatPin;
 	u8 wsvSleepMode__;
-	u8 wsvPadding13[2];
+	u8 wsvPadding13[1];
 
 	u32 enabledLCDIcons;
 	u32 scrollLine;

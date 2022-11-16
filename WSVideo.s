@@ -286,7 +286,7 @@ IN_Table:
 	.long wsvRegR				;@ 0x17 Vsync line
 	.long wsvWSUnmappedR		;@ 0x18 ---
 	.long wsvWSUnmappedR		;@ 0x19 ---
-	.long wsvUnknownR			;@ 0x1A ???
+	.long wsvLCDVolumeR			;@ 0x1A Volume Icons
 	.long wsvWSUnmappedR		;@ 0x1B ---
 	.long wsvRegR				;@ 0x1C Pal mono pool 0
 	.long wsvRegR				;@ 0x1D Pal mono pool 1
@@ -576,6 +576,18 @@ wsvVCountR:					;@ 0x03
 	ldrb r0,[spxptr,#scanline]
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvLCDVolumeR:				;@ 0x1A
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r0,spxptr,lr}
+	bl _debugIOUnimplR
+	ldmfd sp!,{r0,spxptr,lr}
+	ldrb r0,[spxptr,#wsvLCDVolume]
+	and r0,r0,#1				;@ Only keep bit 0
+	ldrb r1,[spxptr,#wsvHWVolume]
+	and r1,r1,#0x03				;@ Only low 2 bits
+	orr r0,r0,r1,lsl#2
+	bx lr
+;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
@@ -625,7 +637,7 @@ OUT_Table:
 	.long wsvRegW				;@ 0x04 Sprite table address
 	.long wsvSpriteFirstW		;@ 0x05 Sprite to start with
 	.long wsvRegW				;@ 0x06 Sprite count
-	.long wsvRegW				;@ 0x07 Map table address
+	.long wsvMapAdrW			;@ 0x07 Map table address
 	.long wsvRegW				;@ 0x08 Window X-Position
 	.long wsvRegW				;@ 0x09 Window Y-Position
 	.long wsvRegW				;@ 0x0A Window X-Size
@@ -812,7 +824,7 @@ OUT_Table:
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
 	.long wsvRegW				;@ 0xB5 Input Controls
 	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownW			;@ 0xB7 ??? NMI ctrl?
+	.long wsvNMICtrlW			;@ 0xB7 NMI ctrl
 	.long wsvUnmappedW			;@ 0xB8 ---
 	.long wsvUnmappedW			;@ 0xB9 ---
 	.long intEepromDataLowW		;@ 0xBA int-eeprom data low
@@ -929,6 +941,11 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x7F
 	strb r1,[spxptr,#wsvSpriteFirst]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvMapAdrW:					;@ 0x07 Map table address
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvMapTblAdr]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
@@ -1194,6 +1211,13 @@ wsvIntAckW:					;@ 0xB6
 	bic r0,r0,r1
 	b wsvSetInterruptStatus
 ;@----------------------------------------------------------------------------
+wsvNMICtrlW:				;@ 0xB7
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvNMIControl]
+	ldrb r0,[spxptr,#wsvLowBattery]
+	b wsvSetLowBattery
+
+;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvHWVolume]
@@ -1214,6 +1238,13 @@ wsvSetHeadphones:			;@ r0 = on/off
 wsvSetLowBattery:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvLowBattery]
+	ldrb r1,[spxptr,#wsvNMIControl]
+	tst r1,#0x10
+	moveq r0,#0
+	ldrb r1,[spxptr,#wsvLowBatPin]
+	strb r0,[spxptr,#wsvLowBatPin]
+	cmp r0,r1
+	bne V30SetNMIPin
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination

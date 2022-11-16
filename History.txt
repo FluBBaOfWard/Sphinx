@@ -1,6 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.1.9 - 2022-11-16 (FluBBa)
+	Added reading of register 0x1A.
+	Added emulation of NMI control register (0xB7).
+
 V0.1.8 - 2022-08-15 (FluBBa)
 	Fixed LCD icons when in PCV2 mode.
 	WS refresh rate can control NDS refresh rate.

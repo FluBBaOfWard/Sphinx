@@ -72,7 +72,9 @@ wsvFgYScroll:		.byte 0		;@ 0x13 Foreground Y-Scroll
 wsvLCDControl:		.byte 0		;@ 0x14 LCD control (on/off?)
 wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
 wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
-wsvPadding0:		.space 5	;@ 0x17 - 0x1B ???
+wsvPadding0:		.space 3	;@ 0x17 - 0x19 ???
+wsvLCDVolume:		.byte 0		;@ 0x1A LCD Volume icon
+wsvPadding0_1:		.space 1	;@ 00x1B ???
 
 wsvColor01:			.byte 0		;@ 0x1C Color 0 & 1
 wsvColor23:			.byte 0		;@ 0x1D Color 2 & 3
@@ -167,8 +169,9 @@ wsvSerialStatus:	.byte 0		;@ 0xB3 Serial status
 wsvInterruptStatus:	.byte 0		;@ 0xB4 Interrupt status
 wsvControls:		.byte 0		;@ 0xB5 Input Controls
 wsvInterruptAck:	.byte 0		;@ 0xB6 Interrupt acknowledge
+wsvNMIControl:		.byte 0		;@ 0xB7 NMI Control
 
-wsvPadding11:		.space 3	;@ 0xB7 - 0xB9 ???
+wsvPadding11:		.space 2	;@ 0xB8 - 0xB9 ???
 
 wsvIntEEPROMData:	.short 0	;@ 0xBA/0xBB Internal EEPROM data
 wsvIntEEPROMAdr:	.short 0	;@ 0xBC/0xBD Internal EEPROM address
@@ -211,8 +214,9 @@ wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvLatchedDispCtrl:	.byte 0		;@ Latched Display Control
 wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
+wsvLowBatPin:		.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding13:		.space 2
+wsvPadding13:		.space 1
 
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.
