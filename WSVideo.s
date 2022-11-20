@@ -1662,6 +1662,7 @@ bgColor:
 	stmfd sp!,{lr}
 	bl bgm16Start
 	ldmfd sp!,{lr}
+	add r0,r0,#0x800
 
 	and r1,r7,#0xf0
 	add r1,r10,r1,lsl#7
@@ -1696,6 +1697,7 @@ bgMono:
 	stmfd sp!,{lr}
 	bl bgm4Start
 	ldmfd sp!,{lr}
+	add r0,r0,#0x800
 
 	and r1,r7,#0xf0
 	add r1,r10,r1,lsl#7
