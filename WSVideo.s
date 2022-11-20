@@ -1725,13 +1725,13 @@ bgm4Loop:
 ;@----------------------------------------------------------------------------
 copyScrollValues:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r6}
+	stmfd sp!,{r4-r9}
 	ldr r1,[spxptr,#scrollBuff]
 
-	mov r2,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
-	add r0,r0,r2,lsl#3			;@ 8 bytes per row
+	mov r7,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
+	add r0,r0,r7,lsl#3			;@ 8 bytes per row
 	mov r3,#0x100-(SCREEN_WIDTH-GAME_WIDTH)/2
-	sub r3,r3,r2,lsl#16
+	sub r3,r3,r7,lsl#16
 	ldr r4,=0x00FF00FF
 	mov r2,#GAME_HEIGHT
 setScrlLoop:
@@ -1744,11 +1744,18 @@ setScrlLoop:
 	and r5,r4,r5,lsr#8
 	add r6,r6,r3
 	add r5,r5,r3
+	add r8,r5,r7,lsl#16
+	tst r8,#0x1000000
+	subne r5,r5,#0x1000000
+	add r8,r6,r7,lsl#16
+	tst r8,#0x1000000
+	subne r6,r6,#0x1000000
 	stmia r0!,{r5,r6}
+	add r7,r7,#1
 	subs r2,r2,#1
 	bne setScrlLoop
 
-	ldmfd sp!,{r4-r6}
+	ldmfd sp!,{r4-r9}
 	bx lr
 
 ;@----------------------------------------------------------------------------
