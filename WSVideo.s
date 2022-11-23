@@ -1778,6 +1778,7 @@ wsvDMASprites:
 	movmi r2,#0
 	strb r2,[spxptr,#wsvLatchedSprCnt]
 	ldmfdle sp!,{spxptr,pc}
+
 	sub v30cyc,v30cyc,r2,lsl#CYC_SHIFT+1
 	mov r2,r2,lsl#2
 
@@ -1881,7 +1882,7 @@ redrawColorIcons:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r5,lr}
 
-	ldr r2,=BG_GFX+0x800*2
+	ldr r2,=BG_GFX+0x800*11
 	add r1,r2,#0x40*24
 #ifdef GBA
 	add r2,r2,#0x40*1+0x3A
@@ -1979,7 +1980,7 @@ redrawMonoIcons:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r5,lr}
 
-	ldr r2,=BG_GFX+0x800*2
+	ldr r2,=BG_GFX+0x800*11
 	add r1,r2,#0x40*24
 #ifdef GBA
 	add r2,r2,#0x40*19
