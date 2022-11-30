@@ -196,14 +196,18 @@ typedef struct {
 	u32 noise4CurrentAddr;		// Ch4 noise Current addr
 	u32 sweep3CurrentAddr;		// Ch3 sweep Current addr
 
+	u32 serialIRQCounter;		// How many cycles to send byte.
+
 	u8 wsvSOC;					// ASWAN, SPHINX or SPHINX2
 	u8 wsvLatchedSprCnt;		// Latched Sprite count
 	u8 wsvLatchedDispCtrl;		// Latched Display Control
 	u8 wsvOrientation;
 	u8 wsvLowBattery;
 	u8 wsvLowBatPin;
+	u8 wsvInterruptPins;
+	u8 wsvByteReceived;
 	u8 wsvSleepMode__;
-	u8 wsvPadding13[1];
+	u8 wsvPadding13[3];
 
 	u32 enabledLCDIcons;
 	u32 scrollLine;

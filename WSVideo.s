@@ -84,6 +84,7 @@ wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal,
 	ldr r1,[r2],#4
 	mov r0,#-1
 	stmia spxptr,{r0-r2}		;@ Reset scanline, nextChange & lineState
+	str r0,[spxptr,#serialIRQCounter]
 
 	ldmfd sp!,{r0-r3,lr}
 	cmp r0,#0
@@ -447,7 +448,7 @@ IN_Table:
 	.long wsvWSUnmappedR		;@ 0xAF ---
 
 	.long wsvRegR				;@ 0xB0 Interrupt base
-	.long wsvImportantR			;@ 0xB1 Serial data
+	.long wsvComByteR			;@ 0xB1 Serial data
 	.long wsvRegR				;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusR		;@ 0xB3 Serial status
 	.long wsvRegR				;@ 0xB4 Interrupt status
@@ -588,11 +589,28 @@ wsvLCDVolumeR:				;@ 0x1A
 	orr r0,r0,r1,lsl#2
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvComByteR:				;@ 0xB1
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvInterruptStatus]
+	bic r0,r0,#0x08				;@ #3 = Serial receive
+	stmfd sp!,{lr}
+	bl wsvSetInterruptPins
+	ldmfd sp!,{lr}
+	mov r0,#0
+	strb r0,[spxptr,#wsvByteReceived]
+	ldrb r0,[spxptr,#wsvComByte]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
-	and r0,r0,#0xE0				;@ Mask out write bits.
-	orr r0,r0,#4				;@ Hack! Send buffer always empty.
+	and r0,r0,#0xC0				;@ Mask out settings bits.
+	ldr r1,[spxptr,#serialIRQCounter]
+	cmp r1,#0					;@ Send complete?
+	orrmi r0,r0,#4
+	ldrb r1,[spxptr,#wsvByteReceived]
+	cmp r1,#0					;@ Receive buffer full?
+	orrne r0,r0,#1
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -818,7 +836,7 @@ OUT_Table:
 	.long wsvUnmappedW			;@ 0xAF ---
 
 	.long wsvRegW				;@ 0xB0 Interrupt base
-	.long wsvImportantW			;@ 0xB1 Serial data
+	.long wsvComByteW			;@ 0xB1 Serial data
 	.long wsvIntEnableW			;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusW		;@ 0xB3 Serial status
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
@@ -1184,32 +1202,50 @@ wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 	orr r2,r2,#0xC
 	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
+
+;@----------------------------------------------------------------------------
+wsvComByteW:				;@ 0xB1
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvComByte]
+	ldrb r1,[spxptr,#wsvSerialStatus]
+	tst r1,#0x40					;@ 0 = 9600, 1 = 38400 bps
+	moveq r0,#2560					;@ 3072000/(9600/8)
+	movne r0,#640					;@ 3072000/(38400/8)
+	tst r1,#0x80					;@ Serial enabled?
+	moveq r0,#-1
+	str r0,[spxptr,#serialIRQCounter]
+	ldrb r0,[spxptr,#wsvInterruptStatus]
+	bic r0,r0,#0x01					;@ #0 = Serial transmit
+	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntEnableW:				;@ 0xB2
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvInterruptEnable]
 	ldrb r0,[spxptr,#wsvInterruptStatus]
+	ldrb r2,[spxptr,#wsvSerialStatus]
+	tst r2,#0x80
+	orrne r0,r0,#0x01				;@ Serial buffer empty IRQ.
+	strbne r0,[spxptr,#wsvInterruptStatus]
 	b wsvUpdateIrqEnable
 ;@----------------------------------------------------------------------------
 wsvSerialStatusW:			;@ 0xB3
 ;@----------------------------------------------------------------------------
-//	and r1,r1,#0xE0				;@ Mask out write bits
-//	ldrb r2,[spxptr,#wsvSerialStatus]
-//	strb r1,[spxptr,#wsvSerialStatus]
-//	eor r2,r2,r1
-//	and r2,r2,r1
-//	tst r2,#0x80
-//	ldrb r0,[spxptr,#wsvInterruptStatus]
-//	orrne r0,r0,#0x08
-//	bl wsvSetInterruptStatus
-	b wsvImportantW
-//	bx lr
+	ldrb r0,[spxptr,#wsvSerialStatus]
+	strb r1,[spxptr,#wsvSerialStatus]
+	eor r0,r0,r1
+	tst r0,#0x80					;@ Serial enable changed?
+	bxeq lr
+	tst r1,#0x80					;@ Serial enable now?
+	ldrb r0,[spxptr,#wsvInterruptStatus]
+	orrne r0,r0,#0x01				;@ #0 = Serial transmit buffer empty
+	biceq r0,r0,#0x09				;@ #0, 3 = Serial transmit, receive
+	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 	bic r0,r0,r1
-	b wsvSetInterruptStatus
+	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvNMICtrlW:				;@ 0xB7
 ;@----------------------------------------------------------------------------
@@ -1305,7 +1341,7 @@ noVBlIrq:
 	strhpl r1,[spxptr,#wsvVBlCounter]
 noTimerVBlIrq:
 	orr r0,r0,#0x40					;@ #6 = VBlank
-	bl wsvSetInterruptStatus
+	bl wsvSetInterruptPins
 
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
@@ -1377,6 +1413,12 @@ checkScanlineIRQ:
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 	orreq r0,r0,#0x10			;@ #4 = Line compare
 
+	ldr r2,[spxptr,#serialIRQCounter]
+	cmp r2,#0
+	subspl r2,r2,256			;@ Cycles per scanline
+	str r2,[spxptr,#serialIRQCounter]
+	orrcc r0,r0,#0x01			;@ #0 = Serial transmit
+
 	ldrb r2,[spxptr,#wsvTimerControl]
 	tst r2,#0x1					;@ HBlank timer enabled?
 	beq noTimerHBlIrq
@@ -1391,7 +1433,7 @@ checkScanlineIRQ:
 noHBlIrq:
 	strhpl r1,[spxptr,#wsvHBlCounter]
 noTimerHBlIrq:
-	bl wsvSetInterruptStatus
+	bl wsvSetInterruptPins
 
 	ldrb r0,[spxptr,#wsvSndDMACtrl]
 	tst r0,#0x80
@@ -1410,7 +1452,7 @@ wsvSetInterruptExternal:	;@ r0 = irq state
 	biceq r0,r1,#4
 	orrne r0,r1,#4				;@ External interrupt is bit/number 2.
 ;@----------------------------------------------------------------------------
-wsvSetInterruptStatus:		;@ r0 = interrupt status
+wsvSetInterruptPins:		;@ r0 = interrupt status
 ;@----------------------------------------------------------------------------
 	ldrb r2,[spxptr,#wsvInterruptStatus]
 	cmp r0,r2
@@ -1882,7 +1924,7 @@ redrawColorIcons:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r5,lr}
 
-	ldr r2,=BG_GFX+0x800*11
+	ldr r2,=BG_GFX+0x800*12
 	add r1,r2,#0x40*24
 #ifdef GBA
 	add r2,r2,#0x40*1+0x3A
@@ -1980,7 +2022,7 @@ redrawMonoIcons:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r5,lr}
 
-	ldr r2,=BG_GFX+0x800*11
+	ldr r2,=BG_GFX+0x800*12
 	add r1,r2,#0x40*24
 #ifdef GBA
 	add r2,r2,#0x40*19

@@ -209,14 +209,18 @@ pcm4CurrentAddr:	.long 0		;@ Ch4 Current addr
 noise4CurrentAddr:	.long 0		;@ Ch4 noise Current addr
 sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current addr
 
+serialIRQCounter:	.long 0		;@ How many cycles to send byte.
+
 wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvLatchedDispCtrl:	.byte 0		;@ Latched Display Control
 wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
 wsvLowBatPin:		.byte 0
+wsvInterruptPins:	.byte 0
+wsvByteReceived:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding13:		.space 1
+wsvPadding13:		.space 3
 
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.
