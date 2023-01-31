@@ -1,9 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.1.9 - 2022-11-30 (FluBBa)
+V0.1.9 - 2023-01-31 (FluBBa)
 	Added reading of register 0x1A.
 	Added emulation of NMI control register (0xB7).
+	Fixed interrupt handling.
 	Better emulation of "Serial buffer empty" IRQ.
 
 V0.1.8 - 2022-08-15 (FluBBa)
