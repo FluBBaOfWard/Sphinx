@@ -591,11 +591,6 @@ wsvLCDVolumeR:				;@ 0x1A
 ;@----------------------------------------------------------------------------
 wsvComByteR:				;@ 0xB1
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvInterruptStatus]
-	bic r0,r0,#0x08				;@ #3 = Serial receive
-	stmfd sp!,{lr}
-	bl wsvSetInterruptPins
-	ldmfd sp!,{lr}
 	mov r0,#0
 	strb r0,[spxptr,#wsvByteReceived]
 	ldrb r0,[spxptr,#wsvComByte]
@@ -1214,19 +1209,16 @@ wsvComByteW:				;@ 0xB1
 	tst r1,#0x80					;@ Serial enabled?
 	moveq r0,#-1
 	str r0,[spxptr,#serialIRQCounter]
-	ldrb r0,[spxptr,#wsvInterruptStatus]
-	bic r0,r0,#0x01					;@ #0 = Serial transmit
-	b wsvSetInterruptPins
+	mov r0,#0x01					;@ #0 = Serial transmit
+	b wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntEnableW:				;@ 0xB2
 ;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvInterruptPins]
 	strb r1,[spxptr,#wsvInterruptEnable]
-	ldrb r0,[spxptr,#wsvInterruptStatus]
-	ldrb r2,[spxptr,#wsvSerialStatus]
-	tst r2,#0x80
-	orrne r0,r0,#0x01				;@ Serial buffer empty IRQ.
-	strbne r0,[spxptr,#wsvInterruptStatus]
-	b wsvUpdateIrqEnable
+	and r0,r0,r1
+	and r0,r0,#0x0F
+	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSerialStatusW:			;@ 0xB3
 ;@----------------------------------------------------------------------------
@@ -1236,16 +1228,22 @@ wsvSerialStatusW:			;@ 0xB3
 	tst r0,#0x80					;@ Serial enable changed?
 	bxeq lr
 	tst r1,#0x80					;@ Serial enable now?
-	ldrb r0,[spxptr,#wsvInterruptStatus]
-	orrne r0,r0,#0x01				;@ #0 = Serial transmit buffer empty
-	biceq r0,r0,#0x09				;@ #0, 3 = Serial transmit, receive
-	b wsvSetInterruptPins
+	mov r0,#0x01					;@ #0 = Serial transmit buffer empty
+	bne wsvSetInterruptPins
+	orr r0,r0,#0x09					;@ #0, 3 = Serial transmit, receive
+	b wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvInterruptStatus]
 	bic r0,r0,r1
-	b wsvSetInterruptPins
+	ldrb r1,[spxptr,#wsvInterruptEnable]
+	ldrb r2,[spxptr,#wsvInterruptPins]
+	and r2,r2,r1
+	and r2,r2,#0x0F
+	orr r0,r0,r2
+	strb r0,[spxptr,#wsvInterruptStatus]
+	ldr pc,[spxptr,#irqFunction]
 ;@----------------------------------------------------------------------------
 wsvNMICtrlW:				;@ 0xB7
 ;@----------------------------------------------------------------------------
@@ -1325,7 +1323,7 @@ endFrame:
 	bl endFrameGfx
 	bl wsvDMASprites
 
-	ldrb r0,[spxptr,#wsvInterruptStatus]
+	mov r0,#0
 	ldrb r2,[spxptr,#wsvTimerControl]
 	tst r2,#0x4						;@ VBlank timer enabled?
 	beq noTimerVBlIrq
@@ -1410,7 +1408,7 @@ checkScanlineIRQ:
 	stmfd sp!,{lr}
 	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
-	ldrb r0,[spxptr,#wsvInterruptStatus]
+	mov r0,#0
 	orreq r0,r0,#0x10			;@ #4 = Line compare
 
 	ldr r2,[spxptr,#serialIRQCounter]
@@ -1445,29 +1443,37 @@ noTimerHBlIrq:
 	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
-wsvSetInterruptExternal:	;@ r0 = irq state
+wsvSetInterruptExternal:	;@ r0 = irq pin state
 ;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvInterruptStatus]
 	cmp r0,#0
-	biceq r0,r1,#4
-	orrne r0,r1,#4				;@ External interrupt is bit/number 2.
+	mov r0,#4				;@ External interrupt is bit/number 2.
+	beq wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
-wsvSetInterruptPins:		;@ r0 = interrupt status
+wsvSetInterruptPins:		;@ r0 = interrupt pins
 ;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvInterruptPins]
+	orr r1,r1,r0
+	strb r1,[spxptr,#wsvInterruptPins]
+	ldrb r1,[spxptr,#wsvInterruptEnable]
 	ldrb r2,[spxptr,#wsvInterruptStatus]
+	and r0,r0,r1
+	orr r0,r0,r2
 	cmp r0,r2
 	bxeq lr
 	strb r0,[spxptr,#wsvInterruptStatus]
-	ldrb r1,[spxptr,#wsvInterruptEnable]
-wsvUpdateIrqEnable:
-	and r0,r0,r1
 	ldr pc,[spxptr,#irqFunction]
+;@----------------------------------------------------------------------------
+wsvClearInterruptPins:		;@ r0 = interrupt pins
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvInterruptPins]
+	bic r1,r1,r0
+	strb r1,[spxptr,#wsvInterruptPins]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvGetInterruptVector:		;@ return vector in r0, #-1 if error
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptStatus]
-	ldrb r0,[spxptr,#wsvInterruptEnable]
-	ands r1,r1,r0
+	cmp r1,#0
 	moveq r0,#-1
 	bxeq lr
 #ifdef GBA
