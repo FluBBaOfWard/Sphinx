@@ -1154,21 +1154,12 @@ wsvTimerCtrlW:				;@ 0xA2 Timer control
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x0F
 	strb r1,[spxptr,#wsvTimerControl]
-	tst r1,#1
-	ldrhne r0,[spxptr,#wsvHBlTimerFreq]
-	strhne r0,[spxptr,#wsvHBlCounter]
-	tst r1,#4
-	ldrhne r0,[spxptr,#wsvVBlTimerFreq]
-	strhne r0,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerLowW:				;@ 0xA4 HBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvHBlTimerFreq]
 	strb r1,[spxptr,#wsvHBlCounter]
-	ldrb r2,[spxptr,#wsvTimerControl]
-	orr r2,r2,#0x3
-	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerHighW:				;@ 0xA5 HBlank timer high
@@ -1184,18 +1175,12 @@ wsvVTimerLowW:				;@ 0xA6 VBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvVBlTimerFreq]
 	strb r1,[spxptr,#wsvVBlCounter]
-	ldrb r2,[spxptr,#wsvTimerControl]
-	orr r2,r2,#0xC
-	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvVBlTimerFreq+1]
 	strb r1,[spxptr,#wsvVBlCounter+1]
-	ldrb r2,[spxptr,#wsvTimerControl]
-	orr r2,r2,#0xC
-	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -1332,8 +1317,6 @@ endFrame:
 	bne noVBlIrq
 	orr r0,r0,#0x20					;@ #5 = VBlank timer
 	tst r2,#0x8						;@ Repeat?
-	biceq r2,r2,#0x4
-	strbeq r2,[spxptr,#wsvTimerControl]
 	ldrhne r1,[spxptr,#wsvVBlTimerFreq]
 noVBlIrq:
 	strhpl r1,[spxptr,#wsvVBlCounter]
@@ -1425,8 +1408,6 @@ checkScanlineIRQ:
 	bne noHBlIrq
 	orr r0,r0,#0x80				;@ #7 = HBlank timer
 	tst r2,#0x2					;@ Repeat?
-	biceq r2,r2,#0x1
-	strbeq r2,[spxptr,#wsvTimerControl]
 	ldrhne r1,[spxptr,#wsvHBlTimerFreq]
 noHBlIrq:
 	strhpl r1,[spxptr,#wsvHBlCounter]
