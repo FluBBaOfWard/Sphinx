@@ -1166,9 +1166,6 @@ wsvHTimerHighW:				;@ 0xA5 HBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvHBlTimerFreq+1]
 	strb r1,[spxptr,#wsvHBlCounter+1]
-	ldrb r2,[spxptr,#wsvTimerControl]
-	orr r2,r2,#0x3
-	strb r2,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerLowW:				;@ 0xA6 VBlank timer low
@@ -1309,17 +1306,17 @@ endFrame:
 	bl wsvDMASprites
 
 	mov r0,#0
-	ldrb r2,[spxptr,#wsvTimerControl]
-	tst r2,#0x4						;@ VBlank timer enabled?
-	beq noTimerVBlIrq
 	ldrh r1,[spxptr,#wsvVBlCounter]
 	subs r1,r1,#1
+	bmi noTimerVBlIrq
+	orreq r0,r0,#0x20					;@ #5 = VBlank timer
+	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noVBlIrq
-	orr r0,r0,#0x20					;@ #5 = VBlank timer
 	tst r2,#0x8						;@ Repeat?
 	ldrhne r1,[spxptr,#wsvVBlTimerFreq]
 noVBlIrq:
-	strhpl r1,[spxptr,#wsvVBlCounter]
+	tst r2,#0x4						;@ VBlank timer enabled?
+	strhne r1,[spxptr,#wsvVBlCounter]
 noTimerVBlIrq:
 	orr r0,r0,#0x40					;@ #6 = VBlank
 	bl wsvSetInterruptPins
@@ -1400,17 +1397,17 @@ checkScanlineIRQ:
 	str r2,[spxptr,#serialIRQCounter]
 	orrcc r0,r0,#0x01			;@ #0 = Serial transmit
 
-	ldrb r2,[spxptr,#wsvTimerControl]
-	tst r2,#0x1					;@ HBlank timer enabled?
-	beq noTimerHBlIrq
 	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
+	bmi noTimerHBlIrq
+	orreq r0,r0,#0x80			;@ #7 = HBlank timer
+	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noHBlIrq
-	orr r0,r0,#0x80				;@ #7 = HBlank timer
 	tst r2,#0x2					;@ Repeat?
 	ldrhne r1,[spxptr,#wsvHBlTimerFreq]
 noHBlIrq:
-	strhpl r1,[spxptr,#wsvHBlCounter]
+	tst r2,#0x1					;@ HBlank timer enabled?
+	strhne r1,[spxptr,#wsvHBlCounter]
 noTimerHBlIrq:
 	bl wsvSetInterruptPins
 
