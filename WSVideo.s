@@ -1296,20 +1296,27 @@ midFrame:
 	strb r0,[spxptr,#wsvLatchedDispCtrl]
 
 	ldmfd sp!,{pc}
+
+;@----------------------------------------------------------------------------
+lastScanLine:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	bl gfxPreSpriteDma
+	bl wsvDMASprites
+	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 	ldr r2,[spxptr,#wsvBgXScroll]
 	bl scrollCnt
-	bl endFrameGfx
-	bl wsvDMASprites
+	bl gfxEndFrame
 
 	mov r0,#0
 	ldrh r1,[spxptr,#wsvVBlCounter]
 	subs r1,r1,#1
 	bmi noTimerVBlIrq
-	orreq r0,r0,#0x20					;@ #5 = VBlank timer
+	orreq r0,r0,#0x20				;@ #5 = VBlank timer
 	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noVBlIrq
 	tst r2,#0x8						;@ Repeat?
@@ -1355,6 +1362,7 @@ frameEndHook:
 lineStateTable:
 	.long 0, newFrame			;@ zeroLine
 	.long 72, midFrame			;@ Middle of screen
+	.long 143, lastScanLine		;@ Just before last visible scanline
 	.long 144, endFrame			;@ After last visible scanline
 	.long 145, drawFrameGfx		;@ frameIRQ
 lineStateLastLine:
