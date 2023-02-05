@@ -667,10 +667,10 @@ OUT_Table:
 	.long wsvRegW				;@ 0x14 LCD control (on/off?)
 	.long wsvLCDIconW			;@ 0x15 LCD icons
 	.long wsvRefW				;@ 0x16 Total scan lines
-	.long wsvRegW				;@ 0x17 Vsync line
+	.long wsvImportantW			;@ 0x17 Vsync line
 	.long wsvUnmappedW			;@ 0x18 ---
 	.long wsvUnmappedW			;@ 0x19 ---
-	.long wsvUnknownW			;@ 0x1A ???
+	.long wsvUnknownW			;@ 0x1A Volume Icons, LCD sleep
 	.long wsvUnmappedW			;@ 0x1B ---
 	.long wsvRegW				;@ 0x1C Pal mono pool 0
 	.long wsvRegW				;@ 0x1D Pal mono pool 1
@@ -979,8 +979,8 @@ wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 scrollCnt:
 	ldr r1,[spxptr,#scanline]	;@ r1=scanline
 	add r1,r1,#1
-	cmp r1,#146
-	movhi r1,#146
+	cmp r1,#145
+	movhi r1,#145
 	ldr r0,[spxptr,#scrollLine]
 	subs r0,r1,r0
 	strhi r1,[spxptr,#scrollLine]
@@ -1296,14 +1296,6 @@ midFrame:
 	strb r0,[spxptr,#wsvLatchedDispCtrl]
 
 	ldmfd sp!,{pc}
-
-;@----------------------------------------------------------------------------
-lastScanLine:
-;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
-	bl gfxPreSpriteDma
-	bl wsvDMASprites
-	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 endFrame:
 ;@----------------------------------------------------------------------------
@@ -1311,6 +1303,7 @@ endFrame:
 	ldr r2,[spxptr,#wsvBgXScroll]
 	bl scrollCnt
 	bl gfxEndFrame
+	bl wsvDMASprites
 
 	mov r0,#0
 	ldrh r1,[spxptr,#wsvVBlCounter]
@@ -1362,7 +1355,6 @@ frameEndHook:
 lineStateTable:
 	.long 0, newFrame			;@ zeroLine
 	.long 72, midFrame			;@ Middle of screen
-	.long 143, lastScanLine		;@ Just before last visible scanline
 	.long 144, endFrame			;@ After last visible scanline
 	.long 145, drawFrameGfx		;@ frameIRQ
 lineStateLastLine:
@@ -1813,9 +1805,7 @@ wsvDMASprites:
 	strb r2,[spxptr,#wsvLatchedSprCnt]
 	ldmfdle sp!,{spxptr,pc}
 
-	sub v30cyc,v30cyc,r2,lsl#CYC_SHIFT+1
 	mov r2,r2,lsl#2
-
 	bl memCopy
 
 	ldmfd sp!,{spxptr,pc}
