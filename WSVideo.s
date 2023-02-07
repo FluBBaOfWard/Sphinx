@@ -591,6 +591,10 @@ wsvLCDVolumeR:				;@ 0x1A
 ;@----------------------------------------------------------------------------
 wsvComByteR:				;@ 0xB1
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	mov r0,#0x08				;@ #3 = Serial receive
+	bl wsvClearInterruptPins
+	ldmfd sp!,{lr}
 	mov r0,#0
 	strb r0,[spxptr,#wsvByteReceived]
 	ldrb r0,[spxptr,#wsvComByte]
