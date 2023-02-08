@@ -3,7 +3,7 @@
 //  Bandai WonderSwan Sound emulation for GBA/NDS.
 //
 //  Created by Fredrik Ahlström on 2006-07-23.
-//  Copyright © 2006-2022 Fredrik Ahlström. All rights reserved.
+//  Copyright © 2006-2023 Fredrik Ahlström. All rights reserved.
 //
 
 #ifdef __arm__
@@ -236,7 +236,7 @@ vol4_R:
 //	adds r5,r5,lr,lsl#21
 //	mov r5,r5,ror#21
 noSweep:
-	eor r2,#0x00008000
+	eor r2,r2,#0x00008000
 	cmp r0,#0
 	strpl r2,[r1],#4
 	bhi mixLoop				;@ ?? cycles according to No$gba

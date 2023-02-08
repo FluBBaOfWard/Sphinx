@@ -3,7 +3,7 @@
 //  Bandai WonderSwan Video emulation for GBA/NDS.
 //
 //  Created by Fredrik Ahlström on 2006-07-23.
-//  Copyright © 2006-2022 Fredrik Ahlström. All rights reserved.
+//  Copyright © 2006-2023 Fredrik Ahlström. All rights reserved.
 //
 
 #ifdef __arm__
@@ -336,7 +336,7 @@ IN_Table:
 	.long wsvRegR				;@ 0x45 DMA destination
 	.long wsvRegR				;@ 0x46 DMA length
 	.long wsvRegR				;@ 0x47 DMA length
-	.long wsvImportantR			;@ 0x48 DMA control
+	.long wsvRegR				;@ 0x48 DMA control
 	.long wsvWSUnmappedR		;@ 0x49 ---
 	.long wsvRegR				;@ 0x4A Sound DMA source
 	.long wsvRegR				;@ 0x4B Sound DMA source
@@ -735,7 +735,7 @@ OUT_Table:
 	.long wsvRegW				;@ 0x50 Sound DMA len
 	.long wsvRegW				;@ 0x51 Sound DMA len
 	.long wsvSndDMACtrlW		;@ 0x52 Sound DMA control
-	.long wsvUnmappedW			;@ 0x53 ---
+	.long wsvRegW				;@ 0x53 ---
 	.long wsvUnmappedW			;@ 0x54 ---
 	.long wsvUnmappedW			;@ 0x55 ---
 	.long wsvUnmappedW			;@ 0x56 ---
