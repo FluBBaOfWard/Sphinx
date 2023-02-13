@@ -159,45 +159,45 @@ innerMixLoop:
 	movs r9,r3,lsr#27
 	mov lr,r3,lsl#20
 	addcs r3,r3,lr,lsr#5
+	ldrb r11,[r10,r3,lsr#1]		;@ Channel 1
+	tst r9,#1
+	moveq r11,r11,lsr#4
+	ands r11,r11,#0xF
 vol1_L:
 	mov lr,#0x00				;@ Volume left
 vol1_R:
-	orrs lr,lr,#0xFF0000		;@ Volume right
-	ldrb r11,[r10,r9,lsr#1]		;@ Channel 1
-	tst r9,#1
-	moveq r11,r11,lsr#4
-	andne r11,r11,#0xF
-	mla r2,lr,r11,r2
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
 
 	add r4,r4,#PSG_ADDITION
 	movs r9,r4,lsr#27
 	add r9,r9,#0x20
 	mov lr,r4,lsl#20
 	addcs r4,r4,lr,lsr#5
-vol2_L:
-	mov lr,#0x00				;@ Volume left
-vol2_R:
-	orrs lr,lr,#0xFF0000		;@ Volume right
 	ldrb r11,[r10,r9,lsr#1]		;@ Channel 2
 	tst r9,#1
 	moveq r11,r11,lsr#4
-	andne r11,r11,#0xF
-	mla r2,lr,r11,r2
+	ands r11,r11,#0xF
+vol2_L:
+	mov lr,#0x00				;@ Volume left
+vol2_R:
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
 
 	add r5,r5,#PSG_ADDITION
 	movs r9,r5,lsr#27
 	add r9,r9,#0x40
 	mov lr,r5,lsl#20
 	addcs r5,r5,lr,lsr#5
-vol3_L:
-	mov lr,#0x00				;@ Volume left
-vol3_R:
-	orrs lr,lr,#0xFF0000		;@ Volume right
 	ldrb r11,[r10,r9,lsr#1]		;@ Channel 3
 	tst r9,#1
 	moveq r11,r11,lsr#4
-	andne r11,r11,#0xF
-	mla r2,lr,r11,r2
+	ands r11,r11,#0xF
+vol3_L:
+	mov lr,#0x00				;@ Volume left
+vol3_R:
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
 
 	add r6,r6,#PSG_ADDITION
 	movs r9,r6,lsr#27
@@ -215,12 +215,12 @@ vol3_R:
 	movne r11,#0xFF
 	tst r9,#1
 	moveq r11,r11,lsr#4
-	andne r11,r11,#0xF
+	ands r11,r11,#0xF
 vol4_L:
 	mov lr,#0x00				;@ Volume left
 vol4_R:
-	orrs lr,lr,#0xFF0000		;@ Volume right
-	mla r2,lr,r11,r2
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
 
 	sub r0,r0,#1
 	tst r0,#3
