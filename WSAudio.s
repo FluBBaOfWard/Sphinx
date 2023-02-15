@@ -47,7 +47,7 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 
 	ands r4,r9,#1					;@ Ch 1 on?
 	movne r4,r7
-	ldrb r2,[spxptr,#wsvSound1Vol]
+	ldrb r2,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
 	and r3,r4,r2,lsl r6
 	and r2,r4,r2,lsr r5
 	strb r2,[r10,#vol1_L-vol1_L]
@@ -137,6 +137,123 @@ pcmMixReturn:
 #define PSG_SWEEP_ADD 0x00002000*4*PSG_DIVIDE
 #define PSG_NOISE_FEED 0x00050001
 
+#ifdef WSAUDIO_LOW
+;@----------------------------------------------------------------------------
+;@ r0  = Length
+;@ r1  = Destination
+;@ r2  = Mixer register
+;@ r3  = Channel 1
+;@ r4  = Channel 2
+;@ r5  = Channel 3
+;@ r6  = Channel 4
+;@ r10 = Sample pointer
+;@ r11 = Current sample
+;@ lr  = Current volume
+;@----------------------------------------------------------------------------
+pcmMix:				;@ r0=len, r1=dest, r12=snptr
+// IIIIIVCCCCCCCCCCC0001FFFFFFFFFFF
+// I=sampleindex, V=overflow, C=counter, F=frequency
+;@----------------------------------------------------------------------------
+mixLoop:
+innerMixLoop:
+	add r3,r3,#PSG_ADDITION
+	tst r3,r3,lsl#6
+	mov lr,r3,lsl#20
+	addcs r3,r3,lr,lsr#5
+
+	add r4,r4,#PSG_ADDITION
+	tst r4,r4,lsl#6
+	mov lr,r4,lsl#20
+	addcs r4,r4,lr,lsr#5
+
+	add r5,r5,#PSG_ADDITION
+	tst r5,r5,lsl#6
+	mov lr,r5,lsl#20
+	addcs r5,r5,lr,lsr#5
+
+	add r6,r6,#PSG_ADDITION
+	tst r6,r6,lsl#6
+	mov lr,r6,lsl#20
+	addcs r6,r6,lr,lsr#5
+
+	movcs lr,r7,lsr#16
+	addscs r7,r7,lr,lsl#16
+	ldrcs lr,=PSG_NOISE_FEED
+	eorcs r7,r7,lr
+
+	sub r0,r0,#1
+	tst r0,#3
+	bne innerMixLoop
+;@----------------------------------------------------------------------------
+
+	mov r2,#0x20000000
+	ldrb r11,[r10,r3,lsr#28]	;@ Channel 1
+	add r10,r10,#0x10
+	tst r3,#0x08000000
+	moveq r11,r11,lsr#4
+	ands r11,r11,#0xF
+vol1_L:
+	mov lr,#0x00				;@ Volume left
+vol1_R:
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
+
+	ldrb r11,[r10,r4,lsr#28]	;@ Channel 2
+	add r10,r10,#0x10
+	tst r4,#0x08000000
+	moveq r11,r11,lsr#4
+	ands r11,r11,#0xF
+vol2_L:
+	mov lr,#0x00				;@ Volume left
+vol2_R:
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
+
+	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
+	add r10,r10,#0x10
+	tst r5,#0x08000000
+	moveq r11,r11,lsr#4
+	ands r11,r11,#0xF
+vol3_L:
+	mov lr,#0x00				;@ Volume left
+vol3_R:
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
+
+	tst r7,#0x80				;@ Noise 4 enabled?
+	ldrbeq r11,[r10,r6,lsr#28]	;@ Channel 4
+	sub r10,r10,#0x30
+	andsne r11,r7,#0x00000001
+	movne r11,#0xFF
+	tst r6,#0x08000000
+	moveq r11,r11,lsr#4
+	ands r11,r11,#0xF
+vol4_L:
+	mov lr,#0x00				;@ Volume left
+vol4_R:
+	orrsne lr,lr,#0xFF0000		;@ Volume right
+	mlane r2,lr,r11,r2
+
+//	subs r8,r8,#PSG_SWEEP_ADD
+//	bhi noSweep
+//	ldrb lr,[spxptr,#wsvSweepTime]
+//	add lr,lr,#1
+//	add r8,r8,lr,lsl#26
+//	ldrsb lr,[spxptr,#wsvSweepValue]
+//	mov r5,r5,ror#11
+//	adds r5,r5,lr,lsl#21
+//	mov r5,r5,ror#21
+noSweep:
+	mov r2,r2,lsl#2
+	eor r2,r2,#0x00008000
+	cmp r0,#0
+	strpl r2,[r1],#4
+	bhi mixLoop				;@ ?? cycles according to No$gba
+
+	mov r2,r7,lsr#17
+	strh r2,[spxptr,#wsvNoiseCntr]
+	b pcmMixReturn
+#else
 ;@----------------------------------------------------------------------------
 ;@ r0  = Length
 ;@ r1  = Destination
@@ -245,6 +362,7 @@ noSweep:
 	strh r2,[spxptr,#wsvNoiseCntr]
 	b pcmMixReturn
 ;@----------------------------------------------------------------------------
+#endif
 
 
 #endif // #ifdef __arm__
