@@ -27,6 +27,8 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 	str r0,[spxptr,#pcm4CurrentAddr]
 	mov r0,#0x80000000
 	str r0,[spxptr,#noise4CurrentAddr]
+	ldr r0,=0x01020001
+	str r0,[spxptr,#noiseFeedBack]
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -81,42 +83,26 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 
 	add r2,spxptr,#pcm1CurrentAddr
 	ldmia r2,{r3-r8}
-;@--------------------------
-	ldrh r2,[spxptr,#wsvSound1Freq]
-	mov r3,r3,lsr#11
-	orr r3,r2,r3,lsl#11
-;@--------------------------
-	ldrh r2,[spxptr,#wsvSound2Freq]
-	mov r4,r4,lsr#11
-	orr r4,r2,r4,lsl#11
-;@--------------------------
-	ldrh r2,[spxptr,#wsvSound3Freq]
-	mov r5,r5,lsr#11
-	orr r5,r2,r5,lsl#11
 
 	ldrb r2,[spxptr,#wsvSweepTime]
 	add r2,r2,#1
-	orr r8,r2,r8,lsl#6
-	mov r8,r8,ror#6
+	sub r8,r8,r2,lsl#26
+
+	and r2,r9,#0x40			;@ Ch 3 sweep on?
+	bic r8,r8,#0x40
+	orr r8,r8,r2
+
 ;@--------------------------
-	ands r2,r9,#0x80			;@ Ch 4 noise on?
+	and r2,r9,#0x80			;@ Ch 4 noise on?
 	bic r7,r7,#0x80
 	orr r7,r7,r2
-	and r2,r9,#0x1F
-	rsb r2,r2,#0x1F
-
-	ldrh r9,[spxptr,#wsvSound4Freq]
-	mov r6,r6,lsr#11
-	orreq r6,r9,r6,lsl#11
-	orrne r6,r6,r2,ror#5
-	movne r6,r6,ror#21
 ;@--------------------------
 
 	ldr r10,[spxptr,#gfxRAM]
 	ldrb r2,[spxptr,#wsvSampleBase]
 	add r10,r10,r2,lsl#6
 	ldmfd sp,{r0,r1}			;@ r0=len, r1=dest buffer
-	mov r0,r0,lsl#2
+	mov r0,r0,lsl#3
 	b pcmMix
 pcmMixReturn:
 	add r0,spxptr,#pcm1CurrentAddr	;@ Counters
@@ -134,8 +120,7 @@ pcmMixReturn:
 
 #define PSG_DIVIDE 16
 #define PSG_ADDITION 0x00008000*PSG_DIVIDE
-#define PSG_SWEEP_ADD 0x00002000*4*PSG_DIVIDE
-#define PSG_NOISE_FEED 0x00050001
+#define PSG_SWEEP_ADD 0x00020000*PSG_DIVIDE
 
 #ifdef WSAUDIO_LOW
 ;@----------------------------------------------------------------------------
@@ -178,11 +163,11 @@ innerMixLoop:
 
 	movcs lr,r7,lsr#16
 	addscs r7,r7,lr,lsl#16
-	ldrcs lr,=PSG_NOISE_FEED
+	ldrcs lr,[spxptr,#noiseFeedBack]
 	eorcs r7,r7,lr
 
 	sub r0,r0,#1
-	tst r0,#3
+	tst r0,#7
 	bne innerMixLoop
 ;@----------------------------------------------------------------------------
 
@@ -234,15 +219,17 @@ vol4_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-//	subs r8,r8,#PSG_SWEEP_ADD
-//	bhi noSweep
-//	ldrb lr,[spxptr,#wsvSweepTime]
-//	add lr,lr,#1
-//	add r8,r8,lr,lsl#26
-//	ldrsb lr,[spxptr,#wsvSweepValue]
-//	mov r5,r5,ror#11
-//	adds r5,r5,lr,lsl#21
-//	mov r5,r5,ror#21
+	tst r8,#0x40
+	beq noSweep
+	adds r8,r8,#PSG_SWEEP_ADD
+	bcc noSweep
+	ldrb lr,[spxptr,#wsvSweepTime]
+	add lr,lr,#1
+	sub r8,r8,lr,lsl#26
+	ldrsb lr,[spxptr,#wsvSweepValue]
+	mov r5,r5,ror#11
+	adds r5,r5,lr,lsl#21
+	mov r5,r5,ror#21
 noSweep:
 	mov r2,r2,lsl#2
 	eor r2,r2,#0x00008000

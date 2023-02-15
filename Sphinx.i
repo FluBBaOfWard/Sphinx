@@ -208,6 +208,7 @@ pcm3CurrentAddr:	.long 0		;@ Ch3 Current addr
 pcm4CurrentAddr:	.long 0		;@ Ch4 Current addr
 noise4CurrentAddr:	.long 0		;@ Ch4 noise Current addr
 sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current addr
+noiseFeedBack:		.long 0		;@ Current noise feedback
 
 serialIRQCounter:	.long 0		;@ How many cycles to send byte.
 

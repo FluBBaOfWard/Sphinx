@@ -783,21 +783,21 @@ OUT_Table:
 	.long wsvUnmappedW			;@ 0x7E ---
 	.long wsvUnmappedW			;@ 0x7F ---
 
-	.long wsvRegW				;@ 0x80 Sound Ch1 pitch low
-	.long wsvFreqW				;@ 0x81 Sound Ch1 pitch high
-	.long wsvRegW				;@ 0x82 Sound Ch2 pitch low
-	.long wsvFreqW				;@ 0x83 Sound Ch2 pitch high
-	.long wsvRegW				;@ 0x84 Sound Ch3 pitch low
-	.long wsvFreqW				;@ 0x85 Sound Ch3 pitch high
-	.long wsvRegW				;@ 0x86 Sound Ch4 pitch low
-	.long wsvFreqW				;@ 0x87 Sound Ch4 pitch high
+	.long wsvFreqLW				;@ 0x80 Sound Ch1 pitch low
+	.long wsvFreqHW				;@ 0x81 Sound Ch1 pitch high
+	.long wsvFreqLW				;@ 0x82 Sound Ch2 pitch low
+	.long wsvFreqHW				;@ 0x83 Sound Ch2 pitch high
+	.long wsvFreqLW				;@ 0x84 Sound Ch3 pitch low
+	.long wsvFreqHW				;@ 0x85 Sound Ch3 pitch high
+	.long wsvFreqLW				;@ 0x86 Sound Ch4 pitch low
+	.long wsvFreqHW				;@ 0x87 Sound Ch4 pitch high
 	.long wsvRegW				;@ 0x88 Sound Ch1 volume
 	.long wsvRegW				;@ 0x89 Sound Ch2 volume
 	.long wsvRegW				;@ 0x8A Sound Ch3 volume
 	.long wsvRegW				;@ 0x8B Sound Ch4 volume
 	.long wsvRegW				;@ 0x8C Sweeep value
 	.long wsvSweepTimeW			;@ 0x8D Sweep time
-	.long wsvRegW				;@ 0x8E Noise control
+	.long wsvNoiseCtrlW			;@ 0x8E Noise control
 	.long wsvRegW				;@ 0x8F Wave base
 
 	.long wsvRegW				;@ 0x90 Sound control
@@ -1112,11 +1112,26 @@ wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 	and r0,r1,#0x80
 	b intEepromSetSize
 ;@----------------------------------------------------------------------------
-wsvFreqW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
+wsvFreqLW:					;@ 0x80,0x82,0x84,0x86 Sound frequency low
+;@----------------------------------------------------------------------------
+	add r2,spxptr,#wsvRegs
+	strb r1,[r2,r0]
+	and r0,r0,#6
+	add r2,spxptr,#pcm1CurrentAddr
+	strb r1,[r2,r0,lsl#1]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvFreqHW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
 ;@----------------------------------------------------------------------------
 	and r1,r1,#7				;@ Only low 3 bits
 	add r2,spxptr,#wsvRegs
 	strb r1,[r2,r0]
+	and r0,r0,#6
+	add r2,spxptr,r0,lsl#1
+	ldrb r0,[r2,#pcm1CurrentAddr+1]!
+	bic r0,r0,#7
+	orr r1,r1,r0
+	strb r1,[r2]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSweepTimeW:				;@ 0x8B Sound sweep time
@@ -1124,6 +1139,28 @@ wsvSweepTimeW:				;@ 0x8B Sound sweep time
 	and r1,r1,#0x1F				;@ Only low 5 bits
 	strb r1,[spxptr,#wsvSweepTime]
 	bx lr
+;@----------------------------------------------------------------------------
+wsvNoiseCtrlW:				;@ 0x8E Noise Control
+;@----------------------------------------------------------------------------
+	and r1,r1,#0x1F				;@ Only low 5 bits
+	strb r1,[spxptr,#wsvNoiseCtrl]
+	tst r1,#0x08				;@ Reset?
+	movne r0,#0x80000000
+	strne r0,[spxptr,#noise4CurrentAddr]
+	and r1,r1,#7				;@ Which taps?
+	adr r2,noiseTaps
+	ldr r0,[r2,r1,lsl#2]
+	str r0,[spxptr,#noiseFeedBack]
+	bx lr
+noiseTaps:
+	.long 0x01020001			;@ Tap bit 14
+	.long 0x01200001			;@ Tap bit 10
+	.long 0x01040001			;@ Tap bit 13
+	.long 0x09000001			;@ Tap bit 4
+	.long 0x01800001			;@ Tap bit 8
+	.long 0x03000001			;@ Tap bit 6
+	.long 0x01400001			;@ Tap bit 9
+	.long 0x01100001			;@ Tap bit 11
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------
@@ -1484,14 +1521,13 @@ doSoundDMA:					;@ In r0=SndDmaCtrl
 	ldr r2,[spxptr,#wsvSndDMASrc]
 	subs r1,r1,#1
 	bpl sndDmaCont
-	tst r4,#0x08				;@ Loop?
+	ands r1,r4,#0x08			;@ Loop?
 	biceq r4,r4,#0x80
-	strb r4,[spxptr,#wsvSndDMACtrl]
-	ldrne r1,[spxptr,#sndDmaLength]
-	ldrne r2,[spxptr,#sndDmaSource]
-	moveq r1,#0
+	strbeq r4,[spxptr,#wsvSndDMACtrl]
 	streq r1,[spxptr,#wsvSndDMALen]
 	ldmfdeq sp!,{r4,pc}
+	ldrne r1,[spxptr,#sndDmaLength]
+	ldrne r2,[spxptr,#sndDmaSource]
 sndDmaCont:
 	str r1,[spxptr,#wsvSndDMALen]
 	mov r0,r2,lsl#12
