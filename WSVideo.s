@@ -798,7 +798,7 @@ OUT_Table:
 	.long wsvRegW				;@ 0x8C Sweeep value
 	.long wsvSweepTimeW			;@ 0x8D Sweep time
 	.long wsvNoiseCtrlW			;@ 0x8E Noise control
-	.long wsvRegW				;@ 0x8F Wave base
+	.long wsvSampleBaseW		;@ 0x8F Sample base
 
 	.long wsvRegW				;@ 0x90 Sound control
 	.long wsvSoundOutputW		;@ 0x91 Sound output
@@ -1126,18 +1126,19 @@ wsvFreqHW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
 	and r1,r1,#7				;@ Only low 3 bits
 	add r2,spxptr,#wsvRegs
 	strb r1,[r2,r0]
+	orr r1,r1,#8
 	and r0,r0,#6
 	add r2,spxptr,r0,lsl#1
-	ldrb r0,[r2,#pcm1CurrentAddr+1]!
-	bic r0,r0,#7
-	orr r1,r1,r0
-	strb r1,[r2]
+	strb r1,[r2,#pcm1CurrentAddr+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSweepTimeW:				;@ 0x8B Sound sweep time
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x1F				;@ Only low 5 bits
 	strb r1,[spxptr,#wsvSweepTime]
+	add r1,r1,#1
+	sub r1,r1,r1,lsl#26
+	str r1,[spxptr,#sweep3CurrentAddr]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvNoiseCtrlW:				;@ 0x8E Noise Control
@@ -1161,6 +1162,14 @@ noiseTaps:
 	.long 0x03000001			;@ Tap bit 6
 	.long 0x01400001			;@ Tap bit 9
 	.long 0x01100001			;@ Tap bit 11
+;@----------------------------------------------------------------------------
+wsvSampleBaseW:				;@ 0x8F Sample Base
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSampleBase]
+	ldr r0,[spxptr,#gfxRAM]
+	add r0,r0,r1,lsl#6
+	str r0,[spxptr,#sampleBaseAddr]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------

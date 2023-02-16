@@ -25,6 +25,7 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 	str r0,[spxptr,#pcm2CurrentAddr]
 	str r0,[spxptr,#pcm3CurrentAddr]
 	str r0,[spxptr,#pcm4CurrentAddr]
+	str r0,[spxptr,#sweep3CurrentAddr]
 	mov r0,#0x80000000
 	str r0,[spxptr,#noise4CurrentAddr]
 	ldr r0,=0x01020001
@@ -82,15 +83,11 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 	strb r3,[r10,#vol4_R-vol1_L]
 
 	add r2,spxptr,#pcm1CurrentAddr
-	ldmia r2,{r3-r8}
+	ldmia r2,{r3-r8,r10}
 
-	ldrb r2,[spxptr,#wsvSweepTime]
-	add r2,r2,#1
-	sub r8,r8,r2,lsl#26
-
-	and r2,r9,#0x40			;@ Ch 3 sweep on?
-	bic r8,r8,#0x40
-	orr r8,r8,r2
+	tst r9,#0x40			;@ Ch 3 sweep on?
+	bic r8,r8,#0x100
+	orrne r8,r8,#0x100
 
 ;@--------------------------
 	and r2,r9,#0x80			;@ Ch 4 noise on?
@@ -98,9 +95,6 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 	orr r7,r7,r2
 ;@--------------------------
 
-	ldr r10,[spxptr,#gfxRAM]
-	ldrb r2,[spxptr,#wsvSampleBase]
-	add r10,r10,r2,lsl#6
 	ldmfd sp,{r0,r1}			;@ r0=len, r1=dest buffer
 	mov r0,r0,lsl#3
 	b pcmMix
@@ -219,13 +213,11 @@ vol4_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r8,#0x40
+	tst r8,#0x100
 	beq noSweep
 	adds r8,r8,#PSG_SWEEP_ADD
 	bcc noSweep
-	ldrb lr,[spxptr,#wsvSweepTime]
-	add lr,lr,#1
-	sub r8,r8,lr,lsl#26
+	sub r8,r8,r8,lsl#26
 	ldrsb lr,[spxptr,#wsvSweepValue]
 	mov r5,r5,ror#11
 	adds r5,r5,lr,lsl#21

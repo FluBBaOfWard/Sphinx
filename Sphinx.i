@@ -202,12 +202,13 @@ wsvPadding12:		.space 42	;@ 0xD6 - 0xFF ???
 sndDmaSource:		.long 0		;@ Original Sound DMA source address
 sndDmaLength:		.long 0		;@ Original Sound DMA length
 
-pcm1CurrentAddr:	.long 0		;@ Ch1 Current addr
-pcm2CurrentAddr:	.long 0		;@ Ch2 Current addr
-pcm3CurrentAddr:	.long 0		;@ Ch3 Current addr
-pcm4CurrentAddr:	.long 0		;@ Ch4 Current addr
-noise4CurrentAddr:	.long 0		;@ Ch4 noise Current addr
-sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current addr
+pcm1CurrentAddr:	.long 0		;@ Ch1 Current address
+pcm2CurrentAddr:	.long 0		;@ Ch2 Current address
+pcm3CurrentAddr:	.long 0		;@ Ch3 Current address
+pcm4CurrentAddr:	.long 0		;@ Ch4 Current address
+noise4CurrentAddr:	.long 0		;@ Ch4 noise Current address
+sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current address
+sampleBaseAddr:		.long 0		;@ Current sample base address
 noiseFeedBack:		.long 0		;@ Current noise feedback
 
 serialIRQCounter:	.long 0		;@ How many cycles to send byte.
