@@ -800,7 +800,7 @@ OUT_Table:
 	.long wsvNoiseCtrlW			;@ 0x8E Noise control
 	.long wsvSampleBaseW		;@ 0x8F Sample base
 
-	.long wsvRegW				;@ 0x90 Sound control
+	.long wsvSoundCtrlW			;@ 0x90 Sound control
 	.long wsvSoundOutputW		;@ 0x91 Sound output
 	.long wsvReadOnlyW			;@ 0x92 Noise LFSR value low
 	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
@@ -1169,6 +1169,22 @@ wsvSampleBaseW:				;@ 0x8F Sample Base
 	ldr r0,[spxptr,#gfxRAM]
 	add r0,r0,r1,lsl#6
 	str r0,[spxptr,#sampleBaseAddr]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSoundCtrlW:				;@ 0x90 Sound Control
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSoundCtrl]
+	tst r1,#0x40				;@ Ch 3 sweep on?
+	ldr r0,[spxptr,#sweep3CurrentAddr]
+	biceq r0,r0,#0x100
+	orrne r0,r0,#0x100
+	str r0,[spxptr,#sweep3CurrentAddr]
+
+	tst r1,#0x80				;@ Ch 4 noise on?
+	ldr r0,[spxptr,#noise4CurrentAddr]
+	biceq r0,r0,#0x80
+	orrne r0,r0,#0x80
+	str r0,[spxptr,#noise4CurrentAddr]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91 Sound ouput

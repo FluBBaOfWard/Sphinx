@@ -48,52 +48,38 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 	mov r7,r7,lsr r5
 	ldrb r9,[spxptr,#wsvSoundCtrl]
 
-	ands r4,r9,#1					;@ Ch 1 on?
-	movne r4,r7
-	ldrb r2,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
-	and r3,r4,r2,lsl r6
-	and r2,r4,r2,lsr r5
+	ands r2,r9,#1					;@ Ch 1 on?
+	ldrbne r2,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
+	and r3,r7,r2,lsl r6
+	and r2,r7,r2,lsr r5
 	strb r2,[r10,#vol1_L-vol1_L]
 	strb r3,[r10,#vol1_R-vol1_L]
 
-	ands r4,r9,#2					;@ Ch 2 on?
-	movne r4,r7
+	ands r2,r9,#2					;@ Ch 2 on?
+	ldrbne r2,[spxptr,#wsvSound2Vol]
 	tst r9,#0x20					;@ Ch 2 voice?
-	movne r4,#0
-	ldrb r2,[spxptr,#wsvSound2Vol]
-	and r3,r4,r2,lsl r6
-	and r2,r4,r2,lsr r5
+	movne r2,#0
+	and r3,r7,r2,lsl r6
+	and r2,r7,r2,lsr r5
 	strb r2,[r10,#vol2_L-vol1_L]
 	strb r3,[r10,#vol2_R-vol1_L]
 
-	ands r4,r9,#4					;@ Ch 3 on?
-	movne r4,r7
-	ldrb r2,[spxptr,#wsvSound3Vol]
-	and r3,r4,r2,lsl r6
-	and r2,r4,r2,lsr r5
+	ands r2,r9,#4					;@ Ch 3 on?
+	ldrbne r2,[spxptr,#wsvSound3Vol]
+	and r3,r7,r2,lsl r6
+	and r2,r7,r2,lsr r5
 	strb r2,[r10,#vol3_L-vol1_L]
 	strb r3,[r10,#vol3_R-vol1_L]
 
-	ands r4,r9,#8					;@ Ch 4 on?
-	movne r4,r7
-	ldrb r2,[spxptr,#wsvSound4Vol]
-	and r3,r4,r2,lsl r6
-	and r2,r4,r2,lsr r5
+	ands r2,r9,#8					;@ Ch 4 on?
+	ldrbne r2,[spxptr,#wsvSound4Vol]
+	and r3,r7,r2,lsl r6
+	and r2,r7,r2,lsr r5
 	strb r2,[r10,#vol4_L-vol1_L]
 	strb r3,[r10,#vol4_R-vol1_L]
 
 	add r2,spxptr,#pcm1CurrentAddr
 	ldmia r2,{r3-r8,r10}
-
-	tst r9,#0x40			;@ Ch 3 sweep on?
-	bic r8,r8,#0x100
-	orrne r8,r8,#0x100
-
-;@--------------------------
-	and r2,r9,#0x80			;@ Ch 4 noise on?
-	bic r7,r7,#0x80
-	orr r7,r7,r2
-;@--------------------------
 
 	ldmfd sp,{r0,r1}			;@ r0=len, r1=dest buffer
 	mov r0,r0,lsl#3
