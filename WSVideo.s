@@ -1971,7 +1971,7 @@ redrawColorIcons:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r5,lr}
 
-	ldr r2,=BG_GFX+0x800*12
+	ldr r2,=BG_GFX+0x800*15
 	add r1,r2,#0x40*24
 #ifdef GBA
 	add r2,r2,#0x40*1+0x3A
@@ -2069,7 +2069,7 @@ redrawMonoIcons:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r5,lr}
 
-	ldr r2,=BG_GFX+0x800*12
+	ldr r2,=BG_GFX+0x800*15
 	add r1,r2,#0x40*24
 #ifdef GBA
 	add r2,r2,#0x40*19

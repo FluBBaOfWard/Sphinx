@@ -37,7 +37,7 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,r1,r4-r11,lr}
 ;@--------------------------
-	ldr r10,=vol1_L
+	ldr r4,=vol1_L
 
 	ldrb r5,[spxptr,#wsvHWVolume]
 	add r6,r5,#1
@@ -46,47 +46,41 @@ wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 	mov r7,#0xF0
 	moveq r7,#0
 	mov r7,r7,lsr r5
-	ldrb r9,[spxptr,#wsvSoundCtrl]
+	ldrb r8,[spxptr,#wsvSoundCtrl]
 
-	ands r2,r9,#1					;@ Ch 1 on?
+	ands r2,r8,#1					;@ Ch 1 on?
 	ldrbne r2,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
 	and r3,r7,r2,lsl r6
 	and r2,r7,r2,lsr r5
-	strb r2,[r10,#vol1_L-vol1_L]
-	strb r3,[r10,#vol1_R-vol1_L]
+	strb r2,[r4,#vol1_L-vol1_L]
+	strb r3,[r4,#vol1_R-vol1_L]
 
-	ands r2,r9,#2					;@ Ch 2 on?
+	ands r2,r8,#2					;@ Ch 2 on?
 	ldrbne r2,[spxptr,#wsvSound2Vol]
-	tst r9,#0x20					;@ Ch 2 voice?
+	ands r9,r8,#0x20				;@ Ch 2 voice?
+	addne r9,spxptr,#wsvSound2Vol
 	movne r2,#0
 	and r3,r7,r2,lsl r6
 	and r2,r7,r2,lsr r5
-	strb r2,[r10,#vol2_L-vol1_L]
-	strb r3,[r10,#vol2_R-vol1_L]
+	strb r2,[r4,#vol2_L-vol1_L]
+	strb r3,[r4,#vol2_R-vol1_L]
 
-	ands r2,r9,#4					;@ Ch 3 on?
+	ands r2,r8,#4					;@ Ch 3 on?
 	ldrbne r2,[spxptr,#wsvSound3Vol]
 	and r3,r7,r2,lsl r6
 	and r2,r7,r2,lsr r5
-	strb r2,[r10,#vol3_L-vol1_L]
-	strb r3,[r10,#vol3_R-vol1_L]
+	strb r2,[r4,#vol3_L-vol1_L]
+	strb r3,[r4,#vol3_R-vol1_L]
 
-	ands r2,r9,#8					;@ Ch 4 on?
+	ands r2,r8,#8					;@ Ch 4 on?
 	ldrbne r2,[spxptr,#wsvSound4Vol]
 	and r3,r7,r2,lsl r6
 	and r2,r7,r2,lsr r5
-	strb r2,[r10,#vol4_L-vol1_L]
-	strb r3,[r10,#vol4_R-vol1_L]
+	strb r2,[r4,#vol4_L-vol1_L]
+	strb r3,[r4,#vol4_R-vol1_L]
 
-	add r2,spxptr,#pcm1CurrentAddr
-	ldmia r2,{r3-r8,r10}
-
-	ldmfd sp,{r0,r1}			;@ r0=len, r1=dest buffer
-	mov r0,r0,lsl#3
 	b pcmMix
 pcmMixReturn:
-	add r0,spxptr,#pcm1CurrentAddr	;@ Counters
-	stmia r0,{r3-r8}
 
 	ldmfd sp!,{r0,r1,r4-r11,pc}
 ;@----------------------------------------------------------------------------
@@ -111,6 +105,8 @@ pcmMixReturn:
 ;@ r4  = Channel 2
 ;@ r5  = Channel 3
 ;@ r6  = Channel 4
+;@ r7  = Noise LFSR
+;@ r8  = Ch3 Sweep
 ;@ r10 = Sample pointer
 ;@ r11 = Current sample
 ;@ lr  = Current volume
@@ -119,6 +115,9 @@ pcmMix:				;@ r0=len, r1=dest, r12=snptr
 // IIIIIVCCCCCCCCCCC0001FFFFFFFFFFF
 // I=sampleindex, V=overflow, C=counter, F=frequency
 ;@----------------------------------------------------------------------------
+	add r2,spxptr,#pcm1CurrentAddr
+	ldmia r2,{r3-r8,r10}
+	mov r0,r0,lsl#3
 mixLoop:
 innerMixLoop:
 	add r3,r3,#PSG_ADDITION
@@ -173,6 +172,9 @@ vol2_L:
 vol2_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
+//	cmp r9,#0
+//	ldrbne r11,[r9]
+//	addne r2,r2,r11,lsl#2
 
 	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
 	add r10,r10,#0x10
@@ -199,7 +201,7 @@ vol4_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r8,#0x100
+	tst r8,#0x100				;@ Ch3 Noise?
 	beq noSweep
 	adds r8,r8,#PSG_SWEEP_ADD
 	bcc noSweep
@@ -217,6 +219,8 @@ noSweep:
 
 	mov r2,r7,lsr#17
 	strh r2,[spxptr,#wsvNoiseCntr]
+	add r0,spxptr,#pcm1CurrentAddr	;@ Counters
+	stmia r0,{r3-r8}
 	b pcmMixReturn
 #else
 ;@----------------------------------------------------------------------------
