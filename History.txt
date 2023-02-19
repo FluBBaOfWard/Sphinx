@@ -1,7 +1,7 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.1.9 - 2023-02-18 (FluBBa)
+V0.2.0 - 2023-02-19 (FluBBa)
 	Added reading of register 0x1A.
 	Added emulation of NMI control register (0xB7).
 	Fixed interrupt handling.

@@ -11,6 +11,12 @@
 
 	.global wsAudioReset
 	.global wsAudioMixer
+	.global setAllChVolume
+	.global setCh1Volume
+	.global setCh2Volume
+	.global setCh3Volume
+	.global setCh4Volume
+	.global setTotalVolume
 
 	.syntax unified
 	.arm
@@ -30,59 +36,85 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 	str r0,[spxptr,#noise4CurrentAddr]
 	ldr r0,=0x01020001
 	str r0,[spxptr,#noiseFeedBack]
+
+;@----------------------------------------------------------------------------
+setAllChVolume:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	ldrb r1,[spxptr,#wsvSound1Vol]
+	bl setCh1Volume
+	ldrb r1,[spxptr,#wsvSound2Vol]
+	bl setCh2Volume
+	ldrb r1,[spxptr,#wsvSound3Vol]
+	bl setCh3Volume
+	ldrb r1,[spxptr,#wsvSound4Vol]
+	bl setCh4Volume
+	ldmfd sp!,{pc}
+;@----------------------------------------------------------------------------
+setCh1Volume:
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSoundCtrl]
+	tst r0,#1					;@ Ch 1 on?
+	moveq r1,#0
+	ldr r0,=vol1_L
+	and r2,r1,#0xF
+	mov r1,r1,lsr#4
+	strb r1,[r0,#vol1_L-vol1_L]
+	strb r2,[r0,#vol1_R-vol1_L]
 	bx lr
-
 ;@----------------------------------------------------------------------------
-wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
+setCh2Volume:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r0,r1,r4-r11,lr}
-;@--------------------------
-	ldr r4,=vol1_L
+	ldrb r0,[spxptr,#wsvSoundCtrl]
+	tst r0,#2					;@ Ch 2 on?
+	moveq r1,#0
+	tst r0,#0x20				;@ Ch 2 voice on?
+	movne r1,#0					;@ Silence for now
+	ldr r0,=vol1_L
+	and r2,r1,#0xF
+	mov r1,r1,lsr#4
+	strb r1,[r0,#vol2_L-vol1_L]
+	strb r2,[r0,#vol2_R-vol1_L]
+	bx lr
+;@----------------------------------------------------------------------------
+setCh3Volume:
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSoundCtrl]
+	tst r0,#4					;@ Ch 3 on?
+	moveq r1,#0
+	ldr r0,=vol1_L
+	and r2,r1,#0xF
+	mov r1,r1,lsr#4
+	strb r1,[r0,#vol3_L-vol1_L]
+	strb r2,[r0,#vol3_R-vol1_L]
+	bx lr
+;@----------------------------------------------------------------------------
+setCh4Volume:
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSoundCtrl]
+	tst r0,#8					;@ Ch 4 on?
+	moveq r1,#0
+	ldr r0,=vol1_L
+	and r2,r1,#0xF
+	mov r1,r1,lsr#4
+	strb r1,[r0,#vol4_L-vol1_L]
+	strb r2,[r0,#vol4_R-vol1_L]
+	bx lr
+;@----------------------------------------------------------------------------
+setTotalVolume:
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvHWVolume]
+	ldr r0,=vol1_L
+	adr r2,hwVolumes
+	ldr r1,[r2,r1,lsl#2]
+	str r1,[r0,#totalVolume-vol1_L]
+	bx lr
+hwVolumes:
+	mov r2,#0x80000000
+	mov r2,r2,lsl#4
+	mov r2,r2,lsl#5
+	mov r2,r2,lsl#6
 
-	ldrb r5,[spxptr,#wsvHWVolume]
-	add r6,r5,#1
-	rsb r5,r5,#3
-	cmp r5,#3
-	mov r7,#0xF0
-	moveq r7,#0
-	mov r7,r7,lsr r5
-	ldrb r8,[spxptr,#wsvSoundCtrl]
-
-	ands r2,r8,#1					;@ Ch 1 on?
-	ldrbne r2,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
-	and r3,r7,r2,lsl r6
-	and r2,r7,r2,lsr r5
-	strb r2,[r4,#vol1_L-vol1_L]
-	strb r3,[r4,#vol1_R-vol1_L]
-
-	ands r2,r8,#2					;@ Ch 2 on?
-	ldrbne r2,[spxptr,#wsvSound2Vol]
-	ands r9,r8,#0x20				;@ Ch 2 voice?
-	addne r9,spxptr,#wsvSound2Vol
-	movne r2,#0
-	and r3,r7,r2,lsl r6
-	and r2,r7,r2,lsr r5
-	strb r2,[r4,#vol2_L-vol1_L]
-	strb r3,[r4,#vol2_R-vol1_L]
-
-	ands r2,r8,#4					;@ Ch 3 on?
-	ldrbne r2,[spxptr,#wsvSound3Vol]
-	and r3,r7,r2,lsl r6
-	and r2,r7,r2,lsr r5
-	strb r2,[r4,#vol3_L-vol1_L]
-	strb r3,[r4,#vol3_R-vol1_L]
-
-	ands r2,r8,#8					;@ Ch 4 on?
-	ldrbne r2,[spxptr,#wsvSound4Vol]
-	and r3,r7,r2,lsl r6
-	and r2,r7,r2,lsr r5
-	strb r2,[r4,#vol4_L-vol1_L]
-	strb r3,[r4,#vol4_R-vol1_L]
-
-	b pcmMix
-pcmMixReturn:
-
-	ldmfd sp!,{r0,r1,r4-r11,pc}
 ;@----------------------------------------------------------------------------
 
 #ifdef NDS
@@ -96,6 +128,7 @@ pcmMixReturn:
 #define PSG_ADDITION 0x00008000*PSG_DIVIDE
 #define PSG_SWEEP_ADD 0x00020000*PSG_DIVIDE
 
+;@----------------------------------------------------------------------------
 #ifdef WSAUDIO_LOW
 ;@----------------------------------------------------------------------------
 ;@ r0  = Length
@@ -107,14 +140,16 @@ pcmMixReturn:
 ;@ r6  = Channel 4
 ;@ r7  = Noise LFSR
 ;@ r8  = Ch3 Sweep
+;@ r9  = Ch2 volume.
 ;@ r10 = Sample pointer
 ;@ r11 = Current sample
 ;@ lr  = Current volume
 ;@----------------------------------------------------------------------------
-pcmMix:				;@ r0=len, r1=dest, r12=snptr
+wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 // IIIIIVCCCCCCCCCCC0001FFFFFFFFFFF
 // I=sampleindex, V=overflow, C=counter, F=frequency
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{r0,r1,r4-r11,lr}
 	add r2,spxptr,#pcm1CurrentAddr
 	ldmia r2,{r3-r8,r10}
 	mov r0,r0,lsl#3
@@ -150,7 +185,7 @@ innerMixLoop:
 	bne innerMixLoop
 ;@----------------------------------------------------------------------------
 
-	mov r2,#0x20000000
+	mov r2,#0xFE000000
 	ldrb r11,[r10,r3,lsr#28]	;@ Channel 1
 	add r10,r10,#0x10
 	tst r3,#0x08000000
@@ -174,7 +209,7 @@ vol2_R:
 	mlane r2,lr,r11,r2
 //	cmp r9,#0
 //	ldrbne r11,[r9]
-//	addne r2,r2,r11,lsl#2
+//	addne r2,r2,r11
 
 	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
 	add r10,r10,#0x10
@@ -211,7 +246,8 @@ vol4_R:
 	adds r5,r5,lr,lsl#21
 	mov r5,r5,ror#21
 noSweep:
-	mov r2,r2,lsl#2
+totalVolume:
+	mov r2,r2,lsl#6
 	eor r2,r2,#0x00008000
 	cmp r0,#0
 	strpl r2,[r1],#4
@@ -221,7 +257,7 @@ noSweep:
 	strh r2,[spxptr,#wsvNoiseCntr]
 	add r0,spxptr,#pcm1CurrentAddr	;@ Counters
 	stmia r0,{r3-r8}
-	b pcmMixReturn
+	ldmfd sp!,{r0,r1,r4-r11,pc}
 #else
 ;@----------------------------------------------------------------------------
 ;@ r0  = Length

@@ -584,8 +584,7 @@ wsvLCDVolumeR:				;@ 0x1A
 	ldmfd sp!,{r0,spxptr,lr}
 	ldrb r0,[spxptr,#wsvLCDVolume]
 	and r0,r0,#1				;@ Only keep bit 0
-	ldrb r1,[spxptr,#wsvHWVolume]
-	and r1,r1,#0x03				;@ Only low 2 bits
+	ldrb r1,[spxptr,#wsvHWVolume]	;@ Only low 2 bits are ever set
 	orr r0,r0,r1,lsl#2
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -791,10 +790,10 @@ OUT_Table:
 	.long wsvFreqHW				;@ 0x85 Sound Ch3 pitch high
 	.long wsvFreqLW				;@ 0x86 Sound Ch4 pitch low
 	.long wsvFreqHW				;@ 0x87 Sound Ch4 pitch high
-	.long wsvRegW				;@ 0x88 Sound Ch1 volume
-	.long wsvRegW				;@ 0x89 Sound Ch2 volume
-	.long wsvRegW				;@ 0x8A Sound Ch3 volume
-	.long wsvRegW				;@ 0x8B Sound Ch4 volume
+	.long wsvCh1VolumeW			;@ 0x88 Sound Ch1 volume
+	.long wsvCh2VolumeW			;@ 0x89 Sound Ch2 volume
+	.long wsvCh3VolumeW			;@ 0x8A Sound Ch3 volume
+	.long wsvCh4VolumeW			;@ 0x8B Sound Ch4 volume
 	.long wsvRegW				;@ 0x8C Sweeep value
 	.long wsvSweepTimeW			;@ 0x8D Sweep time
 	.long wsvNoiseCtrlW			;@ 0x8E Noise control
@@ -1132,7 +1131,39 @@ wsvFreqHW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
 	strb r1,[r2,#pcm1CurrentAddr+1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSweepTimeW:				;@ 0x8B Sound sweep time
+wsvCh1VolumeW:				;@ 0x88 Sound Channel 1 Volume
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSound1Vol]
+	teq r0,r1
+	bxeq lr
+	strb r1,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
+	b setCh1Volume
+;@----------------------------------------------------------------------------
+wsvCh2VolumeW:				;@ 0x89 Sound Channel 2 Volume
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSound2Vol]
+	teq r0,r1
+	bxeq lr
+	strb r1,[spxptr,#wsvSound2Vol]	;@ Each nibble is L & R
+	b setCh2Volume
+;@----------------------------------------------------------------------------
+wsvCh3VolumeW:				;@ 0x8A Sound Channel 3 Volume
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSound3Vol]
+	teq r0,r1
+	bxeq lr
+	strb r1,[spxptr,#wsvSound3Vol]	;@ Each nibble is L & R
+	b setCh3Volume
+;@----------------------------------------------------------------------------
+wsvCh4VolumeW:				;@ 0x8B Sound Channel 4 Volume
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSound4Vol]
+	teq r0,r1
+	bxeq lr
+	strb r1,[spxptr,#wsvSound4Vol]	;@ Each nibble is L & R
+	b setCh4Volume
+;@----------------------------------------------------------------------------
+wsvSweepTimeW:				;@ 0x8D Sound sweep time
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x1F				;@ Only low 5 bits
 	strb r1,[spxptr,#wsvSweepTime]
@@ -1146,7 +1177,9 @@ wsvNoiseCtrlW:				;@ 0x8E Noise Control
 	and r1,r1,#0x1F				;@ Only low 5 bits
 	strb r1,[spxptr,#wsvNoiseCtrl]
 	tst r1,#0x08				;@ Reset?
-	movne r0,#0x80000000
+	ldrne r0,[spxptr,#noise4CurrentAddr]
+	andne r0,r0,#0x80			;@ Keep noise on/off
+	orrne r0,#0x80000000
 	strne r0,[spxptr,#noise4CurrentAddr]
 	and r1,r1,#7				;@ Which taps?
 	adr r2,noiseTaps
@@ -1173,6 +1206,9 @@ wsvSampleBaseW:				;@ 0x8F Sample Base
 ;@----------------------------------------------------------------------------
 wsvSoundCtrlW:				;@ 0x90 Sound Control
 ;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSoundCtrl]
+	teq r0,r1
+	bxeq lr
 	strb r1,[spxptr,#wsvSoundCtrl]
 	tst r1,#0x40				;@ Ch 3 sweep on?
 	ldr r0,[spxptr,#sweep3CurrentAddr]
@@ -1185,7 +1221,7 @@ wsvSoundCtrlW:				;@ 0x90 Sound Control
 	biceq r0,r0,#0x80
 	orrne r0,r0,#0x80
 	str r0,[spxptr,#noise4CurrentAddr]
-	bx lr
+	b setAllChVolume
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------
@@ -1196,11 +1232,16 @@ wsvSoundOutputW:			;@ 0x91 Sound ouput
 	strb r1,[spxptr,#wsvSoundOutput]
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvPushVolumeButton:
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvHWVolume]
+	subs r1,r1,#1
+;@----------------------------------------------------------------------------
 wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x03				;@ Only low 2 bits
 	strb r1,[spxptr,#wsvHWVolume]
-	bx lr
+	b setTotalVolume
 ;@----------------------------------------------------------------------------
 wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
@@ -1299,14 +1340,6 @@ wsvNMICtrlW:				;@ 0xB7
 	ldrb r0,[spxptr,#wsvLowBattery]
 	b wsvSetLowBattery
 
-;@----------------------------------------------------------------------------
-wsvPushVolumeButton:
-;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvHWVolume]
-	subs r0,r0,#1
-	movmi r0,#0x03				;@ Max volume
-	strb r0,[spxptr,#wsvHWVolume]
-	bx lr
 ;@----------------------------------------------------------------------------
 wsvSetHeadphones:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------

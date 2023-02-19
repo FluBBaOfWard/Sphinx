@@ -145,22 +145,26 @@ wsvSoundOutput:		.byte 0		;@ 0x91 Sound output
 wsvNoiseCntr:		.short 0	;@ 0x92/0x93 Noise Counter Shift Register (15 bits)
 wsvVolume:			.byte 0		;@ 0x94 Volume (4 bit)
 
-wsvPadding6:		.space 9	;@ 0x95 - 0x9D ???
+wsvPadding6:		.byte 0		;@ 0x95 Hyper Sound sample?
+wsvSoundOutR:		.short 0	;@ 0x96/0x97 Sound out Right, 10  bits
+wsvSoundOutL:		.short 0	;@ 0x98/0x99 Sound out Left,  10  bits
+wsvSoundOutM:		.short 0	;@ 0x9A/0x9B Sound out Mixed, 11  bits
+wsvPadding7:		.short 0	;@ 0x9C/0x9D ???
 wsvHWVolume:		.byte 0		;@ 0x9E HW Volume (2 bit)
-wsvPadding7:		.space 1	;@ 0x9F ???
+wsvPadding8:		.space 1	;@ 0x9F ???
 
 wsvSystemCtrl1:		.byte 0		;@ 0xA0 Hardware type, boot rom lock.
 
-wsvPadding8:		.space 1	;@ 0xA1 ???
+wsvPadding9:		.space 1	;@ 0xA1 ???
 
 wsvTimerControl:	.byte 0		;@ 0xA2 Timer control
-wsvPadding9:		.space 1	;@ 0xA3 ???
+wsvPadding10:		.space 1	;@ 0xA3 ???
 wsvHBlTimerFreq:	.short 0	;@ 0xA4/0xA5 HBlank Timer 'frequency'
 wsvVBlTimerFreq:	.short 0	;@ 0xA6/0xA7 VBlank Timer 'frequency'
 wsvHBlCounter:		.short 0	;@ 0xA8/0xA9 HBlank Counter - 1/12000s
 wsvVBlCounter:		.short 0	;@ 0xAA/0xAB VBlank Counter - 1/75s
 
-wsvPadding10:		.space 4	;@ 0xAC - 0xAF ???
+wsvPadding11:		.space 4	;@ 0xAC - 0xAF ???
 
 wsvInterruptBase:	.byte 0		;@ 0xB0 Interrupt base
 wsvComByte:			.byte 0		;@ 0xB1 Communication byte
@@ -171,7 +175,7 @@ wsvControls:		.byte 0		;@ 0xB5 Input Controls
 wsvInterruptAck:	.byte 0		;@ 0xB6 Interrupt acknowledge
 wsvNMIControl:		.byte 0		;@ 0xB7 NMI Control
 
-wsvPadding11:		.space 2	;@ 0xB8 - 0xB9 ???
+wsvPadding12:		.space 2	;@ 0xB8 - 0xB9 ???
 
 wsvIntEEPROMData:	.short 0	;@ 0xBA/0xBB Internal EEPROM data
 wsvIntEEPROMAdr:	.short 0	;@ 0xBC/0xBD Internal EEPROM address
@@ -196,7 +200,7 @@ wsvBnk0SlctX:		.byte 0		;@ 0xCF ROM Bank Base Selector for segments 4-$F
 wsvBnk1SlctX:		.short 0	;@ 0xD0/0xD1 SRAM Bank selector
 wsvBnk2SlctX:		.short 0	;@ 0xD2/0xD3 BNK2SLCT - ROM Bank selector for segment 2
 wsvBnk3SlctX:		.short 0	;@ 0xD4/0xD5 BNK3SLCT - ROM Bank selector for segment 3
-wsvPadding12:		.space 42	;@ 0xD6 - 0xFF ???
+wsvPadding13:		.space 42	;@ 0xD6 - 0xFF ???
 
 ;@----------------------------------------------------------------------------
 sndDmaSource:		.long 0		;@ Original Sound DMA source address
@@ -222,7 +226,7 @@ wsvLowBatPin:		.byte 0
 wsvInterruptPins:	.byte 0
 wsvByteReceived:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding13:		.space 3
+wsvPadding14:		.space 3
 
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.

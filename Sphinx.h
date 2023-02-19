@@ -133,22 +133,26 @@ typedef struct {
 	u16 wsvNoiseCntr;
 	u8 wsvVolume;
 
-	u8 wsvPadding6[9];
+	u8 wsvPadding6[1];
+	u16 wsvSoundOutR;		// 0x96/0x97 Sound out Right, 10  bits
+	u16 wsvSoundOutL;		// 0x98/0x99 Sound out Left,  10  bits
+	u16 wsvSoundOutM;		// 0x9A/0x9B Sound out Mixed, 11  bits
+	u8 wsvPadding7[2];
 	u8 wsvHWVolume;
-	u8 wsvPadding7;
+	u8 wsvPadding8;
 
 	u8 wsvSystemCtrl1;
 
-	u8 wsvPadding8;
+	u8 wsvPadding9;
 
 	u8 wsvTimerControl;
-	u8 wsvPadding9;
+	u8 wsvPadding10;
 	u16 wsvHBlTimerFreq;
 	u16 wsvVBlTimerFreq;
 	u16 wsvHBlCounter;
 	u16 wsvVBlCounter;
 
-	u8 wsvPadding10[4];
+	u8 wsvPadding11[4];
 
 	u8 wsvInterruptBase;
 	u8 wsvComByte;
@@ -159,7 +163,7 @@ typedef struct {
 	u8 wsvInterruptAck;
 	u8 wsvNMIControl;
 
-	u8 wsvPadding11[2];
+	u8 wsvPadding12[2];
 
 	u16 wsvIntEEPROMData;
 	u16 wsvIntEEPROMAdr;
@@ -184,7 +188,7 @@ typedef struct {
 	u16 wsvBnk1SlctX;
 	u16 wsvBnk2SlctX;
 	u16 wsvBnk3SlctX;
-	u8 wsvPadding12[42];
+	u8 wsvPadding13[42];
 //------------------------------
 	u32 sndDmaSource;			// Original Sound DMA source address
 	u32 sndDmaLength;			// Original Sound DMA length
@@ -207,7 +211,7 @@ typedef struct {
 	u8 wsvInterruptPins;
 	u8 wsvByteReceived;
 	u8 wsvSleepMode__;
-	u8 wsvPadding13[3];
+	u8 wsvPadding14[3];
 
 	u32 enabledLCDIcons;
 	u32 scrollLine;
