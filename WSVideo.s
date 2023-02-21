@@ -1514,10 +1514,10 @@ noTimerHBlIrq:
 	tst r0,#0x80
 	blne doSoundDMA
 
-//	ldr r0,[spxptr,#missingSamplesCnt]
-//	subs r0,r0,#1
-//	strpl r0,[spxptr,#missingSamplesCnt]
-//	blhi soundUpdate
+	ldr r0,[spxptr,#missingSamplesCnt]
+	subs r0,r0,#2
+	strpl r0,[spxptr,#missingSamplesCnt]
+	blhi soundUpdate
 	bl soundUpdate
 
 	ldr r0,[spxptr,#scanline]
