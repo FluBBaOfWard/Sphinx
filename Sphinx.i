@@ -215,6 +215,8 @@ sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current address
 sampleBaseAddr:		.long 0		;@ Current sample base address
 noiseFeedBack:		.long 0		;@ Current noise feedback
 
+missingSamplesCnt:	.long 0		;@ Number of missing samples from last sound callback.
+
 serialIRQCounter:	.long 0		;@ How many cycles to send byte.
 
 wsvSOC:				.byte 0		;@ ASWAN, SPHINX or SPHINX2

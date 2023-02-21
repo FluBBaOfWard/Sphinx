@@ -149,9 +149,12 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 // IIIIIVCCCCCCCCCCC0001FFFFFFFFFFF
 // I=sampleindex, V=overflow, C=counter, F=frequency
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r0,r1,r4-r11,lr}
+	stmfd sp!,{r4-r11,lr}
 	add r2,spxptr,#pcm1CurrentAddr
 	ldmia r2,{r3-r8,r10}
+	ldrb r9,[spxptr,#wsvSoundCtrl]
+	ands r9,r9,#0x20				;@ Ch 2 voice on?
+	addne r9,spxptr,#wsvSound2Vol
 	mov r0,r0,lsl#3
 mixLoop:
 innerMixLoop:
@@ -207,9 +210,10 @@ vol2_L:
 vol2_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
-//	cmp r9,#0
-//	ldrbne r11,[r9]
-//	addne r2,r2,r11
+	cmp r9,#0
+	ldrbne r11,[r9]
+	addne r2,r2,r11
+	addne r2,r2,r11,lsl#16
 
 	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
 	add r10,r10,#0x10
@@ -257,7 +261,7 @@ totalVolume:
 	strh r2,[spxptr,#wsvNoiseCntr]
 	add r0,spxptr,#pcm1CurrentAddr	;@ Counters
 	stmia r0,{r3-r8}
-	ldmfd sp!,{r0,r1,r4-r11,pc}
+	ldmfd sp!,{r4-r11,pc}
 #else
 ;@----------------------------------------------------------------------------
 ;@ r0  = Length
