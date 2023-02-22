@@ -1089,9 +1089,13 @@ wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
 	strb r1,[spxptr,#wsvSndDMACtrl]
 	tst r1,#0x80
 	bxeq lr
-	ldr r1,[spxptr,#wsvSndDMASrc]
+	ldrh r1,[spxptr,#wsvSndDMASrcL]
+	ldrh r0,[spxptr,#wsvSndDMASrcH]
+	orr r1,r1,r0,lsl#16
 	str r1,[spxptr,#sndDmaSource]
-	ldr r1,[spxptr,#wsvSndDMALen]
+	ldrh r1,[spxptr,#wsvSndDMALenL]
+	ldrh r0,[spxptr,#wsvSndDMALenH]
+	orr r1,r1,r0,lsl#16
 	str r1,[spxptr,#sndDmaLength]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1581,28 +1585,40 @@ doSoundDMA:					;@ In r0=SndDmaCtrl
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,lr}
 	mov r4,r0
-	ldr r1,[spxptr,#wsvSndDMALen]
-	ldr r2,[spxptr,#wsvSndDMASrc]
+	ldrh r1,[spxptr,#wsvSndDMALenL]
+	ldrh r0,[spxptr,#wsvSndDMALenH]
+	orr r1,r1,r0,lsl#16
+	ldrh r2,[spxptr,#wsvSndDMASrcL]
+	ldrh r0,[spxptr,#wsvSndDMASrcH]
+	orr r2,r2,r0,lsl#16
 	subs r1,r1,#1
 	bpl sndDmaCont
 	ands r1,r4,#0x08			;@ Loop?
 	biceq r4,r4,#0x80
 	strbeq r4,[spxptr,#wsvSndDMACtrl]
-	streq r1,[spxptr,#wsvSndDMALen]
+	strheq r1,[spxptr,#wsvSndDMALenL]
+	moveq r1,r1,lsr#16
+	strheq r1,[spxptr,#wsvSndDMALenH]
 	ldmfdeq sp!,{r4,pc}
 	ldrne r1,[spxptr,#sndDmaLength]
 	ldrne r2,[spxptr,#sndDmaSource]
 sndDmaCont:
-	str r1,[spxptr,#wsvSndDMALen]
+	strh r1,[spxptr,#wsvSndDMALenL]
+	mov r1,r1,lsr#16
+	strh r1,[spxptr,#wsvSndDMALenH]
 	mov r0,r2,lsl#12
 	tst r4,#0x40				;@ Increase/decrease
 	addeq r2,r2,#1
 	subne r2,r2,#1
-	str r2,[spxptr,#wsvSndDMASrc]
+	strh r2,[spxptr,#wsvSndDMASrcL]
+	mov r2,r2,lsr#16
+	strh r2,[spxptr,#wsvSndDMASrcH]
 	bl cpuReadMem20
-	tst r4,#0x10				;@ Ch2Vol/HyperVoice
-	strbeq r0,[spxptr,#wsvSound2Vol]
 	sub v30cyc,v30cyc,#1*CYCLE
+	tst r4,#0x10				;@ Ch2Vol/HyperVoice
+	strne r0,[spxptr,#currentSampleValue]
+	mov r1,r0
+	bleq wsvCh2VolumeW
 	ldmfd sp!,{r4,pc}
 ;@----------------------------------------------------------------------------
 T_data:

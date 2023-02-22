@@ -66,10 +66,12 @@ setCh1Volume:
 setCh2Volume:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSoundCtrl]
+	ands r2,r0,#0x20			;@ Ch 2 voice on?
+	orrne r2,r1,r1,lsl#16
+	strne r2,[spxptr,#currentSampleValue]
+	movne r1,#0					;@ Silence for now
 	tst r0,#2					;@ Ch 2 on?
 	moveq r1,#0
-	tst r0,#0x20				;@ Ch 2 voice on?
-	movne r1,#0					;@ Silence for now
 	ldr r0,=vol1_L
 	and r2,r1,#0xF
 	mov r1,r1,lsr#4
@@ -140,7 +142,7 @@ hwVolumes:
 ;@ r6  = Channel 4
 ;@ r7  = Noise LFSR
 ;@ r8  = Ch3 Sweep
-;@ r9  = Ch2 volume.
+;@ r9  = Ch2/HyperVoice sample.
 ;@ r10 = Sample pointer
 ;@ r11 = Current sample
 ;@ lr  = Current volume
@@ -151,10 +153,7 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 	add r2,spxptr,#pcm1CurrentAddr
-	ldmia r2,{r3-r8,r10}
-	ldrb r9,[spxptr,#wsvSoundCtrl]
-	ands r9,r9,#0x20				;@ Ch 2 voice on?
-	addne r9,spxptr,#wsvSound2Vol
+	ldmia r2,{r3-r10}
 	mov r0,r0,lsl#3
 mixLoop:
 innerMixLoop:
@@ -210,10 +209,7 @@ vol2_L:
 vol2_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
-	cmp r9,#0
-	ldrbne r11,[r9]
-	addne r2,r2,r11
-	addne r2,r2,r11,lsl#16
+	add r2,r2,r9
 
 	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
 	add r10,r10,#0x10

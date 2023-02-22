@@ -104,8 +104,10 @@ wsvDMALength:		.short 0	;@ 0x46/0x47 DMA length bits 15-0
 wsvDMACtrl:			.byte 0		;@ 0x48 DMA control, bit 7 start
 wsvPadding1:		.space 1	;@ 0x49 ???
 
-wsvSndDMASrc:		.long 0		;@ 0x4A-0x4D Sound DMA source adr bits 19-0
-wsvSndDMALen:		.long 0		;@ 0x4E-0x51 Sound DMA length bits 19-0
+wsvSndDMASrcL:		.short 0	;@ 0x4A-0x4B Sound DMA source adr bits 15-0
+wsvSndDMASrcH:		.short 0	;@ 0x4C-0x4D Sound DMA source adr bits 19-16
+wsvSndDMALenL:		.short 0	;@ 0x4E-0x4F Sound DMA length bits 15-0
+wsvSndDMALenH:		.short 0	;@ 0x50-0x51 Sound DMA length bits 19-16
 wsvSndDMACtrl:		.byte 0		;@ 0x52 Sound DMA control, bit 7 start
 wsvPadding2:		.space 1	;@ 0x53 ???
 
@@ -212,6 +214,7 @@ pcm3CurrentAddr:	.long 0		;@ Ch3 Current address
 pcm4CurrentAddr:	.long 0		;@ Ch4 Current address
 noise4CurrentAddr:	.long 0		;@ Ch4 noise Current address
 sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current address
+currentSampleValue: .long 0		;@ Ch2/Hyper Voice sample
 sampleBaseAddr:		.long 0		;@ Current sample base address
 noiseFeedBack:		.long 0		;@ Current noise feedback
 

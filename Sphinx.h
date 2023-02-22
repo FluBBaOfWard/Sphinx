@@ -92,8 +92,10 @@ typedef struct {
 	u8 wsvDMACtrl;
 	u8 wsvPadding1;
 
-	u32 wsvSndDMASrc;
-	u32 wsvSndDMALen;
+	u16 wsvSndDMASrcL;
+	u16 wsvSndDMASrcH;
+	u16 wsvSndDMALenL;
+	u16 wsvSndDMALenH;
 	u8 wsvSndDMACtrl;
 	u8 wsvPadding2;
 
