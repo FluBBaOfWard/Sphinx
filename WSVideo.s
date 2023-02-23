@@ -1519,10 +1519,16 @@ noTimerHBlIrq:
 	blne doSoundDMA
 
 	ldr r0,[spxptr,#missingSamplesCnt]
-	subs r0,r0,#2
-	strpl r0,[spxptr,#missingSamplesCnt]
+	cmp r0,#0
+	beq noExtraSound
+	addmi r0,r0,#2
+	subpl r0,r0,#2
+	str r0,[spxptr,#missingSamplesCnt]
+	bmi skipSound
 	blhi soundUpdate
+noExtraSound:
 	bl soundUpdate
+skipSound:
 
 	ldr r0,[spxptr,#scanline]
 	subs r0,r0,#144				;@ Return from emulation loop on this scanline
@@ -1607,9 +1613,13 @@ sndDmaCont:
 	mov r1,r1,lsr#16
 	strh r1,[spxptr,#wsvSndDMALenH]
 	mov r0,r2,lsl#12
+	and r1,r4,#3
+	cmp r1,#3
+	movne r1,#1
+	moveq r1,#2
 	tst r4,#0x40				;@ Increase/decrease
-	addeq r2,r2,#1
-	subne r2,r2,#1
+	addeq r2,r2,r1
+	subne r2,r2,r1
 	strh r2,[spxptr,#wsvSndDMASrcL]
 	mov r2,r2,lsr#16
 	strh r2,[spxptr,#wsvSndDMASrcH]
