@@ -1517,7 +1517,7 @@ noTimerHBlIrq:
 	ldrb r0,[spxptr,#wsvSndDMACtrl]
 	tst r0,#0x80
 	blne doSoundDMA
-
+#ifndef GBA
 	ldr r0,[spxptr,#missingSamplesCnt]
 	cmp r0,#0
 	beq noExtraSound
@@ -1529,6 +1529,7 @@ noTimerHBlIrq:
 noExtraSound:
 	bl soundUpdate
 skipSound:
+#endif
 
 	ldr r0,[spxptr,#scanline]
 	subs r0,r0,#144				;@ Return from emulation loop on this scanline
