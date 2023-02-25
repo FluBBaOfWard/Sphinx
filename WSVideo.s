@@ -752,13 +752,13 @@ OUT_Table:
 	.long wsvUnmappedW			;@ 0x61 ---
 	.long wsvImportantW			;@ 0x62 SwanCrystal/Power off
 	.long wsvUnmappedW			;@ 0x63 ---
-	.long wsvImportantW			;@ 0x64 Left channel Hyper Voice (lower byte)
-	.long wsvImportantW			;@ 0x65 Left channel Hyper Voice (upper byte)
-	.long wsvImportantW			;@ 0x66 Right channel Hyper Voice (lower byte)
-	.long wsvImportantW			;@ 0x67 Right channel Hyper Voice (upper byte)
-	.long wsvImportantW			;@ 0x68 Hyper Voice Shadow (lower byte)
-	.long wsvImportantW			;@ 0x69 Hyper Voice Shadow (upper byte)
-	.long wsvImportantW			;@ 0x6A Hyper control
+	.long wsvImportantW			;@ 0x64 Hyper Voice Left channel (lower byte)
+	.long wsvImportantW			;@ 0x65 Hyper Voice Left channel (upper byte)
+	.long wsvImportantW			;@ 0x66 Hyper Voice Right channel (lower byte)
+	.long wsvImportantW			;@ 0x67 Hyper Voice Right channel (upper byte)
+	.long wsvImportantW			;@ 0x68 Hyper Voice Shadow (lower byte? Left?)
+	.long wsvImportantW			;@ 0x69 Hyper Voice Shadow (upper byte? Right?)
+	.long wsvImportantW			;@ 0x6A Hyper Voice control
 	.long wsvHyperChanCtrlW		;@ 0x6B Hyper Chan control
 	.long wsvUnmappedW			;@ 0x6C ---
 	.long wsvUnmappedW			;@ 0x6D ---
@@ -1099,10 +1099,15 @@ wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
 	str r1,[spxptr,#sndDmaLength]
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvHyperCtrlW:				;@ 0x6A, only WSC
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvHyperVCtrl]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvHyperChanCtrlW:			;@ 0x6B, only WSC
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x6F
-	strb r1,[spxptr,#wsvHyperVChnCtrl]
+	strb r1,[spxptr,#wsvHyperVCtrl+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVideoModeW:				;@ 0x60, Video mode, WSColor
@@ -1627,10 +1632,10 @@ sndDmaCont:
 	bl cpuReadMem20
 	sub v30cyc,v30cyc,#1*CYCLE
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
-	strne r0,[spxptr,#currentSampleValue]
+	ldmfd sp!,{r4,lr}
 	mov r1,r0
-	bleq wsvCh2VolumeW
-	ldmfd sp!,{r4,pc}
+	beq wsvCh2VolumeW
+	b setHyperVoiceValue
 ;@----------------------------------------------------------------------------
 T_data:
 	.long DIRTYTILES+0x200

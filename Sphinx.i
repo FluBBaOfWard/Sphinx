@@ -114,18 +114,17 @@ wsvPadding2:		.space 1	;@ 0x53 ???
 wsvPadding3:		.space 12	;@ 0x54 - 0x5F ???
 
 wsvVideoMode:		.byte 0		;@ 0x60 Video rendering mode
-
 wsvPadding4:		.space 1	;@ 0x61 ???
+
 wsvSystemCtrl3:		.byte 0		;@ 0x62 WSC / SC, Power off
 wsvPadding5:		.space 1	;@ 0x63 ???
-wsvHyperVLL:		.byte 0		;@ 0x64 HyperVoice Left channel (lower byte)
-wsvHyperVLH:		.byte 0		;@ 0x65 HyperVoice Left channel (upper byte)
-wsvHyperVRL:		.byte 0		;@ 0x66 HyperVoice Right channel (lower byte)
-wsvHyperVRH:		.byte 0		;@ 0x67 HyperVoice Right channel (upper byte)
-wsvHyperVSL:		.byte 0		;@ 0x68 HyperVoice Shadow (lower byte)
-wsvHyperVSH:		.byte 0		;@ 0x69 HyperVoice Shadow (upper byte)
-wsvHyperVCtrl:		.byte 0		;@ 0x6A HyperVoice control
-wsvHyperVChnCtrl:	.byte 0		;@ 0x6B HyperVoice channel control
+
+wsvHyperVL:			.short 0	;@ 0x64 HyperVoice Left channel
+wsvHyperVR:			.short 0	;@ 0x66 HyperVoice Right channel
+wsvHyperVSL:		.byte 0		;@ 0x68 HyperVoice Shadow (lower byte? left?)
+wsvHyperVSH:		.byte 0		;@ 0x69 HyperVoice Shadow (upper byte? right?)
+wsvHyperVCtrl:		.short 0	;@ 0x6A HyperVoice control
+
 wsvPadding5_1:		.space 20	;@ 0x6C - 0x7F ???
 
 wsvSound1Freq:		.short 0	;@ 0x80/0x81 Sound ch 1 pitch bits 10-0

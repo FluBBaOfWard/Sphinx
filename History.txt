@@ -1,7 +1,7 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.2.0 - 2023-02-23 (FluBBa)
+V0.2.0 - 2023-02-25 (FluBBa)
 	Added reading of register 0x1A.
 	Added emulation of NMI control register (0xB7).
 	Fixed interrupt handling.
@@ -9,7 +9,8 @@ V0.2.0 - 2023-02-23 (FluBBa)
 	Fixed sprite DMA.
 	Fixed sweep on sound channel 3.
 	Fixed noise feedback selection.
-	Fixed sound sample playback.
+	Fixed sound ch2 sample playback.
+	Fixed HyperVoice sample playback.
 	Fixed sound DMA.
 	Better emulation of "Serial buffer empty" IRQ.
 

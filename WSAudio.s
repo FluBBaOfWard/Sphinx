@@ -16,6 +16,7 @@
 	.global setCh2Volume
 	.global setCh3Volume
 	.global setCh4Volume
+	.global setHyperVoiceValue
 	.global setTotalVolume
 
 	.syntax unified
@@ -101,6 +102,22 @@ setCh4Volume:
 	mov r1,r1,lsr#4
 	strb r1,[r0,#vol4_L-vol1_L]
 	strb r2,[r0,#vol4_R-vol1_L]
+	bx lr
+;@----------------------------------------------------------------------------
+setHyperVoiceValue:
+;@----------------------------------------------------------------------------
+	ldrh r0,[spxptr,#wsvHyperVCtrl]
+	ldrb r2,[spxptr,#wsvSoundOutput]
+	tst r0,#0x80				;@ HyperV Enabled
+	tstne r2,#0x80				;@ HeadPhones Enabled
+	bxeq lr
+//	and r2,r0,#0x6000			;@ Mode, 0=stereo, 1=left, 2=right, 3=mono both.
+	tst r0,#8					;@ Signed value?
+	eorne r1,r1,#0x80
+//	ands r2,r0,#3				;@ Shift amount
+//	movne r1,r1,lsr r2
+	orr r1,r1,r1,lsl#16
+	str r1,[spxptr,#currentSampleValue]
 	bx lr
 ;@----------------------------------------------------------------------------
 setTotalVolume:
@@ -236,7 +253,7 @@ vol4_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r8,#0x100				;@ Ch3 Noise?
+	tst r8,#0x100				;@ Ch3 Sweep?
 	beq noSweep
 	adds r8,r8,#PSG_SWEEP_ADD
 	bcc noSweep
