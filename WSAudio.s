@@ -123,6 +123,9 @@ setHyperVoiceValue:
 setTotalVolume:
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvHWVolume]
+	ldrb r0,[spxptr,#wsvSoundOutput]
+	tst r0,#0x80				;@ Headphones?
+	movne r1,#3
 	ldr r0,=vol1_L
 	adr r2,hwVolumes
 	ldr r1,[r2,r1,lsl#2]

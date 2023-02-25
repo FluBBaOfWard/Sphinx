@@ -1243,6 +1243,11 @@ wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
+	mov r0,#150
+	strb r0,[spxptr,#wsvSoundIconTimer]
+	ldrb r0,[spxptr,#wsvSoundOutput]
+	tst r0,#0x80				;@ Headphones?
+	bxne lr
 	ldrb r1,[spxptr,#wsvHWVolume]
 	subs r1,r1,#1
 ;@----------------------------------------------------------------------------
@@ -1357,7 +1362,9 @@ wsvSetHeadphones:			;@ r0 = on/off
 	biceq r0,r0,#0x80
 	orrne r0,r0,#0x80
 	strb r0,[spxptr,#wsvSoundOutput]
-	bx lr
+	mov r0,#150
+	strb r0,[spxptr,#wsvSoundIconTimer]
+	b setTotalVolume
 ;@----------------------------------------------------------------------------
 wsvSetLowBattery:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
@@ -1478,13 +1485,13 @@ redoScanline:
 	ldr r2,[spxptr,#lineState]
 	ldmia r2!,{r0,r1}
 	stmib spxptr,{r1,r2}		;@ Write nextLineChange & lineState
-	stmfd sp!,{lr}
-	mov lr,pc
+	adr lr,continueScanline
 	bx r0
-	ldmfd sp!,{lr}
 ;@----------------------------------------------------------------------------
 wsvDoScanline:
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+continueScanline:
 	ldmia spxptr,{r0,r1}		;@ Read scanLine & nextLineChange
 	add r0,r0,#1
 	cmp r0,r1
@@ -1493,7 +1500,6 @@ wsvDoScanline:
 ;@----------------------------------------------------------------------------
 checkScanlineIRQ:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
 	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
 	mov r0,#0
@@ -2016,7 +2022,7 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	and r2,r2,#3
 	orr r0,r0,r2,lsl#6
 	ldrb r2,[spxptr,#wsvSoundOutput]
-	tst r2,#0x80
+	tst r2,#0x80				;@ Headphones?
 	orrne r0,r0,#LCD_ICON_HEAD
 	ldrb r2,[spxptr,#wsvSystemCtrl1]
 	tst r2,#0x01
@@ -2025,6 +2031,11 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	ldrb r2,[spxptr,#wsvLowBattery]
 	cmp r2,#0
 	orrne r0,r0,#LCD_ICON_BATT
+	ldrb r2,[spxptr,#wsvSoundIconTimer]
+	subs r2,r2,#1
+	strbpl r2,[spxptr,#wsvSoundIconTimer]
+	orrhi r0,r0,#LCD_ICON_TIME
+	biceq r0,r0,#LCD_ICON_TIME
 	eors r1,r1,r0
 	bxeq lr
 	str r0,[spxptr,#enabledLCDIcons]
@@ -2089,13 +2100,24 @@ redrawColorIcons:
 	ldrhne r3,[r1,#24]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_HEAD		;@ HeadPhones
+	ldrb r5,[spxptr,#wsvSoundIconTimer]
+	cmp r5,#0
+	tstne r0,#LCD_ICON_HEAD		;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#26]
 	strh r3,[r2],#0x40
 	ldrhne r3,[r1,#28]
 	strh r3,[r2],#0x40
 
+	bne clrVoluIcon
+	cmp r5,#0
+	bne chkVoluIcon
+clrVoluIcon:
+	strh r4,[r2],#0x40		;@ No Volume when headphones
+	strh r4,[r2],#0x40
+	b chkBattIcon
+
+chkVoluIcon:
 	ands r5,r0,#LCD_ICON_VOLU	;@ HW Volume
 	ldrheq r3,[r1,#30]
 	ldrhne r3,[r1,#32]
@@ -2106,6 +2128,7 @@ redrawColorIcons:
 	ldrh r3,[r1,#38]
 	strh r3,[r2],#0x40
 
+chkBattIcon:
 	tst r0,#LCD_ICON_BATT		;@ Low battery
 	moveq r3,r4
 	ldrhne r3,[r1,#40]
@@ -2177,6 +2200,16 @@ redrawMonoIcons:
 	ldrhne r3,[r1,#0x16]
 	strh r3,[r2,#0x18]
 
+	tst r0,#LCD_ICON_HEAD		;@ HeadPhones
+	moveq r3,r4
+	ldrhne r3,[r1,#0x24]
+	strh r3,[r2,#0x26]
+
+	strhne r4,[r2,#0x1A]
+	strhne r4,[r2,#0x1C]
+	strhne r4,[r2,#0x1E]
+	bne chkHorzIcon
+
 	ands r5,r0,#LCD_ICON_VOLU	;@ HW Volume
 	moveq r3,r4
 	ldrhne r3,[r1,#0x18]
@@ -2186,11 +2219,7 @@ redrawMonoIcons:
 	ldrhne r3,[r1,#0x1C]
 	strh r3,[r2,#0x1E]
 
-	tst r0,#LCD_ICON_HEAD		;@ HeadPhones
-	moveq r3,r4
-	ldrhne r3,[r1,#0x24]
-	strh r3,[r2,#0x26]
-
+chkHorzIcon:
 	tst r0,#LCD_ICON_HORZ
 	moveq r3,r4
 	ldrhne r3,[r1,#0x2A]

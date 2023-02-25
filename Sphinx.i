@@ -29,6 +29,7 @@
 #define LCD_ICON_BATT	(1<<9)
 #define LCD_ICON_CART	(1<<10)
 #define LCD_ICON_POWR	(1<<11)
+#define LCD_ICON_TIME	(1<<12)
 
 /** Game screen width in pixels */
 #define GAME_WIDTH  (224)
@@ -229,8 +230,9 @@ wsvLowBattery:		.byte 0
 wsvLowBatPin:		.byte 0
 wsvInterruptPins:	.byte 0
 wsvByteReceived:	.byte 0
+wsvSoundIconTimer:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding14:		.space 3
+wsvPadding14:		.space 2
 
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.
