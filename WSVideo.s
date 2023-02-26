@@ -2200,16 +2200,23 @@ redrawMonoIcons:
 	ldrhne r3,[r1,#0x16]
 	strh r3,[r2,#0x18]
 
-	tst r0,#LCD_ICON_HEAD		;@ HeadPhones
+	ldrb r5,[spxptr,#wsvSoundIconTimer]
+	cmp r5,#0
+	tstne r0,#LCD_ICON_HEAD		;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#0x24]
 	strh r3,[r2,#0x26]
 
-	strhne r4,[r2,#0x1A]
-	strhne r4,[r2,#0x1C]
-	strhne r4,[r2,#0x1E]
-	bne chkHorzIcon
+	bne clrVoluIconMono
+	cmp r5,#0
+	bne chkVoluIconMono
+clrVoluIconMono:
+	strh r4,[r2,#0x1A]
+	strh r4,[r2,#0x1C]
+	strh r4,[r2,#0x1E]
+	b chkHorzIcon
 
+chkVoluIconMono:
 	ands r5,r0,#LCD_ICON_VOLU	;@ HW Volume
 	moveq r3,r4
 	ldrhne r3,[r1,#0x18]
