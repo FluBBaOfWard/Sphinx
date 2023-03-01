@@ -1,6 +1,7 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Fix sound icon for WS mono.
 	Use scrollbuffer for tilemap settings, just add map number as new Y*0x100 and use 32*64 tilemap on NDS/GBA.
 		Mask Y value correctly against NDS/GBA tilemap.
 	Add check for dirty tiles in tilemap renderer.
@@ -8,8 +9,6 @@ Bandai WonderSwan/Sphinx To do
 	BG/Spr control per line?
 	Palette change per line?
 	Handle LCD on/off.
-	Fix icons.
-	Add voice to ch 2.
-	Add Hyper Voice.
+	Handle Contrast High/Low for WSC, add 2 images on top.
 	Only enable appropriate registers on the different versions of the SOC.
 	Check sprite start & sprite count.

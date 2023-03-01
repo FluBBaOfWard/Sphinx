@@ -143,6 +143,10 @@ wsvRegistersReset:				;@ in r3=SOC
 	mov r0,#0x84
 	movne r0,#0x86
 	strb r0,[spxptr,#wsvSystemCtrl1]
+	mov r0,#0x90
+	movne r0,#0x9F
+	strb r0,[spxptr,#wsvColor01]
+
 	ldrb r1,[spxptr,#wsvTotalLines]
 	b wsvRefW
 
@@ -724,9 +728,9 @@ OUT_Table:
 	.long wsvRegW				;@ 0x47 DMA len
 	.long wsvDMACtrlW			;@ 0x48 DMA control
 	.long wsvRegW				;@ 0x49 DMA ctrl
-	.long wsvRegW				;@ 0x4A	Sound DMA source
-	.long wsvRegW				;@ 0x4B Sound DMA src
-	.long wsvRegW				;@ 0x4C Sound DMA src
+	.long wsvSndDMASrc0W		;@ 0x4A	Sound DMA source
+	.long wsvSndDMASrc1W		;@ 0x4B Sound DMA src
+	.long wsvSndDMASrc2W		;@ 0x4C Sound DMA src
 	.long wsvRegW				;@ 0x4D Sound DMA src
 	.long wsvRegW				;@ 0x4E Sound DMA length
 	.long wsvRegW				;@ 0x4F Sound DMA len
@@ -1081,6 +1085,24 @@ dmaLoop:
 dmaEnd:
 
 	ldmfd sp!,{r4-r8,lr}
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMASrc0W:				;@ 0x4A, only WSC.
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSndDMASrcL]
+	strb r1,[spxptr,#sndDmaSource]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMASrc1W:				;@ 0x4B, only WSC.
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSndDMASrcL+1]
+	strb r1,[spxptr,#sndDmaSource+1]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMASrc2W:				;@ 0x4C, only WSC.
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSndDMASrcH]
+	strb r1,[spxptr,#sndDmaSource+2]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
