@@ -1209,26 +1209,25 @@ wsvNoiseCtrlW:				;@ 0x8E Noise Control
 	strb r0,[spxptr,#wsvNoiseCtrl]
 	ldr r0,[spxptr,#noise4CurrentAddr]
 	tst r1,#0x08				;@ Reset?
-	andne r0,r0,#0x180			;@ Keep Ch4 noise on/off
-	orrne r0,#0x80000000
-	tst r1,#0x10				;@ Enable?
-	biceq r0,r0,#0x10000
-	orrne r0,r0,#0x10000
-	str r0,[spxptr,#noise4CurrentAddr]
+	andne r0,r0,#0x0C000		;@ Keep Ch4 noise on/off
+	tst r1,#0x10				;@ Enable calculation?
+	biceq r0,r0,#0x8000
+	orrne r0,r0,#0x8000
 	and r1,r1,#7				;@ Which taps?
 	adr r2,noiseTaps
-	ldr r0,[r2,r1,lsl#2]
-	str r0,[spxptr,#noiseFeedBack]
+	ldr r1,[r2,r1,lsl#2]
+	orr r0,r0,r1
+	str r0,[spxptr,#noise4CurrentAddr]
 	bx lr
 noiseTaps:
-	.long 0x00004080			;@ Tap bit 14
-	.long 0x00000480			;@ Tap bit 10
-	.long 0x00002080			;@ Tap bit 13
-	.long 0x00000090			;@ Tap bit 4
-	.long 0x00000180			;@ Tap bit 8
-	.long 0x000000C0			;@ Tap bit 6
-	.long 0x00000280			;@ Tap bit 9
-	.long 0x00000880			;@ Tap bit 11
+	.long 0x00000408			;@ Tap bit 7 & 14
+	.long 0x00000048			;@ Tap bit 7 & 10
+	.long 0x00000208			;@ Tap bit 7 & 13
+	.long 0x00000009			;@ Tap bit 7 & 4
+	.long 0x00000018			;@ Tap bit 7 & 8
+	.long 0x0000000C			;@ Tap bit 7 & 6
+	.long 0x00000028			;@ Tap bit 7 & 9
+	.long 0x00000088			;@ Tap bit 7 & 11
 ;@----------------------------------------------------------------------------
 wsvSampleBaseW:				;@ 0x8F Sample Base
 ;@----------------------------------------------------------------------------
@@ -1252,8 +1251,8 @@ wsvSoundCtrlW:				;@ 0x90 Sound Control
 
 	tst r1,#0x80				;@ Ch 4 noise on?
 	ldr r0,[spxptr,#noise4CurrentAddr]
-	biceq r0,r0,#0x80
-	orrne r0,r0,#0x80
+	biceq r0,r0,#0x4000
+	orrne r0,r0,#0x4000
 	str r0,[spxptr,#noise4CurrentAddr]
 	b setAllChVolume
 ;@----------------------------------------------------------------------------

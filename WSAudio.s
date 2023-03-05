@@ -33,10 +33,8 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 	str r0,[spxptr,#pcm3CurrentAddr]
 	str r0,[spxptr,#pcm4CurrentAddr]
 	str r0,[spxptr,#sweep3CurrentAddr]
-	mov r0,#0x80000000
+	ldr r0,=0x00000408
 	str r0,[spxptr,#noise4CurrentAddr]
-	ldr r0,=0x01020001
-	str r0,[spxptr,#noiseFeedBack]
 
 ;@----------------------------------------------------------------------------
 setAllChVolume:
@@ -176,7 +174,6 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 	ldmia r2,{r3-r10}
 	mov r0,r0,lsl#3
 mixLoop:
-	ldr lr,[spxptr,#noiseFeedBack]
 innerMixLoop:
 	add r3,r3,#PSG_ADDITION
 	tst r3,r3,lsl#6
@@ -198,11 +195,11 @@ innerMixLoop:
 	mov r2,r6,lsl#20
 	addcs r6,r6,r2,lsr#5
 
-	movscs r2,r7,lsr#17
-	addscs r7,r7,r2,lsl#17
-	ands r2,lr,r7,lsr#17
-	eorsne r2,r2,lr
-	orreq r7,r7,#0x00020000
+	movscs r2,r7,lsr#16
+	addcs r7,r7,r2,lsl#16
+	ands r2,r7,r7,lsl#21
+	eorsne r2,r2,r7,lsl#21
+	orreq r7,r7,#0x00010000
 
 	sub r0,r0,#1
 	tst r0,#7
@@ -244,7 +241,7 @@ vol3_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r7,#0x80				;@ Channel 4 Noise enabled?
+	tst r7,#0x4000				;@ Channel 4 Noise enabled?
 	ldrbeq r11,[r10,r6,lsr#28]	;@ Channel 4 PCM
 	sub r10,r10,#0x30
 	andsne r11,r7,#0x00020000

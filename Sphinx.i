@@ -216,7 +216,6 @@ noise4CurrentAddr:	.long 0		;@ Ch4 noise Current address
 sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current address
 currentSampleValue: .long 0		;@ Ch2/Hyper Voice sample
 sampleBaseAddr:		.long 0		;@ Current sample base address
-noiseFeedBack:		.long 0		;@ Current noise feedback
 
 missingSamplesCnt:	.long 0		;@ Number of missing samples from last sound callback.
 
