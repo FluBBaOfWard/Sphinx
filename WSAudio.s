@@ -176,30 +176,30 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 	ldmia r2,{r3-r10}
 	mov r0,r0,lsl#3
 mixLoop:
+	ldr lr,[spxptr,#noiseFeedBack]
 innerMixLoop:
 	add r3,r3,#PSG_ADDITION
 	tst r3,r3,lsl#6
-	mov lr,r3,lsl#20
-	addcs r3,r3,lr,lsr#5
+	mov r2,r3,lsl#20
+	addcs r3,r3,r2,lsr#5
 
 	add r4,r4,#PSG_ADDITION
 	tst r4,r4,lsl#6
-	mov lr,r4,lsl#20
-	addcs r4,r4,lr,lsr#5
+	mov r2,r4,lsl#20
+	addcs r4,r4,r2,lsr#5
 
 	add r5,r5,#PSG_ADDITION
 	tst r5,r5,lsl#6
-	mov lr,r5,lsl#20
-	addcs r5,r5,lr,lsr#5
+	mov r2,r5,lsl#20
+	addcs r5,r5,r2,lsr#5
 
 	add r6,r6,#PSG_ADDITION
 	tst r6,r6,lsl#6
-	mov lr,r6,lsl#20
-	addcs r6,r6,lr,lsr#5
+	mov r2,r6,lsl#20
+	addcs r6,r6,r2,lsr#5
 
-	movscs lr,r7,lsr#17
-	addscs r7,r7,lr,lsl#17
-	ldrcs lr,[spxptr,#noiseFeedBack]
+	movscs r2,r7,lsr#17
+	addscs r7,r7,r2,lsl#17
 	eorcs r7,r7,lr
 
 	sub r0,r0,#1
