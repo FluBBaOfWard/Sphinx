@@ -200,7 +200,9 @@ innerMixLoop:
 
 	movscs r2,r7,lsr#17
 	addscs r7,r7,r2,lsl#17
-	eorcs r7,r7,lr
+	ands r2,lr,r7,lsr#17
+	eorsne r2,r2,lr
+	orreq r7,r7,#0x00020000
 
 	sub r0,r0,#1
 	tst r0,#7
@@ -245,7 +247,7 @@ vol3_R:
 	tst r7,#0x80				;@ Channel 4 Noise enabled?
 	ldrbeq r11,[r10,r6,lsr#28]	;@ Channel 4 PCM
 	sub r10,r10,#0x30
-	andsne r11,r7,#0x00000001
+	andsne r11,r7,#0x00020000
 	movne r11,#0xFF
 	tst r6,#0x08000000
 	moveq r11,r11,lsr#4

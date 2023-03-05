@@ -1221,14 +1221,14 @@ wsvNoiseCtrlW:				;@ 0x8E Noise Control
 	str r0,[spxptr,#noiseFeedBack]
 	bx lr
 noiseTaps:
-	.long 0x01020001			;@ Tap bit 14
-	.long 0x01200001			;@ Tap bit 10
-	.long 0x01040001			;@ Tap bit 13
-	.long 0x09000001			;@ Tap bit 4
-	.long 0x01800001			;@ Tap bit 8
-	.long 0x03000001			;@ Tap bit 6
-	.long 0x01400001			;@ Tap bit 9
-	.long 0x01100001			;@ Tap bit 11
+	.long 0x00004080			;@ Tap bit 14
+	.long 0x00000480			;@ Tap bit 10
+	.long 0x00002080			;@ Tap bit 13
+	.long 0x00000090			;@ Tap bit 4
+	.long 0x00000180			;@ Tap bit 8
+	.long 0x000000C0			;@ Tap bit 6
+	.long 0x00000280			;@ Tap bit 9
+	.long 0x00000880			;@ Tap bit 11
 ;@----------------------------------------------------------------------------
 wsvSampleBaseW:				;@ 0x8F Sample Base
 ;@----------------------------------------------------------------------------
