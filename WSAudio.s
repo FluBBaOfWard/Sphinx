@@ -197,8 +197,8 @@ innerMixLoop:
 	mov lr,r6,lsl#20
 	addcs r6,r6,lr,lsr#5
 
-	movcs lr,r7,lsr#16
-	addscs r7,r7,lr,lsl#16
+	movscs lr,r7,lsr#17
+	addscs r7,r7,lr,lsl#17
 	ldrcs lr,[spxptr,#noiseFeedBack]
 	eorcs r7,r7,lr
 
@@ -242,8 +242,8 @@ vol3_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r7,#0x80				;@ Noise 4 enabled?
-	ldrbeq r11,[r10,r6,lsr#28]	;@ Channel 4
+	tst r7,#0x80				;@ Channel 4 Noise enabled?
+	ldrbeq r11,[r10,r6,lsr#28]	;@ Channel 4 PCM
 	sub r10,r10,#0x30
 	andsne r11,r7,#0x00000001
 	movne r11,#0xFF

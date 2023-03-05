@@ -1205,13 +1205,16 @@ wsvSweepTimeW:				;@ 0x8D Sound sweep time
 ;@----------------------------------------------------------------------------
 wsvNoiseCtrlW:				;@ 0x8E Noise Control
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x1F				;@ Only low 5 bits
-	strb r1,[spxptr,#wsvNoiseCtrl]
+	and r0,r1,#0x17				;@ Only keep enable & tap bits
+	strb r0,[spxptr,#wsvNoiseCtrl]
+	ldr r0,[spxptr,#noise4CurrentAddr]
 	tst r1,#0x08				;@ Reset?
-	ldrne r0,[spxptr,#noise4CurrentAddr]
-	andne r0,r0,#0x80			;@ Keep noise on/off
+	andne r0,r0,#0x180			;@ Keep Ch4 noise on/off
 	orrne r0,#0x80000000
-	strne r0,[spxptr,#noise4CurrentAddr]
+	tst r1,#0x10				;@ Enable?
+	biceq r0,r0,#0x10000
+	orrne r0,r0,#0x10000
+	str r0,[spxptr,#noise4CurrentAddr]
 	and r1,r1,#7				;@ Which taps?
 	adr r2,noiseTaps
 	ldr r0,[r2,r1,lsl#2]
