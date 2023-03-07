@@ -244,7 +244,7 @@ vol3_R:
 	tst r7,#0x4000				;@ Channel 4 Noise enabled?
 	ldrbeq r11,[r10,r6,lsr#28]	;@ Channel 4 PCM
 	sub r10,r10,#0x30
-	andsne r11,r7,#0x00020000
+	andsne r11,r7,#0x00010000
 	movne r11,#0xFF
 	tst r6,#0x08000000
 	moveq r11,r11,lsr#4

@@ -1208,15 +1208,16 @@ wsvNoiseCtrlW:				;@ 0x8E Noise Control
 	and r0,r1,#0x17				;@ Only keep enable & tap bits
 	strb r0,[spxptr,#wsvNoiseCtrl]
 	ldr r0,[spxptr,#noise4CurrentAddr]
+	mov r0,r0,lsr#12			;@ Clear taps
 	tst r1,#0x08				;@ Reset?
-	andne r0,r0,#0x0C000		;@ Keep Ch4 noise on/off
+	andne r0,r0,#0x4			;@ Keep Ch4 noise on/off
 	tst r1,#0x10				;@ Enable calculation?
-	biceq r0,r0,#0x8000
-	orrne r0,r0,#0x8000
+	biceq r0,r0,#0x8
+	orrne r0,r0,#0x8
 	and r1,r1,#7				;@ Which taps?
 	adr r2,noiseTaps
 	ldr r1,[r2,r1,lsl#2]
-	orr r0,r0,r1
+	orr r0,r1,r0,lsl#12
 	str r0,[spxptr,#noise4CurrentAddr]
 	bx lr
 noiseTaps:
