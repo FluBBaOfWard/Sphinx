@@ -419,8 +419,8 @@ IN_Table:
 
 	.long wsvRegR				;@ 0x90 Sound control
 	.long wsvRegR				;@ 0x91 Sound output
-	.long wsvImportantR			;@ 0x92 Noise LFSR value low
-	.long wsvImportantR			;@ 0x93 Noise LFSR value high
+	.long wsvRegR				;@ 0x92 Noise LFSR value low
+	.long wsvRegR				;@ 0x93 Noise LFSR value high
 	.long wsvRegR				;@ 0x94 Sound voice control
 	.long wsvRegR				;@ 0x95 Sound Hyper voice
 	.long wsvUnknownR			;@ 0x96 SND9697
@@ -566,9 +566,11 @@ wsvUnknownR:
 ;@----------------------------------------------------------------------------
 wsvImportantR:
 	mov r11,r11					;@ No$GBA breakpoint
-	stmfd sp!,{r0,spxptr,lr}
+	add r2,spxptr,#wsvRegs
+	ldrb r1,[r2,r0]
+	stmfd sp!,{r1,spxptr,lr}
 	bl _debugIOUnimplR
-	ldmfd sp!,{r0,spxptr,lr}
+	ldmfd sp!,{r0,spxptr,pc}
 ;@----------------------------------------------------------------------------
 wsvRegR:
 	add r2,spxptr,#wsvRegs
@@ -1268,7 +1270,7 @@ wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
-	mov r0,#150
+	mov r0,#128
 	strb r0,[spxptr,#wsvSoundIconTimer]
 	ldrb r0,[spxptr,#wsvSoundOutput]
 	tst r0,#0x80				;@ Headphones?
@@ -1387,7 +1389,7 @@ wsvSetHeadphones:			;@ r0 = on/off
 	biceq r0,r0,#0x80
 	orrne r0,r0,#0x80
 	strb r0,[spxptr,#wsvSoundOutput]
-	mov r0,#150
+	mov r0,#128
 	strb r0,[spxptr,#wsvSoundIconTimer]
 	b setTotalVolume
 ;@----------------------------------------------------------------------------
