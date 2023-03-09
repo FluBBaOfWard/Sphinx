@@ -1,8 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.2.1 - 2023-03-05 (FluBBa)
+V0.2.1 - 2023-03-09 (FluBBa)
 	Fixed noise calculation.
+	Tweaked sound icons "timeout".
 
 V0.2.0 - 2023-03-01 (FluBBa)
 	Added reading of register 0x1A.
