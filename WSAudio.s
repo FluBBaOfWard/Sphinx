@@ -124,12 +124,20 @@ setTotalVolume:
 	ldrb r0,[spxptr,#wsvSoundOutput]
 	tst r0,#0x80				;@ Headphones?
 	movne r1,#3
-	ldr r0,=vol1_L
-	adr r2,hwVolumes
+	adr r2,hw1Volumes
+	ldrb r0,[spxptr,#wsvSOC]
+	cmp r0,#SOC_ASWAN
+	adrne r2,hw2Volumes
 	ldr r1,[r2,r1,lsl#2]
+	ldr r0,=vol1_L
 	str r1,[r0,#totalVolume-vol1_L]
 	bx lr
-hwVolumes:
+hw1Volumes:
+	mov r2,#0x80000000
+	mov r2,r2,lsl#5
+	mov r2,r2,lsl#6
+	mov r2,r2,lsl#6
+hw2Volumes:
 	mov r2,#0x80000000
 	mov r2,r2,lsl#4
 	mov r2,r2,lsl#5

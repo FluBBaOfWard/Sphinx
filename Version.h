@@ -1,1 +1,1 @@
-#define SPHINXVERSION "V0.2.1"
+#define SPHINXVERSION "V0.2.2"

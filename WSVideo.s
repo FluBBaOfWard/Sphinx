@@ -72,7 +72,7 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=spxptr
+wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=spxptr
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
@@ -87,6 +87,8 @@ wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal,
 	str r0,[spxptr,#serialIRQCounter]
 
 	ldmfd sp!,{r0-r3,lr}
+	strb r1,[spxptr,#wsvMachine]
+	strb r3,[spxptr,#wsvSOC]
 	cmp r0,#0
 	adreq r0,dummyIrqFunc
 	str r0,[spxptr,#irqFunction]
@@ -96,8 +98,6 @@ wsVideoReset:		;@ r0=IrqFunc, r1=, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal,
 	str r0,[spxptr,#paletteRAM]
 	ldr r0,=SCROLL_BUFF
 	str r0,[spxptr,#scrollBuff]
-
-	strb r3,[spxptr,#wsvSOC]
 
 	b wsvRegistersReset
 
@@ -146,6 +146,9 @@ wsvRegistersReset:				;@ in r3=SOC
 	mov r0,#0x90
 	movne r0,#0x9F
 	strb r0,[spxptr,#wsvColor01]
+	mov r0,#0x02
+	movne r0,#0x03
+	strb r0,[spxptr,#wsvHWVolume]
 
 	ldrb r1,[spxptr,#wsvTotalLines]
 	b wsvRefW
@@ -1276,10 +1279,17 @@ wsvPushVolumeButton:
 	tst r0,#0x80				;@ Headphones?
 	bxne lr
 	ldrb r1,[spxptr,#wsvHWVolume]
-	subs r1,r1,#1
+	sub r1,r1,#1
 ;@----------------------------------------------------------------------------
 wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSOC]
+	cmp r0,#SOC_ASWAN
+	moveq r0,#2
+	movne r0,#3
+	cmp r1,r0
+	movcs r1,r0
+	
 	and r1,r1,#0x03				;@ Only low 2 bits
 	strb r1,[spxptr,#wsvHWVolume]
 	b setTotalVolume
@@ -2069,8 +2079,7 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 ;@----------------------------------------------------------------------------
 wsvRedrawLCDIcons:			;@ In r0=
 ;@----------------------------------------------------------------------------
-	ldr r1,=gMachine
-	ldrb r1,[r1]
+	ldrb r1,[spxptr,#wsvMachine]
 	cmp r1,#HW_WONDERSWAN
 	beq redrawMonoIcons
 	cmp r1,#HW_POCKETCHALLENGEV2
@@ -2240,18 +2249,17 @@ redrawMonoIcons:
 clrVoluIconMono:
 	strh r4,[r2,#0x1A]
 	strh r4,[r2,#0x1C]
-	strh r4,[r2,#0x1E]
 	b chkHorzIcon
 
 chkVoluIconMono:
 	ands r5,r0,#LCD_ICON_VOLU	;@ HW Volume
-	moveq r3,r4
-	ldrhne r3,[r1,#0x18]
+	ldrh r3,[r1,#0x18]
 	strh r3,[r2,#0x1A]
-	ldrhne r3,[r1,#0x1A]
-	strh r3,[r2,#0x1C]
-	ldrhne r3,[r1,#0x1C]
-	strh r3,[r2,#0x1E]
+	strheq r4,[r2,#0x1C]
+	cmp r5,#0x40
+	ldrheq r3,[r1,#0x1C]
+	ldrhhi r3,[r1,#0x1A]
+	strhpl r3,[r2,#0x1C]
 
 chkHorzIcon:
 	tst r0,#LCD_ICON_HORZ
