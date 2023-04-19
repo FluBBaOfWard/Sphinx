@@ -2157,7 +2157,7 @@ chkVoluIcon:
 	ands r5,r0,#LCD_ICON_VOLU	;@ HW Volume
 	ldrheq r3,[r1,#30]
 	ldrhne r3,[r1,#32]
-	cmp r5,#0x80
+	cmp r5,#LCD_ICON_VOL2
 	ldrheq r3,[r1,#34]
 	ldrhhi r3,[r1,#36]
 	strh r3,[r2],#0x40
@@ -2256,7 +2256,7 @@ chkVoluIconMono:
 	ldrh r3,[r1,#0x18]
 	strh r3,[r2,#0x1A]
 	strheq r4,[r2,#0x1C]
-	cmp r5,#0x40
+	cmp r5,#LCD_ICON_VOL1
 	ldrheq r3,[r1,#0x1C]
 	ldrhhi r3,[r1,#0x1A]
 	strhpl r3,[r2,#0x1C]

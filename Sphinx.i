@@ -25,6 +25,8 @@
 #define LCD_ICON_DOT2	(1<<4)
 #define LCD_ICON_DOT3	(1<<5)
 #define LCD_ICON_VOLU	(3<<6)
+#define LCD_ICON_VOL1	(1<<6)
+#define LCD_ICON_VOL2	(2<<6)
 #define LCD_ICON_HEAD	(1<<8)
 #define LCD_ICON_BATT	(1<<9)
 #define LCD_ICON_CART	(1<<10)
