@@ -41,12 +41,13 @@
 	spxptr		.req r12
 						;@ WSVideo.s
 	.struct 0
+sphinxState:					;@
 scanline:			.long 0		;@ These 3 must be first in state.
 nextLineChange:		.long 0
 lineState:			.long 0
 
 windowData:			.long 0
-sphinxState:					;@
+
 wsvRegs:
 wsvDispCtrl:		.byte 0		;@ 0x00 Display control
 wsvBGColor:			.byte 0		;@ 0x01 Background color

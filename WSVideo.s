@@ -200,15 +200,27 @@ sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
 	mov r2,#sphinxStateEnd-sphinxState
 	bl memCopy
 
+	mov spxptr,r5
+	ldr r0,[spxptr,#nextLineChange]
+	ldr r2,=lineStateTable
+fixStateTableLoop:
+	ldr r1,[r2],#8
+	cmp r1,r0
+	bne fixStateTableLoop
+	ldr r1,[r2,#-4]!
+	ldr r1,[spxptr,#lineState]
+
 	bl clearDirtyTiles
 
 	mov spxptr,r5
 	bl drawFrameGfx
 
-	bl reBankSwitch4_F
-	bl reBankSwitch1
-	bl reBankSwitch2
-	bl reBankSwitch3
+	bl reBankSwitchAll
+
+	ldrb r1,[spxptr,#wsvSystemCtrl1]
+	tst r1,#1					;@ Boot rom locked?
+	movne r0,#0					;@ Remove boot rom overlay
+	blne setBootRomOverlay
 
 	ldmfd sp!,{r4,r5,lr}
 ;@----------------------------------------------------------------------------
