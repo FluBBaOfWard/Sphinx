@@ -1,9 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.2.2 - 2023-04-18 (FluBBa)
+V0.2.2 - 2023-04-21 (FluBBa)
 	Fixed WS sound levels.
 	Fixed WS sound icon.
+	Fixed save states.
 
 V0.2.1 - 2023-03-09 (FluBBa)
 	Fixed noise calculation.

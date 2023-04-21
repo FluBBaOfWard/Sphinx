@@ -1,7 +1,6 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
-	Fix sound icon for WS mono.
 	Use scrollbuffer for tilemap settings, just add map number as new Y*0x100 and use 32*64 tilemap on NDS/GBA.
 		Mask Y value correctly against NDS/GBA tilemap.
 	Add check for dirty tiles in tilemap renderer.

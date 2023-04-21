@@ -30,13 +30,13 @@ extern "C" {
 #define GAME_HEIGHT (144)
 
 typedef struct {
+//wsvState:
 	u32 scanline;
 	u32 nextLineChange;
 	u32 lineState;
 
 	u32 windowData;
-//wsvState:
-//wsvRegs:					// 0-4
+//wsvRegs:
 	u8 wsvDispCtrl;
 	u8 wsvBGColor;
 	u8 wsvCurrentLine;

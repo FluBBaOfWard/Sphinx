@@ -278,7 +278,7 @@ totalVolume:
 	eor r2,r2,#0x00008000
 	cmp r0,#0
 	strpl r2,[r1],#4
-	bhi mixLoop				;@ ?? cycles according to No$gba
+	bhi mixLoop					;@ ?? cycles according to No$gba
 
 	mov r2,r7,lsr#17
 	strh r2,[spxptr,#wsvNoiseCntr]
@@ -388,7 +388,7 @@ noSweep:
 	eor r2,r2,#0x00008000
 	cmp r0,#0
 	strpl r2,[r1],#4
-	bhi mixLoop				;@ ?? cycles according to No$gba
+	bhi mixLoop					;@ ?? cycles according to No$gba
 
 	mov r2,r7,lsr#17
 	strh r2,[spxptr,#wsvNoiseCntr]
