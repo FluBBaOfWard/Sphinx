@@ -249,6 +249,7 @@ paletteRAM:			.long 0		;@ 0x0200
 scrollBuff:			.long 0
 wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 
+sphinxStateSize = sphinxStateEnd-sphinxState
 sphinxSize:
 
 ;@----------------------------------------------------------------------------

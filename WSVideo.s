@@ -175,29 +175,29 @@ IO_Default:
 
 ;@----------------------------------------------------------------------------
 sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
-	.type   sphinxSaveState STT_FUNC
+	.type sphinxSaveState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
 	mov r4,r0					;@ Store destination
 	mov r5,r1					;@ Store spxptr (r1)
 
 	add r1,r5,#sphinxState
-	mov r2,#sphinxStateEnd-sphinxState
+	mov r2,#sphinxStateSize
 	bl memCopy
 
 	ldmfd sp!,{r4,r5,lr}
-	mov r0,#sphinxStateEnd-sphinxState
+	mov r0,#sphinxStateSize
 	bx lr
 ;@----------------------------------------------------------------------------
 sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
-	.type   sphinxLoadState STT_FUNC
+	.type sphinxLoadState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
 	mov r5,r0					;@ Store spxptr (r0)
 	mov r4,r1					;@ Store source
 
 	add r0,r5,#sphinxState
-	mov r2,#sphinxStateEnd-sphinxState
+	mov r2,#sphinxStateSize
 	bl memCopy
 
 	mov spxptr,r5
@@ -225,9 +225,9 @@ fixStateTableLoop:
 	ldmfd sp!,{r4,r5,lr}
 ;@----------------------------------------------------------------------------
 sphinxGetStateSize:	;@ Out r0=state size.
-	.type   sphinxGetStateSize STT_FUNC
+	.type sphinxGetStateSize STT_FUNC
 ;@----------------------------------------------------------------------------
-	mov r0,#sphinxStateEnd-sphinxState
+	mov r0,#sphinxStateSize
 	bx lr
 
 	.pool
