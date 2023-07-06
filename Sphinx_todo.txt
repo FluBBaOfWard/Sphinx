@@ -5,7 +5,7 @@ Bandai WonderSwan/Sphinx To do
 		Mask Y value correctly against NDS/GBA tilemap.
 	Add check for dirty tiles in tilemap renderer.
 	Window control per line?
-	BG/Spr control per line?
+	BG/Spr on/off per line?
 	Palette change per line?
 	Handle LCD on/off.
 	Handle Contrast High/Low for WSC, add 2 images on top.

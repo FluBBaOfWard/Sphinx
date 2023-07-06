@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.2.3 - 2023-07-06 (FluBBa)
+	Moved cart stuff out of Sphinx.
+
 V0.2.2 - 2023-04-21 (FluBBa)
 	Fixed WS sound levels.
 	Fixed WS sound icon.
