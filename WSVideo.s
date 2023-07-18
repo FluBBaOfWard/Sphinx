@@ -21,15 +21,15 @@
 	.global wsvSetCartMap
 	.global wsvDoScanline
 	.global wsvRead
+	.global wsvRead16
 	.global wsvWrite
-	.global wsvRegR
+	.global wsvWrite16
 	.global sphinxSaveState
 	.global sphinxLoadState
 	.global sphinxGetStateSize
 	.global copyScrollValues
 	.global wsvConvertTileMaps
 	.global wsvConvertSprites
-	.global wsvBufferWindows
 	.global wsvRefW
 	.global wsvGetInterruptVector
 	.global wsvSetInterruptExternal
@@ -285,8 +285,25 @@ wsvBufferWindows:
 
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvRead16:					;@ I/O read word (0x00-0xFF)
+;@----------------------------------------------------------------------------
+	tst r0,r0,lsr#1				;@ Odd address?
+	cmpcc r0,#0xC0				;@ Cart?
+	subcs v30cyc,v30cyc,#1*CYCLE	;@ Eat an extra cpu cycle
+	stmfd sp!,{r4,r5,lr}
+	mov r4,r0
+	bl wsvRead
+	mov r5,r0
+	add r0,r4,#1
+	bl wsvRead
+	orr r0,r5,r0,lsl#8
+	ldmfd sp!,{r4,r5,pc}
+;@----------------------------------------------------------------------------
 wsvReadHigh:				;@ I/O read (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
+	mov r1,r0,lsl#23
+	cmp r1,#0xB8<<23
+	bcs wsvUnmappedR
 	stmfd sp!,{r0,spxptr,lr}
 	bl _debugIOUnmappedR
 	ldmfd sp!,{r0,spxptr,lr}
@@ -492,7 +509,7 @@ ioInTable:
 	.long wsvRegR				;@ 0xB4 Interrupt status
 	.long IOPortA_R				;@ 0xB5 keypad
 	.long wsvZeroR				;@ 0xB6 Interrupt acknowledge
-	.long wsvUnknownR			;@ 0xB7 ??? NMI ctrl?
+	.long wsvImportantR			;@ 0xB7 NMI ctrl, bit 4.
 	.long wsvUnmappedR			;@ 0xB8 ---
 	.long wsvUnmappedR			;@ 0xB9 ---
 	.long intEepromDataLowR		;@ 0xBA int-eeprom data low
@@ -580,8 +597,8 @@ wsvUnmappedR:
 	stmfd sp!,{spxptr,lr}
 	bl _debugIOUnmappedR
 	ldmfd sp!,{spxptr,lr}
-	ldrb r0,[spxptr,#wsvSOC]
-	cmp r0,#SOC_ASWAN
+	ldrb r0,[spxptr,#wsvVideoMode]
+	tst r0,#0x80				;@ Color mode?
 	moveq r0,#0x90
 	movne r0,#0x00
 	bx lr
@@ -652,8 +669,25 @@ wsvSerialStatusR:			;@ 0xB3
 	bx lr
 
 ;@----------------------------------------------------------------------------
+wsvWrite16:					;@ I/O write word (0x00-0xFF)
+;@----------------------------------------------------------------------------
+	tst r0,r0,lsr#1				;@ Odd address?
+	cmpcc r0,#0xC0				;@ Cart?
+	subcs v30cyc,v30cyc,#1*CYCLE	;@ Eat an extra cpu cycle
+	stmfd sp!,{r4,r5,lr}
+	mov r4,r0
+	mov r5,r1
+	bl wsvWrite
+	mov r1,r5,lsr#8
+	add r0,r4,#1
+	bl wsvWrite
+	ldmfd sp!,{r4,r5,pc}
+;@----------------------------------------------------------------------------
 wsvWriteHigh:				;@ I/O write (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
+	mov r2,r0,lsl#23
+	cmp r2,#0xB8<<23
+	bcs wsvUnmappedW
 	stmfd sp!,{r0,r1,spxptr,lr}
 	bl _debugIOUnmappedW
 	ldmfd sp!,{r0,r1,spxptr,lr}
