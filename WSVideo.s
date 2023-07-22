@@ -699,7 +699,7 @@ wsvWrite:					;@ I/O write (0x00-0xBF)
 	ldrmi pc,[pc,r0,lsl#2]
 	b wsvWriteHigh
 ioOutTable:
-	.long wsvRegW				;@ 0x00 Display control
+	.long wsvDisplayCtrlW		;@ 0x00 Display control
 	.long wsvRegW				;@ 0x01 Background color
 	.long wsvReadOnlyW			;@ 0x02 Current scan line
 	.long wsvRegW				;@ 0x03 Scan line compare
@@ -996,6 +996,12 @@ wsvRegW:
 	strb r1,[r2,r0]
 	bx lr
 
+;@----------------------------------------------------------------------------
+wsvDisplayCtrlW:			;@ 0x00, Display Control
+;@----------------------------------------------------------------------------
+	and r1,r1,#0x3F
+	strb r1,[spxptr,#wsvDispCtrl]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvSpriteTblAdrW:			;@ 0x04, Sprite Table Address
 ;@----------------------------------------------------------------------------
