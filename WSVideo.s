@@ -100,6 +100,8 @@ wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=c
 	str r0,[spxptr,#paletteRAM]
 	ldr r0,=SCROLL_BUFF
 	str r0,[spxptr,#scrollBuff]
+	ldr r0,=DISP_BUFF
+	str r0,[spxptr,#dispBuff]
 
 	b wsvRegistersReset
 
@@ -999,8 +1001,24 @@ wsvRegW:
 ;@----------------------------------------------------------------------------
 wsvDisplayCtrlW:			;@ 0x00, Display Control
 ;@----------------------------------------------------------------------------
+	ldrb r2,[spxptr,#wsvDispCtrl]
 	and r1,r1,#0x3F
 	strb r1,[spxptr,#wsvDispCtrl]
+dispCnt:
+	ldr r1,[spxptr,#scanline]	;@ r1=scanline
+	add r1,r1,#1
+	cmp r1,#145
+	movhi r1,#145
+	ldr r0,[spxptr,#dispLine]
+	subs r0,r1,r0
+	strhi r1,[spxptr,#dispLine]
+
+	ldr r3,[spxptr,#dispBuff]
+	add r1,r3,r1
+sy3:
+	strbhi r2,[r1,#-1]!			;@ Fill backwards from scanline to lastline
+	subs r0,r0,#1
+	bhi sy3
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSpriteTblAdrW:			;@ 0x04, Sprite Table Address
@@ -1504,6 +1522,8 @@ endFrame:
 	stmfd sp!,{lr}
 	ldr r2,[spxptr,#wsvBgXScroll]
 	bl scrollCnt
+	ldrb r2,[spxptr,#wsvDispCtrl]
+	bl dispCnt
 	bl gfxEndFrame
 	bl wsvDMASprites
 
@@ -1546,6 +1566,7 @@ TransRet:
 frameEndHook:
 	mov r0,#0
 	str r0,[spxptr,#scrollLine]
+	str r0,[spxptr,#dispLine]
 
 	adr r2,lineStateTable
 	ldr r1,[r2],#4
@@ -2352,5 +2373,7 @@ CHR_DECODE:
 	.space 0x400
 SCROLL_BUFF:
 	.space 160*4
+DISP_BUFF:
+	.space 160
 
 #endif // #ifdef __arm__

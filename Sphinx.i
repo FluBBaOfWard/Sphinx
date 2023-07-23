@@ -224,8 +224,6 @@ missingSamplesCnt:	.long 0		;@ Number of missing samples from last sound callbac
 
 serialIRQCounter:	.long 0		;@ How many cycles to send byte.
 
-wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2
-wsvMachine:			.byte 0		;@ WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvLatchedDispCtrl:	.byte 0		;@ Latched Display Control
 wsvOrientation:		.byte 0
@@ -235,19 +233,25 @@ wsvInterruptPins:	.byte 0
 wsvByteReceived:	.byte 0
 wsvSoundIconTimer:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding14:		.space 1
+wsvPadding14:		.space 3
 
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.
+dispLine: 			.long 0		;@ Last line dispCtrl was updated.
 ledCounter:			.long 0
+wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 sphinxStateEnd:
+
+wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2
+wsvMachine:			.byte 0		;@ WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
+wsvPadding15:		.space 2
 
 irqFunction:		.long 0		;@ IRQ function
 
 gfxRAM:				.long 0		;@ 0x4000/0x10000
 paletteRAM:			.long 0		;@ 0x0200
 scrollBuff:			.long 0
-wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
+dispBuff:			.long 0
 
 sphinxStateSize = sphinxStateEnd-sphinxState
 sphinxSize:

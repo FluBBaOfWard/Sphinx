@@ -3,8 +3,8 @@ Bandai WonderSwan/Sphinx To do
 
 	Use scrollbuffer for tilemap settings, just add map number as new Y*0x100 and use 32*64 tilemap on NDS/GBA.
 		Mask Y value correctly against NDS/GBA tilemap.
+		See: Front Mission, SD Gundam Operation U.C, 
 	Add check for dirty tiles in tilemap renderer.
-	BG/Spr on/off per line?
 	Window control per line?
 	Palette change per line?
 	Handle LCD on/off.
