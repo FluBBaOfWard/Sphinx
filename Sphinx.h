@@ -44,8 +44,8 @@ typedef struct {
 
 	u8 wsvFgWinXPos;
 	u8 wsvFgWinYPos;
-	u8 wsvFgWinXSize;
-	u8 wsvFgWinYSize;
+	u8 wsvFgWinXEnd;
+	u8 wsvFgWinYEnd;
 
 	u8 wsvSprWinXPos;
 	u8 wsvSprWinYPos;
@@ -232,6 +232,7 @@ typedef struct {
 	void *paletteRAM;
 	u32 *scrollBuff;
 	u8 *dispBuff;
+	u32 *windowBuff;
 
 } Sphinx;
 

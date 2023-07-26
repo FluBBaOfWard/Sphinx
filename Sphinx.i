@@ -60,8 +60,8 @@ wsvMapTblAdr:		.byte 0		;@ 0x07 Map table address
 
 wsvFgWinXPos:		.byte 0		;@ 0x08 Foreground window X-Position
 wsvFgWinYPos:		.byte 0		;@ 0x09 Foreground window Y-Position
-wsvFgWinXSize:		.byte 0		;@ 0x0A Foreground window X-Size
-wsvFgWinYSize:		.byte 0		;@ 0x0B Foreground window Y-Size
+wsvFgWinXEnd:		.byte 0		;@ 0x0A Foreground window X-End
+wsvFgWinYEnd:		.byte 0		;@ 0x0B Foreground window Y-End
 
 wsvSprWinXPos:		.byte 0		;@ 0x0C Sprite window X-Position
 wsvSprWinYPos:		.byte 0		;@ 0x0D Sprite window Y-Position
@@ -238,6 +238,7 @@ wsvPadding14:		.space 3
 enabledLCDIcons:	.long 0
 scrollLine: 		.long 0		;@ Last line scroll was updated.
 dispLine: 			.long 0		;@ Last line dispCtrl was updated.
+windowLine:			.long 0		;@ Last line window was updated.
 ledCounter:			.long 0
 wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 sphinxStateEnd:
@@ -252,6 +253,7 @@ gfxRAM:				.long 0		;@ 0x4000/0x10000
 paletteRAM:			.long 0		;@ 0x0200
 scrollBuff:			.long 0
 dispBuff:			.long 0
+windowBuff:			.long 0
 
 sphinxStateSize = sphinxStateEnd-sphinxState
 sphinxSize:

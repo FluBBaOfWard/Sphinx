@@ -102,6 +102,8 @@ wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=c
 	str r0,[spxptr,#scrollBuff]
 	ldr r0,=DISP_BUFF
 	str r0,[spxptr,#dispBuff]
+	ldr r0,=WINDOW_BUFF
+	str r0,[spxptr,#windowBuff]
 
 	b wsvRegistersReset
 
@@ -709,10 +711,10 @@ ioOutTable:
 	.long wsvSpriteFirstW		;@ 0x05 Sprite to start with
 	.long wsvRegW				;@ 0x06 Sprite count
 	.long wsvMapAdrW			;@ 0x07 Map table address
-	.long wsvRegW				;@ 0x08 Window X-Position
-	.long wsvRegW				;@ 0x09 Window Y-Position
-	.long wsvRegW				;@ 0x0A Window X-Size
-	.long wsvRegW				;@ 0x0B Window Y-Size
+	.long wsvFgWinX0W			;@ 0x08 Window X-Position
+	.long wsvFgWinY0W			;@ 0x09 Window Y-Position
+	.long wsvFgWinX1W			;@ 0x0A Window X-End
+	.long wsvFgWinY1W			;@ 0x0B Window Y-End
 	.long wsvRegW				;@ 0x0C Sprite window X-Position
 	.long wsvRegW				;@ 0x0D Sprite window Y-Position
 	.long wsvRegW				;@ 0x0E Sprite window X-Size
@@ -1039,6 +1041,38 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 wsvMapAdrW:					;@ 0x07 Map table address
 ;@----------------------------------------------------------------------------
 	strb r1,[spxptr,#wsvMapTblAdr]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvFgWinX0W:				;@ 0x08, Foreground Window X start register
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+wsvFgWinY0W:				;@ 0x09, Foreground Window Y start register
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+wsvFgWinX1W:				;@ 0x0A, Foreground Window X end register
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+wsvFgWinY1W:				;@ 0x0B, Foreground Window Y end register
+;@----------------------------------------------------------------------------
+	ldr r2,[spxptr,#wsvFgWinXPos]
+	add r0,r0,#wsvRegs
+	strb r1,[spxptr,r0]
+
+windowCnt:
+	ldr r1,[spxptr,#scanline]	;@ r1=scanline
+	add r1,r1,#1
+	cmp r1,#145
+	movhi r1,#145
+	ldr r0,[spxptr,#windowLine]
+	subs r0,r1,r0
+	strhi r1,[spxptr,#windowLine]
+
+	ldr r3,[spxptr,#windowBuff]
+	add r1,r3,r1,lsl#2
+sy4:
+	stmdbhi r1!,{r2}			;@ Fill backwards from scanline to lastline
+	subs r0,r0,#1
+	bhi sy4
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
@@ -1524,6 +1558,8 @@ endFrame:
 	bl scrollCnt
 	ldrb r2,[spxptr,#wsvDispCtrl]
 	bl dispCnt
+	ldr r2,[spxptr,#wsvFgWinXPos]
+	bl windowCnt
 	bl gfxEndFrame
 	bl wsvDMASprites
 
@@ -1567,6 +1603,7 @@ frameEndHook:
 	mov r0,#0
 	str r0,[spxptr,#scrollLine]
 	str r0,[spxptr,#dispLine]
+	str r0,[spxptr,#windowLine]
 
 	adr r2,lineStateTable
 	ldr r1,[r2],#4
@@ -2093,6 +2130,8 @@ dm5:
 	and r4,r2,#0xC000
 	orr r3,r3,r4,lsl#14			;@ Flip
 
+//	tst r2,#0x1000				;@ WS Window enable
+//	orrne r3,r3,#0x400			;@ Semi TRansparent obj
 	str r3,[r0],#4				;@ Store OBJ Atr 0,1. Xpos, ypos, flip, scale/rot, size, shape.
 
 	mov r3,r2,lsl#23
@@ -2372,6 +2411,8 @@ chkHorzIcon:
 CHR_DECODE:
 	.space 0x400
 SCROLL_BUFF:
+	.space 160*4
+WINDOW_BUFF:
 	.space 160*4
 DISP_BUFF:
 	.space 160

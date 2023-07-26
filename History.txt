@@ -1,9 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.2.3 - 2023-07-23 (FluBBa)
+V0.3.0 - 2023-07-26 (FluBBa)
 	Moved cart stuff out of Sphinx.
-	Added per line emulation of display control register.
+	Added per line emulation of Display Control register.
+	Added per line emulation of FG Window register.
 	Added sprite ram to save state.
 
 V0.2.2 - 2023-04-21 (FluBBa)
