@@ -216,8 +216,10 @@ typedef struct {
 	u8 wsvPadding14[3];
 
 	u32 enabledLCDIcons;
-	u32 scrollLine;
 	u32 dispLine;
+	u32 mapAdrLine;
+	u32 windowLine;
+	u32 scrollLine;
 	u32 ledCounter;
 	u8 wsvSpriteRAM[0x200];
 	// End of Sphinx state
@@ -230,9 +232,10 @@ typedef struct {
 
 	void *gfxRAM;
 	void *paletteRAM;
-	u32 *scrollBuff;
 	u8 *dispBuff;
+	u8 *mapAdrBuff;
 	u32 *windowBuff;
+	u32 *scrollBuff;
 
 } Sphinx;
 

@@ -98,12 +98,14 @@ wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=c
 	str r2,[spxptr,#gfxRAM]
 	add r0,r2,#0xFE00
 	str r0,[spxptr,#paletteRAM]
-	ldr r0,=SCROLL_BUFF
-	str r0,[spxptr,#scrollBuff]
 	ldr r0,=DISP_BUFF
 	str r0,[spxptr,#dispBuff]
+	ldr r0,=MAPADR_BUFF
+	str r0,[spxptr,#mapAdrBuff]
 	ldr r0,=WINDOW_BUFF
 	str r0,[spxptr,#windowBuff]
+	ldr r0,=SCROLL_BUFF
+	str r0,[spxptr,#scrollBuff]
 
 	b wsvRegistersReset
 
@@ -200,15 +202,13 @@ IO_Default:
 sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
 	.type sphinxSaveState STT_FUNC
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4,r5,lr}
-	mov r4,r0					;@ Store destination
-	mov r5,r1					;@ Store spxptr (r1)
+	stmfd sp!,{lr}
 
-	add r1,r5,#sphinxState
+	add r1,r1,#sphinxState
 	mov r2,#sphinxStateSize
 	bl memCopy
 
-	ldmfd sp!,{r4,r5,lr}
+	ldmfd sp!,{lr}
 	mov r0,#sphinxStateSize
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1017,10 +1017,10 @@ dispCnt:
 
 	ldr r3,[spxptr,#dispBuff]
 	add r1,r3,r1
-sy3:
+sy1:
 	strbhi r2,[r1,#-1]!			;@ Fill backwards from scanline to lastline
 	subs r0,r0,#1
-	bhi sy3
+	bhi sy1
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSpriteTblAdrW:			;@ 0x04, Sprite Table Address
@@ -1040,7 +1040,26 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 wsvMapAdrW:					;@ 0x07 Map table address
 ;@----------------------------------------------------------------------------
+	ldrb r2,[spxptr,#wsvMapTblAdr]
+	ldrb r0,[spxptr,#wsvVideoMode]
+	tst r0,#0x80				;@ Color mode?
+	andeq r1,r1,#0x77
 	strb r1,[spxptr,#wsvMapTblAdr]
+mapAdrCont:
+	ldr r1,[spxptr,#scanline]	;@ r1=scanline
+	add r1,r1,#1
+	cmp r1,#145
+	movhi r1,#145
+	ldr r0,[spxptr,#mapAdrLine]
+	subs r0,r1,r0
+	strhi r1,[spxptr,#mapAdrLine]
+
+	ldr r3,[spxptr,#mapAdrBuff]
+	add r1,r3,r1
+sy2:
+	strbhi r2,[r1,#-1]!			;@ Fill backwards from scanline to lastline
+	subs r0,r0,#1
+	bhi sy2
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvFgWinX0W:				;@ 0x08, Foreground Window X start register
@@ -1069,10 +1088,10 @@ windowCnt:
 
 	ldr r3,[spxptr,#windowBuff]
 	add r1,r3,r1,lsl#2
-sy4:
+sy3:
 	stmdbhi r1!,{r2}			;@ Fill backwards from scanline to lastline
 	subs r0,r0,#1
-	bhi sy4
+	bhi sy3
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvBgScrXW:					;@ 0x10, Background Horizontal Scroll register
@@ -1101,10 +1120,10 @@ scrollCnt:
 
 	ldr r3,[spxptr,#scrollBuff]
 	add r1,r3,r1,lsl#2
-sy2:
+sy4:
 	stmdbhi r1!,{r2}			;@ Fill backwards from scanline to lastline
 	subs r0,r0,#1
-	bhi sy2
+	bhi sy4
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -1527,8 +1546,7 @@ wsvConvertTileMaps:			;@ r0 = destination
 	ldr r10,[spxptr,#gfxRAM]
 
 	ldrb r1,[spxptr,#wsvVideoMode]
-	tst r1,#0x80				;@ Color Mode / 64kB RAM?
-	andeq r7,r7,#0x77
+//	tst r1,#0x80				;@ Color Mode / 64kB RAM?
 	adr lr,tMapRet
 	tst r1,#0x40				;@ 4 bit planes?
 	beq bgMono
@@ -1554,12 +1572,14 @@ midFrame:
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldr r2,[spxptr,#wsvBgXScroll]
-	bl scrollCnt
 	ldrb r2,[spxptr,#wsvDispCtrl]
 	bl dispCnt
+	ldrb r2,[spxptr,#wsvMapTblAdr]
+	bl mapAdrCont
 	ldr r2,[spxptr,#wsvFgWinXPos]
 	bl windowCnt
+	ldr r2,[spxptr,#wsvBgXScroll]
+	bl scrollCnt
 	bl gfxEndFrame
 	bl wsvDMASprites
 
@@ -1601,9 +1621,10 @@ TransRet:
 ;@----------------------------------------------------------------------------
 frameEndHook:
 	mov r0,#0
-	str r0,[spxptr,#scrollLine]
 	str r0,[spxptr,#dispLine]
+	str r0,[spxptr,#mapAdrLine]
 	str r0,[spxptr,#windowLine]
+	str r0,[spxptr,#scrollLine]
 
 	adr r2,lineStateTable
 	ldr r1,[r2],#4
@@ -1970,15 +1991,35 @@ tx4ColTileLoop1:
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
 bgColor:
+	stmfd sp!,{lr}
+	ldr r8,[spxptr,#mapAdrBuff]
+	ldrb r7,[r8],#1
+	mov r1,#GAME_HEIGHT-1
+bgAdrLoop:
+	ldrb r2,[r8],#1
+	cmp r2,r7
+	orrne r7,r7,r2,lsl#24
+	bne bgAdrDone
+	subs r1,r1,#1
+	bne bgAdrLoop
+bgAdrDone:
+
 	and r1,r7,#0x0f
 	add r1,r10,r1,lsl#11
-	stmfd sp!,{lr}
 	bl bgm16Start
-	ldmfd sp!,{lr}
-	add r0,r0,#0x800
+	mov r1,r7,lsr#24
+	and r1,r1,#0x0f
+	add r1,r10,r1,lsl#11
+	bl bgm16Start
+//	add r0,r0,#0x800
 
 	and r1,r7,#0xf0
 	add r1,r10,r1,lsl#7
+	bl bgm16Start
+	mov r1,r7,lsr#28
+	add r1,r10,r1,lsl#11
+	bl bgm16Start
+	ldmfd sp!,{pc}
 
 bgm16Start:
 	mov r2,#0x400
@@ -2038,8 +2079,10 @@ bgm4Loop:
 ;@----------------------------------------------------------------------------
 copyScrollValues:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r9}
+	stmfd sp!,{r4-r10}
 	ldr r1,[spxptr,#scrollBuff]
+	ldr r9,[spxptr,#mapAdrBuff]
+	ldrb r10,[r9]
 
 	mov r7,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
 	add r0,r0,r7,lsl#3			;@ 8 bytes per row
@@ -2063,12 +2106,18 @@ setScrlLoop:
 	add r8,r6,r7,lsl#16
 	tst r8,#0x1000000
 	subne r6,r6,#0x1000000
+	ldrb r8,[r9],#1
+	eor r8,r8,r10
+	tst r8,#0x0F
+	addne r5,r5,#0x1000000
+	tst r8,#0xF0
+	addne r6,r6,#0x1000000
 	stmia r0!,{r5,r6}
 	add r7,r7,#1
 	subs r2,r2,#1
 	bne setScrlLoop
 
-	ldmfd sp!,{r4-r9}
+	ldmfd sp!,{r4-r10}
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -2410,11 +2459,13 @@ chkHorzIcon:
 	.align 2
 CHR_DECODE:
 	.space 0x400
+DISP_BUFF:
+	.space 160
+MAPADR_BUFF:
+	.space 160
 SCROLL_BUFF:
 	.space 160*4
 WINDOW_BUFF:
 	.space 160*4
-DISP_BUFF:
-	.space 160
 
 #endif // #ifdef __arm__

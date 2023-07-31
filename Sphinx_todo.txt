@@ -1,14 +1,15 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Fix mono tilemap code!
 	Use scrollbuffer for tilemap settings, just add map number as new Y*0x100 and use 32*64 tilemap on NDS/GBA.
 		Mask Y value correctly against NDS/GBA tilemap.
 	See:
 		Battle Spirits
+		From TV Animation One Piece - Grand Battle Swan Colosseum
 		Front Mission
 		SD Gundam Operation U.C
 		Makai Toushi Sa-Ga
-		From TV Animation One Piece - Grand Battle Swan Colosseum
 	Add check for dirty tiles in tilemap renderer.
 	Palette change per line?
 	Handle LCD on/off.
