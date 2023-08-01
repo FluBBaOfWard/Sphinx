@@ -217,7 +217,6 @@ typedef struct {
 
 	u32 enabledLCDIcons;
 	u32 dispLine;
-	u32 mapAdrLine;
 	u32 windowLine;
 	u32 scrollLine;
 	u32 ledCounter;
@@ -233,7 +232,6 @@ typedef struct {
 	void *gfxRAM;
 	void *paletteRAM;
 	u8 *dispBuff;
-	u8 *mapAdrBuff;
 	u32 *windowBuff;
 	u32 *scrollBuff;
 

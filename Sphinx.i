@@ -237,7 +237,6 @@ wsvPadding14:		.space 3
 
 enabledLCDIcons:	.long 0
 dispLine: 			.long 0		;@ Last line dispCtrl was updated.
-mapAdrLine:			.long 0		;@ Last line mapAdr was updated.
 windowLine:			.long 0		;@ Last line window was updated.
 scrollLine: 		.long 0		;@ Last line scroll was updated.
 ledCounter:			.long 0
@@ -253,7 +252,6 @@ irqFunction:		.long 0		;@ IRQ function
 gfxRAM:				.long 0		;@ 0x4000/0x10000
 paletteRAM:			.long 0		;@ 0x0200
 dispBuff:			.long 0
-mapAdrBuff:			.long 0
 windowBuff:			.long 0
 scrollBuff:			.long 0
 

@@ -100,8 +100,6 @@ wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=c
 	str r0,[spxptr,#paletteRAM]
 	ldr r0,=DISP_BUFF
 	str r0,[spxptr,#dispBuff]
-	ldr r0,=MAPADR_BUFF
-	str r0,[spxptr,#mapAdrBuff]
 	ldr r0,=WINDOW_BUFF
 	str r0,[spxptr,#windowBuff]
 	ldr r0,=SCROLL_BUFF
@@ -1040,27 +1038,13 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 wsvMapAdrW:					;@ 0x07 Map table address
 ;@----------------------------------------------------------------------------
-	ldrb r2,[spxptr,#wsvMapTblAdr]
+	ldr r2,[spxptr,#wsvBgXScroll]
+	ldrb r3,[spxptr,#wsvMapTblAdr]
 	ldrb r0,[spxptr,#wsvVideoMode]
 	tst r0,#0x80				;@ Color mode?
 	andeq r1,r1,#0x77
 	strb r1,[spxptr,#wsvMapTblAdr]
-mapAdrCont:
-	ldr r1,[spxptr,#scanline]	;@ r1=scanline
-	add r1,r1,#1
-	cmp r1,#145
-	movhi r1,#145
-	ldr r0,[spxptr,#mapAdrLine]
-	subs r0,r1,r0
-	strhi r1,[spxptr,#mapAdrLine]
-
-	ldr r3,[spxptr,#mapAdrBuff]
-	add r1,r3,r1
-sy2:
-	strbhi r2,[r1,#-1]!			;@ Fill backwards from scanline to lastline
-	subs r0,r0,#1
-	bhi sy2
-	bx lr
+	b scrollCnt
 ;@----------------------------------------------------------------------------
 wsvFgWinX0W:				;@ 0x08, Foreground Window X start register
 ;@----------------------------------------------------------------------------
@@ -1106,10 +1090,12 @@ wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
 	ldr r2,[spxptr,#wsvBgXScroll]
+	ldrb r3,[spxptr,#wsvMapTblAdr]
 	add r0,r0,#wsvRegs
 	strb r1,[spxptr,r0]
 
 scrollCnt:
+	stmfd sp!,{lr}
 	ldr r1,[spxptr,#scanline]	;@ r1=scanline
 	add r1,r1,#1
 	cmp r1,#145
@@ -1118,13 +1104,13 @@ scrollCnt:
 	subs r0,r1,r0
 	strhi r1,[spxptr,#scrollLine]
 
-	ldr r3,[spxptr,#scrollBuff]
-	add r1,r3,r1,lsl#2
+	ldr lr,[spxptr,#scrollBuff]
+	add r1,lr,r1,lsl#3
 sy4:
-	stmdbhi r1!,{r2}			;@ Fill backwards from scanline to lastline
+	stmdbhi r1!,{r2,r3}			;@ Fill backwards from scanline to lastline
 	subs r0,r0,#1
 	bhi sy4
-	bx lr
+	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
 wsvLCDIconW:				;@ 0x15, Enable/disable LCD icons
@@ -1574,11 +1560,10 @@ endFrame:
 	stmfd sp!,{lr}
 	ldrb r2,[spxptr,#wsvDispCtrl]
 	bl dispCnt
-	ldrb r2,[spxptr,#wsvMapTblAdr]
-	bl mapAdrCont
 	ldr r2,[spxptr,#wsvFgWinXPos]
 	bl windowCnt
 	ldr r2,[spxptr,#wsvBgXScroll]
+	ldrb r3,[spxptr,#wsvMapTblAdr]
 	bl scrollCnt
 	bl gfxEndFrame
 	bl wsvDMASprites
@@ -1622,7 +1607,6 @@ TransRet:
 frameEndHook:
 	mov r0,#0
 	str r0,[spxptr,#dispLine]
-	str r0,[spxptr,#mapAdrLine]
 	str r0,[spxptr,#windowLine]
 	str r0,[spxptr,#scrollLine]
 
@@ -1992,11 +1976,11 @@ tx4ColTileLoop1:
 ;@ hvbppppnnnnnnnnn
 bgColor:
 	stmfd sp!,{lr}
-	ldr r8,[spxptr,#mapAdrBuff]
-	ldrb r7,[r8],#1
+	ldr r8,[spxptr,#scrollBuff]
+	ldrb r7,[r8,#4]!
 	mov r1,#GAME_HEIGHT-1
 bgAdrLoop:
-	ldrb r2,[r8],#1
+	ldrb r2,[r8],#8
 	cmp r2,r7
 	orrne r7,r7,r2,lsl#24
 	bne bgAdrDone
@@ -2081,8 +2065,7 @@ copyScrollValues:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r10}
 	ldr r1,[spxptr,#scrollBuff]
-	ldr r9,[spxptr,#mapAdrBuff]
-	ldrb r10,[r9]
+	ldrb r10,[r1,#4]
 
 	mov r7,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
 	add r0,r0,r7,lsl#3			;@ 8 bytes per row
@@ -2091,7 +2074,7 @@ copyScrollValues:			;@ r0 = destination
 	ldr r4,=0x00FF00FF
 	mov r2,#GAME_HEIGHT
 setScrlLoop:
-	ldr r5,[r1],#4
+	ldmia r1!,{r5,r9}
 	mov r6,r5,lsr#16
 	mov r5,r5,lsl#16
 	orr r6,r6,r6,lsl#8
@@ -2106,11 +2089,10 @@ setScrlLoop:
 	add r8,r6,r7,lsl#16
 	tst r8,#0x1000000
 	subne r6,r6,#0x1000000
-	ldrb r8,[r9],#1
-	eor r8,r8,r10
-	tst r8,#0x0F
+	eor r9,r9,r10
+	tst r9,#0x0F
 	addne r5,r5,#0x1000000
-	tst r8,#0xF0
+	tst r9,#0xF0
 	addne r6,r6,#0x1000000
 	stmia r0!,{r5,r6}
 	add r7,r7,#1
@@ -2461,10 +2443,8 @@ CHR_DECODE:
 	.space 0x400
 DISP_BUFF:
 	.space 160
-MAPADR_BUFF:
-	.space 160
 SCROLL_BUFF:
-	.space 160*4
+	.space 160*4*2
 WINDOW_BUFF:
 	.space 160*4
 
