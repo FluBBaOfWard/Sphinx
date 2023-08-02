@@ -1625,6 +1625,7 @@ lineStateTable:
 lineStateLastLine:
 	.long 159, frameEndHook		;@ totalScanlines
 ;@----------------------------------------------------------------------------
+	.pool
 #ifdef GBA
 	.section .iwram, "ax", %progbits	;@ For the GBA
 	.align 2
@@ -1806,22 +1807,22 @@ TransferVRAM16Packed:
 	adr r0,T_data
 	ldmia r0,{r4-r8}
 	ldr r6,=0xF0F0F0F0
-	mov r9,#-1
+	ldr r9,=0x01010101
 	mov r1,#0
 
 tileLoop16_0p:
 	ldr r10,[r4,r1,lsr#5]
 	str r9,[r4,r1,lsr#5]
-	tst r10,#0x000000FF
+	tst r10,#0x00000001
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r10,#0x0000FF00
+	tst r10,#0x00000100
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r10,#0x00FF0000
+	tst r10,#0x00010000
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r10,#0xFF000000
+	tst r10,#0x01000000
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
 	cmp r1,#0x8000
@@ -1850,22 +1851,22 @@ TransferVRAM16Planar:
 	stmfd sp!,{r4-r10,lr}
 	adr r0,T_data
 	ldmia r0,{r4-r8}
-	mov r9,#-1
+	ldr r9,=0x02020202
 	mov r1,#0
 
 tx16ColTileLoop0:
 	ldr r10,[r4,r1,lsr#5]
 	str r9,[r4,r1,lsr#5]
-	tst r10,#0x000000FF
+	tst r10,#0x00000002
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
-	tst r10,#0x0000FF00
+	tst r10,#0x00000200
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
-	tst r10,#0x00FF0000
+	tst r10,#0x00020000
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
-	tst r10,#0xFF000000
+	tst r10,#0x02000000
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
 	cmp r1,#0x8000
@@ -1905,7 +1906,7 @@ T4Data:
 	.long BG_GFX+0x0C000		;@ BGR tiles 2
 	.long SPRITE_GFX			;@ SPR tiles
 	.long SPRITE_GFX+0x4000		;@ SPR tiles 2
-	.long 0x44444444			;@ Extra bitplane
+	.long 0x44444444			;@ Extra bitplane, undirty mark
 ;@----------------------------------------------------------------------------
 TransferVRAM4Planar:
 ;@----------------------------------------------------------------------------
@@ -1917,16 +1918,16 @@ TransferVRAM4Planar:
 tx4ColTileLoop0:
 	ldr r12,[r4,r1,lsr#5]
 	str r11,[r4,r1,lsr#5]
-	tst r12,#0x000000FF
+	tst r12,#0x00000044
 	addne r1,r1,#0x20
 	bleq tx4ColTileLoop1
-	tst r12,#0x0000FF00
+	tst r12,#0x00004400
 	addne r1,r1,#0x20
 	bleq tx4ColTileLoop1
-	tst r12,#0x00FF0000
+	tst r12,#0x00440000
 	addne r1,r1,#0x20
 	bleq tx4ColTileLoop1
-	tst r12,#0xFF000000
+	tst r12,#0x44000000
 	addne r1,r1,#0x20
 	bleq tx4ColTileLoop1
 	cmp r1,#0x2000
@@ -1979,34 +1980,47 @@ bgColor:
 	ldr r8,[spxptr,#scrollBuff]
 	ldrb r7,[r8,#4]!
 	mov r1,#GAME_HEIGHT-1
-bgAdrLoop:
+bgCAdrLoop:
 	ldrb r2,[r8],#8
 	cmp r2,r7
 	orrne r7,r7,r2,lsl#24
-	bne bgAdrDone
+	bne bgCAdrDone
 	subs r1,r1,#1
-	bne bgAdrLoop
-bgAdrDone:
+	bne bgCAdrLoop
+bgCAdrDone:
+	add r11,r10,#0x10000			;@ Size of wsRAM, ptr to DIRTYTILES.
 
 	and r1,r7,#0x0f
+	add r8,r11,r1,lsl#6
 	add r1,r10,r1,lsl#11
 	bl bgm16Start
 	mov r1,r7,lsr#24
 	and r1,r1,#0x0f
+	add r8,r11,r1,lsl#6
 	add r1,r10,r1,lsl#11
 	bl bgm16Start
-//	add r0,r0,#0x800
 
 	and r1,r7,#0xf0
+	add r8,r11,r1,lsl#2
 	add r1,r10,r1,lsl#7
 	bl bgm16Start
 	mov r1,r7,lsr#28
+	add r8,r11,r1,lsl#6
 	add r1,r10,r1,lsl#11
 	bl bgm16Start
 	ldmfd sp!,{pc}
 
 bgm16Start:
-	mov r2,#0x400
+	mov r9,#0x20
+bgm16Loop2:
+	ldr r4,=0x0808
+	ldrh r3,[r8],#2
+	teq r4,r3
+	strhne r4,[r8,#-2]
+	addeq r1,r1,#0x40
+	addeq r0,r0,#0x40
+	beq bgm16Tst
+	mov r2,#0x20
 bgm16Loop:
 	ldr r3,[r1],#4				;@ Read from WonderSwan Tilemap RAM
 
@@ -2019,6 +2033,9 @@ bgm16Loop:
 	str r3,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, background
 	subs r2,r2,#2
 	bne bgm16Loop
+bgm16Tst:
+	subs r9,r9,#1
+	bne bgm16Loop2
 
 	bx lr
 
@@ -2030,18 +2047,51 @@ bgm16Loop:
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
 bgMono:
-	and r1,r7,#0x0f
-	add r1,r10,r1,lsl#11
 	stmfd sp!,{lr}
+	ldr r8,[spxptr,#scrollBuff]
+	ldrb r7,[r8,#4]!
+	mov r1,#GAME_HEIGHT-1
+bgMAdrLoop:
+	ldrb r2,[r8],#8
+	cmp r2,r7
+	orrne r7,r7,r2,lsl#24
+	bne bgMAdrDone
+	subs r1,r1,#1
+	bne bgMAdrLoop
+bgMAdrDone:
+	add r11,r10,#0x10000			;@ Size of wsRAM, ptr to DIRTYTILES.
+
+	and r1,r7,#0x0f
+	add r8,r11,r1,lsl#6
+	add r1,r10,r1,lsl#11
 	bl bgm4Start
-	ldmfd sp!,{lr}
-	add r0,r0,#0x800
+	mov r1,r7,lsr#24
+	and r1,r1,#0x0f
+	add r8,r11,r1,lsl#6
+	add r1,r10,r1,lsl#11
+	bl bgm4Start
 
 	and r1,r7,#0xf0
+	add r8,r11,r1,lsl#2
 	add r1,r10,r1,lsl#7
+	bl bgm4Start
+	mov r1,r7,lsr#28
+	add r8,r11,r1,lsl#6
+	add r1,r10,r1,lsl#11
+	bl bgm4Start
+	ldmfd sp!,{pc}
 
 bgm4Start:
-	mov r2,#0x400
+	mov r9,#0x20
+bgm4Loop2:
+	ldr r4,=0x0808
+	ldrh r3,[r8],#2
+	teq r4,r3
+	strhne r4,[r8,#-2]
+	addeq r1,r1,#0x40
+	addeq r0,r0,#0x40
+	beq bgm4Tst
+	mov r2,#0x20
 bgm4Loop:
 	ldr r3,[r1],#4				;@ Read from WonderSwan Tilemap RAM
 
@@ -2057,6 +2107,9 @@ bgm4Loop:
 	str r3,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, background
 	subs r2,r2,#2
 	bne bgm4Loop
+bgm4Tst:
+	subs r9,r9,#1
+	bne bgm4Loop2
 
 	bx lr
 
