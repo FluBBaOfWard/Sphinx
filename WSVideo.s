@@ -1528,7 +1528,6 @@ wsvConvertTileMaps:			;@ r0 = destination
 
 	ldr r5,=0xFE00FE00
 	ldr r6,=0x00010001
-	ldrb r7,[spxptr,#wsvMapTblAdr]
 	ldr r10,[spxptr,#gfxRAM]
 
 	ldrb r1,[spxptr,#wsvVideoMode]
@@ -1807,22 +1806,22 @@ TransferVRAM16Packed:
 	adr r0,T_data
 	ldmia r0,{r4-r8}
 	ldr r6,=0xF0F0F0F0
-	ldr r9,=0x01010101
+	ldr r9,=0x10101010
 	mov r1,#0
 
 tileLoop16_0p:
 	ldr r10,[r4,r1,lsr#5]
 	str r9,[r4,r1,lsr#5]
-	tst r10,#0x00000001
+	tst r10,#0x00000010
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r10,#0x00000100
+	tst r10,#0x00001000
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r10,#0x00010000
+	tst r10,#0x00100000
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
-	tst r10,#0x01000000
+	tst r10,#0x10000000
 	addne r1,r1,#0x20
 	bleq tileLoop16_1p
 	cmp r1,#0x8000
@@ -1851,22 +1850,22 @@ TransferVRAM16Planar:
 	stmfd sp!,{r4-r10,lr}
 	adr r0,T_data
 	ldmia r0,{r4-r8}
-	ldr r9,=0x02020202
+	ldr r9,=0x20202020
 	mov r1,#0
 
 tx16ColTileLoop0:
 	ldr r10,[r4,r1,lsr#5]
 	str r9,[r4,r1,lsr#5]
-	tst r10,#0x00000002
+	tst r10,#0x00000020
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
-	tst r10,#0x00000200
+	tst r10,#0x00002000
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
-	tst r10,#0x00020000
+	tst r10,#0x00200000
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
-	tst r10,#0x02000000
+	tst r10,#0x20000000
 	addne r1,r1,#0x20
 	bleq tx16ColTileLoop1
 	cmp r1,#0x8000
@@ -1979,48 +1978,55 @@ bgColor:
 	stmfd sp!,{lr}
 	ldr r8,[spxptr,#scrollBuff]
 	ldrb r7,[r8,#4]!
-	mov r1,#GAME_HEIGHT-1
+	mov r1,#GAME_HEIGHT
 bgCAdrLoop:
-	ldrb r2,[r8],#8
-	cmp r2,r7
-	orrne r7,r7,r2,lsl#24
+	ldrb r9,[r8],#8
+	cmp r9,r7
 	bne bgCAdrDone
 	subs r1,r1,#1
 	bne bgCAdrLoop
+	mov r9,#-1
 bgCAdrDone:
+	orrne r7,r7,r9,lsl#24
 	add r11,r10,#0x10000			;@ Size of wsRAM, ptr to DIRTYTILES.
 
-	and r1,r7,#0x0f
-	add r8,r11,r1,lsl#6
-	add r1,r10,r1,lsl#11
+	mov r2,#1						;@ Where the map is cached.
+	and r1,r7,#0xf
 	bl bgm16Start
+	mov r2,#2
 	mov r1,r7,lsr#24
-	and r1,r1,#0x0f
-	add r8,r11,r1,lsl#6
-	add r1,r10,r1,lsl#11
-	bl bgm16Start
+	and r1,r1,#0xf
+	cmp r9,#-1
+	addeq r0,r0,#0x800
+	blne bgm16Start
 
-	and r1,r7,#0xf0
-	add r8,r11,r1,lsl#2
-	add r1,r10,r1,lsl#7
+	mov r2,#3
+	mov r1,r7,lsr#4
+	and r1,r1,#0xf
 	bl bgm16Start
+	mov r2,#4
 	mov r1,r7,lsr#28
-	add r8,r11,r1,lsl#6
-	add r1,r10,r1,lsl#11
-	bl bgm16Start
+	cmp r9,#-1
+	addeq r0,r0,#0x800
+	blne bgm16Start
 	ldmfd sp!,{pc}
 
 bgm16Start:
-	mov r9,#0x20
+	orr r2,r2,r2,lsl#8
+	add r8,r11,r1,lsl#6
+	add r1,r10,r1,lsl#11
+	b bgm16Loop2
+
+bgm16Tst:
+	add r1,r1,#0x40
+	add r0,r0,#0x40
+	tst r0,#0x7c0				;@ Only one screen
+	bxeq lr
 bgm16Loop2:
-	ldr r4,=0x0808
 	ldrh r3,[r8],#2
-	teq r4,r3
-	strhne r4,[r8,#-2]
-	addeq r1,r1,#0x40
-	addeq r0,r0,#0x40
+	teq r2,r3
 	beq bgm16Tst
-	mov r2,#0x20
+	strh r2,[r8,#-2]
 bgm16Loop:
 	ldr r3,[r1],#4				;@ Read from WonderSwan Tilemap RAM
 
@@ -2031,10 +2037,9 @@ bgm16Loop:
 	orr r3,r3,r4				;@ Add palette, flip + bank.
 
 	str r3,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, background
-	subs r2,r2,#2
+	tst r0,#0x3c				;@ One row at a time
 	bne bgm16Loop
-bgm16Tst:
-	subs r9,r9,#1
+	tst r0,#0x7c0				;@ Only one screen
 	bne bgm16Loop2
 
 	bx lr
@@ -2050,48 +2055,55 @@ bgMono:
 	stmfd sp!,{lr}
 	ldr r8,[spxptr,#scrollBuff]
 	ldrb r7,[r8,#4]!
-	mov r1,#GAME_HEIGHT-1
+	mov r1,#GAME_HEIGHT
 bgMAdrLoop:
-	ldrb r2,[r8],#8
-	cmp r2,r7
-	orrne r7,r7,r2,lsl#24
+	ldrb r9,[r8],#8
+	cmp r9,r7
 	bne bgMAdrDone
 	subs r1,r1,#1
 	bne bgMAdrLoop
+	mov r9,#-1
 bgMAdrDone:
+	orrne r7,r7,r9,lsl#24
 	add r11,r10,#0x10000			;@ Size of wsRAM, ptr to DIRTYTILES.
 
-	and r1,r7,#0x0f
-	add r8,r11,r1,lsl#6
-	add r1,r10,r1,lsl#11
+	mov r2,#1						;@ Where the map is cached.
+	and r1,r7,#0xf
 	bl bgm4Start
+	mov r2,#2
 	mov r1,r7,lsr#24
-	and r1,r1,#0x0f
-	add r8,r11,r1,lsl#6
-	add r1,r10,r1,lsl#11
-	bl bgm4Start
+	and r1,r1,#0xf
+	cmp r9,#-1
+	addeq r0,r0,#0x800
+	blne bgm4Start
 
-	and r1,r7,#0xf0
-	add r8,r11,r1,lsl#2
-	add r1,r10,r1,lsl#7
+	mov r2,#3
+	mov r1,r7,lsr#4
+	and r1,r1,#0xf
 	bl bgm4Start
+	mov r2,#4
 	mov r1,r7,lsr#28
-	add r8,r11,r1,lsl#6
-	add r1,r10,r1,lsl#11
-	bl bgm4Start
+	cmp r9,#-1
+	addeq r0,r0,#0x800
+	blne bgm4Start
 	ldmfd sp!,{pc}
 
 bgm4Start:
-	mov r9,#0x20
+	orr r2,r2,r2,lsl#8
+	add r8,r11,r1,lsl#6
+	add r1,r10,r1,lsl#11
+	b bgm4Loop2
+
+bgm4Tst:
+	add r1,r1,#0x40
+	add r0,r0,#0x40
+	tst r0,#0x7c0				;@ Only one screen
+	bxeq lr
 bgm4Loop2:
-	ldr r4,=0x0808
 	ldrh r3,[r8],#2
-	teq r4,r3
-	strhne r4,[r8,#-2]
-	addeq r1,r1,#0x40
-	addeq r0,r0,#0x40
+	teq r2,r3
 	beq bgm4Tst
-	mov r2,#0x20
+	strh r2,[r8,#-2]
 bgm4Loop:
 	ldr r3,[r1],#4				;@ Read from WonderSwan Tilemap RAM
 
@@ -2105,10 +2117,9 @@ bgm4Loop:
 	orr r3,r3,r4,lsr#5			;@ Add as bank bit (GBA/NDS)
 
 	str r3,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, background
-	subs r2,r2,#2
+	tst r0,#0x3c				;@ One row at a time
 	bne bgm4Loop
-bgm4Tst:
-	subs r9,r9,#1
+	tst r0,#0x7c0				;@ Only one screen
 	bne bgm4Loop2
 
 	bx lr
