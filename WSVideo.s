@@ -671,20 +671,6 @@ wsvSerialStatusR:			;@ 0xB3
 	bx lr
 
 ;@----------------------------------------------------------------------------
-wsvWrite16:					;@ I/O write word (0x00-0xFF)
-;@----------------------------------------------------------------------------
-	tst r0,r0,lsr#1				;@ Odd address?
-	cmpcc r0,#0xC0				;@ Cart?
-	subcs v30cyc,v30cyc,#1*CYCLE	;@ Eat an extra cpu cycle
-	stmfd sp!,{r4,r5,lr}
-	mov r4,r0
-	mov r5,r1
-	bl wsvWrite
-	mov r1,r5,lsr#8
-	add r0,r4,#1
-	bl wsvWrite
-	ldmfd sp!,{r4,r5,pc}
-;@----------------------------------------------------------------------------
 wsvWriteHigh:				;@ I/O write (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
 	mov r2,r0,lsl#23
@@ -694,6 +680,19 @@ wsvWriteHigh:				;@ I/O write (0x0100-0xFFFF)
 	bl _debugIOUnmappedW
 	ldmfd sp!,{r0,r1,spxptr,lr}
 	and r0,r0,#0xFF
+	b wsvWrite
+;@----------------------------------------------------------------------------
+wsvWrite16:					;@ I/O write word (0x00-0xFF)
+;@----------------------------------------------------------------------------
+	tst r0,r0,lsr#1				;@ Odd address?
+	cmpcc r0,#0xC0				;@ Cart?
+	subcs v30cyc,v30cyc,#1*CYCLE	;@ Eat an extra cpu cycle
+	stmfd sp!,{r0,r1,lr}
+	and r1,r1,#0xFF
+	bl wsvWrite
+	ldmfd sp!,{r0,r1,lr}
+	mov r1,r1,lsr#8
+	add r0,r0,#1
 ;@----------------------------------------------------------------------------
 wsvWrite:					;@ I/O write (0x00-0xBF)
 ;@----------------------------------------------------------------------------
