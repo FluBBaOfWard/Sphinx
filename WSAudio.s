@@ -218,7 +218,7 @@ innerMixLoop:
 	ldrb r11,[r10,r3,lsr#28]	;@ Channel 1
 	add r10,r10,#0x10
 	tst r3,#0x08000000
-	moveq r11,r11,lsr#4
+	movne r11,r11,lsr#4
 	ands r11,r11,#0xF
 vol1_L:
 	mov lr,#0x00				;@ Volume left
@@ -229,7 +229,7 @@ vol1_R:
 	ldrb r11,[r10,r4,lsr#28]	;@ Channel 2
 	add r10,r10,#0x10
 	tst r4,#0x08000000
-	moveq r11,r11,lsr#4
+	movne r11,r11,lsr#4
 	ands r11,r11,#0xF
 vol2_L:
 	mov lr,#0x00				;@ Volume left
@@ -241,7 +241,7 @@ vol2_R:
 	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
 	add r10,r10,#0x10
 	tst r5,#0x08000000
-	moveq r11,r11,lsr#4
+	movne r11,r11,lsr#4
 	ands r11,r11,#0xF
 vol3_L:
 	mov lr,#0x00				;@ Volume left
@@ -255,7 +255,7 @@ vol3_R:
 	andsne r11,r7,#0x00010000
 	movne r11,#0xFF
 	tst r6,#0x08000000
-	moveq r11,r11,lsr#4
+	movne r11,r11,lsr#4
 	ands r11,r11,#0xF
 vol4_L:
 	mov lr,#0x00				;@ Volume left

@@ -142,6 +142,11 @@ _debugIOUnmappedW:
 	ldr r3,=debugIOUnmappedW
 	bx r3
 ;@----------------------------------------------------------------------------
+_debugSerialOutW:
+;@----------------------------------------------------------------------------
+	ldr r3,=debugSerialOutW
+	bx r3
+;@----------------------------------------------------------------------------
 memCopy:
 ;@----------------------------------------------------------------------------
 	ldr r3,=memcpy
@@ -661,7 +666,6 @@ wsvComByteR:				;@ 0xB1
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
-	and r0,r0,#0xC0				;@ Mask out settings bits.
 	ldr r1,[spxptr,#serialIRQCounter]
 	cmp r1,#0					;@ Send complete?
 	orrmi r0,r0,#4
@@ -1447,6 +1451,10 @@ wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 ;@----------------------------------------------------------------------------
 wsvComByteW:				;@ 0xB1
 ;@----------------------------------------------------------------------------
+	stmfd sp!,{r1,spxptr,lr}
+	mov r0,r1
+	bl _debugSerialOutW
+	ldmfd sp!,{r1,spxptr,pc}
 	strb r1,[spxptr,#wsvComByte]
 	ldrb r1,[spxptr,#wsvSerialStatus]
 	tst r1,#0x40					;@ 0 = 9600, 1 = 38400 bps
@@ -1469,14 +1477,15 @@ wsvIntEnableW:				;@ 0xB2
 wsvSerialStatusW:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
+	and r1,r1,#0xC0				;@ Mask out writeable bits. 0x20 is reset Overrun.
 	strb r1,[spxptr,#wsvSerialStatus]
 	eor r0,r0,r1
-	tst r0,#0x80					;@ Serial enable changed?
+	tst r0,#0x80				;@ Serial enable changed?
 	bxeq lr
-	tst r1,#0x80					;@ Serial enable now?
-	mov r0,#0x01					;@ #0 = Serial transmit buffer empty
+	tst r1,#0x80				;@ Serial enable now?
+	mov r0,#0x01				;@ #0 = Serial transmit buffer empty
 	bne wsvSetInterruptPins
-	orr r0,r0,#0x09					;@ #0, 3 = Serial transmit, receive
+	orr r0,r0,#0x09				;@ #0, 3 = Serial transmit, receive
 	b wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
