@@ -182,16 +182,16 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 	ldmia r2,{r3-r10}
 	mov r0,r0,lsl#3
 mixLoop:
+	mov r11,r3,lsl#20			;@ Pre-load r11 & lr with frequency.
+	mov lr,r4,lsl#20
 innerMixLoop:
 	add r3,r3,#PSG_ADDITION
 	tst r3,r3,lsl#6
-	mov r2,r3,lsl#20
-	addcs r3,r3,r2,lsr#5
+	addcs r3,r3,r11,lsr#5
 
 	add r4,r4,#PSG_ADDITION
 	tst r4,r4,lsl#6
-	mov r2,r4,lsl#20
-	addcs r4,r4,r2,lsr#5
+	addcs r4,r4,lr,lsr#5
 
 	add r5,r5,#PSG_ADDITION
 	tst r5,r5,lsl#6
@@ -263,9 +263,8 @@ vol4_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r8,#0x100				;@ Ch3 Sweep?
-	beq noSweep
-	adds r8,r8,#PSG_SWEEP_ADD
+	tst r8,r8,lsr#9				;@ Ch3 Sweep?
+	addscs r8,r8,#PSG_SWEEP_ADD
 	bcc noSweep
 	sub r8,r8,r8,lsl#26
 	ldrsb lr,[spxptr,#wsvSweepValue]
@@ -281,7 +280,7 @@ totalVolume:
 	bhi mixLoop					;@ ?? cycles according to No$gba
 
 	mov r2,r7,lsr#17
-	strh r2,[spxptr,#wsvNoiseCntr]
+	strh r2,[spxptr,#wsvNoiseCntr]	;@ Update Reg 0x92 for "rnd".
 	add r0,spxptr,#pcm1CurrentAddr	;@ Counters
 	stmia r0,{r3-r8}
 	ldmfd sp!,{r4-r11,pc}
