@@ -203,7 +203,7 @@ innerMixLoop:
 	mov r2,r6,lsl#20
 	addcs r6,r6,r2,lsr#5
 
-	movscs r2,r7,lsr#16
+	movscs r2,r7,lsr#16			;@ Mask LFSR and check noise calc enable.
 	addcs r7,r7,r2,lsl#16
 	ands r2,r7,r7,lsl#21
 	eorsne r2,r2,r7,lsl#21
@@ -264,12 +264,13 @@ vol4_R:
 	mlane r2,lr,r11,r2
 
 	tst r8,r8,lsr#9				;@ Ch3 Sweep?
+	bcc noSweep
 	addscs r8,r8,#PSG_SWEEP_ADD
 	bcc noSweep
-	sub r8,r8,r8,lsl#26
+	subcs r8,r8,r8,lsl#26
 	ldrsb lr,[spxptr,#wsvSweepValue]
-	mov r5,r5,ror#11
-	adds r5,r5,lr,lsl#21
+	mov lr,lr,lsl#21
+	add r5,lr,r5,ror#11
 	mov r5,r5,ror#21
 noSweep:
 totalVolume:

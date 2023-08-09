@@ -177,6 +177,10 @@ wsvRegistersReset:				;@ in r3=SOC
 	mov r0,#0x02
 	movne r0,#0x03
 	strb r0,[spxptr,#wsvHWVolume]
+	cmp r1,#SOC_SPHINX2
+	mov r0,#0
+	moveq r0,#0x80
+	strb r0,[spxptr,#wsvSystemCtrl3]
 
 	ldrb r1,[spxptr,#wsvTotalLines]
 	b wsvRefW
@@ -808,7 +812,7 @@ ioOutTable:
 
 	.long wsvVideoModeW			;@ 0x60 Display mode
 	.long wsvUnmappedW			;@ 0x61 ---
-	.long wsvImportantW			;@ 0x62 SwanCrystal/Power off
+	.long wsvSysCtrl3W			;@ 0x62 SwanCrystal/Power off
 	.long wsvUnmappedW			;@ 0x63 ---
 	.long wsvImportantW			;@ 0x64 Hyper Voice Left channel (lower byte)
 	.long wsvImportantW			;@ 0x65 Hyper Voice Left channel (upper byte)
@@ -1234,6 +1238,14 @@ wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
 	ldrh r0,[spxptr,#wsvSndDMALenH]
 	orr r1,r1,r0,lsl#16
 	str r1,[spxptr,#sndDmaLength]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSysCtrl3W:				;@ 0x62, only WSC
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSystemCtrl3]
+	ands r1,r1,#1				;@ Power Off bit.
+	orr r1,r1,r0				;@ OR SwanCrystal flag (bit 7).
+	strb r1,[spxptr,#wsvSystemCtrl3]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHyperCtrlW:				;@ 0x6A, only WSC
@@ -2275,9 +2287,9 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	tst r2,#0x80				;@ Headphones?
 	orrne r0,r0,#LCD_ICON_HEAD
 	ldrb r2,[spxptr,#wsvSystemCtrl1]
+	eor r2,r2,r2,lsr#7
 	tst r2,#0x01
 	orrne r0,r0,#LCD_ICON_CART
-	orr r0,r0,#LCD_ICON_POWR
 	ldrb r2,[spxptr,#wsvLowBattery]
 	cmp r2,#0
 	orrne r0,r0,#LCD_ICON_BATT
@@ -2285,7 +2297,10 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	subs r2,r2,#1
 	strbpl r2,[spxptr,#wsvSoundIconTimer]
 	orrhi r0,r0,#LCD_ICON_TIME
-	biceq r0,r0,#LCD_ICON_TIME
+	ldrb r2,[spxptr,#wsvSystemCtrl3]
+	tst r2,#1
+	orreq r0,r0,#LCD_ICON_POWR
+	movne r0,#0
 	eors r1,r1,r0
 	bxeq lr
 	str r0,[spxptr,#enabledLCDIcons]
@@ -2345,8 +2360,7 @@ redrawColorIcons:
 	ldrhne r3,[r1,#24]
 	strh r3,[r2],#0x40
 
-	ldrb r5,[spxptr,#wsvSoundIconTimer]
-	cmp r5,#0
+	tst r0,#LCD_ICON_TIME
 	tstne r0,#LCD_ICON_HEAD		;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#26]
@@ -2355,7 +2369,7 @@ redrawColorIcons:
 	strh r3,[r2],#0x40
 
 	bne clrVoluIcon
-	cmp r5,#0
+	tst r0,#LCD_ICON_TIME
 	bne chkVoluIcon
 clrVoluIcon:
 	strh r4,[r2],#0x40		;@ No Volume when headphones
@@ -2391,15 +2405,15 @@ chkBattIcon:
 	strh r3,[r2],#0x40
 
 	tst r0,#LCD_ICON_CART		;@ Cart OK?
-	movne r3,r4
-	ldrheq r3,[r1,#50]
+	moveq r3,r4
+	ldrhne r3,[r1,#50]
 	strh r3,[r2],#0x40
 
 	tst r0,#LCD_ICON_POWR		;@ Power On?
 	moveq r3,r4
-	ldrh r3,[r1,#52]
+	ldrhne r3,[r1,#52]
 	strh r3,[r2],#0x40
-	ldrh r3,[r1,#54]
+	ldrhne r3,[r1,#54]
 	strh r3,[r2],#0x40
 
 	ldmfd sp!,{r4-r5,pc}
@@ -2415,14 +2429,14 @@ redrawMonoIcons:
 
 	tst r0,#LCD_ICON_POWR		;@ Power On?
 	moveq r3,r4
-	ldrh r3,[r1,#0x02]
+	ldrhne r3,[r1,#0x02]
 	strh r3,[r2,#0x04]
 
 	tst r0,#LCD_ICON_CART		;@ Cart OK?
-	movne r3,r4
-	ldrheq r3,[r1,#0x06]
+	moveq r3,r4
+	ldrhne r3,[r1,#0x06]
 	strh r3,[r2,#0x08]
-	ldrheq r3,[r1,#0x08]
+	ldrhne r3,[r1,#0x08]
 	strh r3,[r2,#0x0A]
 
 	tst r0,#LCD_ICON_SLEP		;@ Sleep Mode
@@ -2441,15 +2455,14 @@ redrawMonoIcons:
 	ldrhne r3,[r1,#0x16]
 	strh r3,[r2,#0x18]
 
-	ldrb r5,[spxptr,#wsvSoundIconTimer]
-	cmp r5,#0
+	tst r0,#LCD_ICON_TIME
 	tstne r0,#LCD_ICON_HEAD		;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#0x24]
 	strh r3,[r2,#0x26]
 
 	bne clrVoluIconMono
-	cmp r5,#0
+	tst r0,#LCD_ICON_TIME
 	bne chkVoluIconMono
 clrVoluIconMono:
 	strh r4,[r2,#0x1A]
