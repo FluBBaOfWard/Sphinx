@@ -110,6 +110,20 @@ wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=c
 dummyIrqFunc:
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvSetPowerOff:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	mov r0,#0
+	ldr r1,=powerIsOn
+	strb r0,[r1]
+
+	bl wsvRegistersReset
+	ldrb r0,[spxptr,#wsvSystemCtrl3]
+	orr r0,r0,#1
+	strb r0,[spxptr,#wsvSystemCtrl3]
+	bl setMuteSoundChip
+	ldmfd sp!,{pc}
+;@----------------------------------------------------------------------------
 wsvSetCartMap:		;@ r0=inTable, r1=outTable
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r6,lr}
@@ -1246,7 +1260,8 @@ wsvSysCtrl3W:				;@ 0x62, only WSC
 	ands r1,r1,#1				;@ Power Off bit.
 	orr r1,r1,r0				;@ OR SwanCrystal flag (bit 7).
 	strb r1,[spxptr,#wsvSystemCtrl3]
-	bx lr
+	bxeq lr
+	b wsvSetPowerOff
 ;@----------------------------------------------------------------------------
 wsvHyperCtrlW:				;@ 0x6A, only WSC
 ;@----------------------------------------------------------------------------
