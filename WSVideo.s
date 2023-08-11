@@ -122,6 +122,7 @@ wsvSetPowerOff:
 	orr r0,r0,#1
 	strb r0,[spxptr,#wsvSystemCtrl3]
 	bl setMuteSoundChip
+	bl wsvUpdateIcons
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 wsvSetCartMap:		;@ r0=inTable, r1=outTable
