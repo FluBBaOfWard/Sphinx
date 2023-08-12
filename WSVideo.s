@@ -460,7 +460,7 @@ ioInTable:
 	.long wsvUnmappedR			;@ 0x6E ---
 	.long wsvUnmappedR			;@ 0x6F ---
 
-	.long wsvImportantR			;@ 0x70 Unknown70
+	.long wsvImportantR			;@ 0x70 Unknown70, LCD settings on SC?
 	.long wsvImportantR			;@ 0x71 Unknown71
 	.long wsvImportantR			;@ 0x72 Unknown72
 	.long wsvImportantR			;@ 0x73 Unknown73
@@ -500,12 +500,12 @@ ioInTable:
 	.long wsvRegR				;@ 0x93 Noise LFSR value high
 	.long wsvRegR				;@ 0x94 Sound voice control
 	.long wsvRegR				;@ 0x95 Sound Hyper voice
-	.long wsvUnknownR			;@ 0x96 SND9697
-	.long wsvUnknownR			;@ 0x97 SND9697
-	.long wsvUnknownR			;@ 0x98 SND9899
-	.long wsvUnknownR			;@ 0x99 SND9899
-	.long wsvUnknownR			;@ 0x9A SND9A
-	.long wsvUnknownR			;@ 0x9B SND9B
+	.long wsvImportantR			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.
+	.long wsvImportantR			;@ 0x97 SND9697
+	.long wsvImportantR			;@ 0x98 SND9899 SND_OUT_L (ch1-4) left output, 10bit.
+	.long wsvImportantR			;@ 0x99 SND9899
+	.long wsvImportantR			;@ 0x9A SND9A9B SND_OUT_M (ch1-4) mix output, 11bit.
+	.long wsvImportantR			;@ 0x9B SND9A9B
 	.long wsvUnknownR			;@ 0x9C SND9C
 	.long wsvUnknownR			;@ 0x9D SND9D
 	.long wsvImportantR			;@ 0x9E HW Volume
@@ -882,14 +882,14 @@ ioOutTable:
 	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
 	.long wsvRegW				;@ 0x94 Sound voice control
 	.long wsvRegW				;@ 0x95 Sound Hyper voice
-	.long wsvImportantW			;@ 0x96 SND9697
-	.long wsvImportantW			;@ 0x97 SND9697
-	.long wsvImportantW			;@ 0x98 SND9899
-	.long wsvImportantW			;@ 0x99 SND9899
-	.long wsvReadOnlyW			;@ 0x9A SND9A
-	.long wsvReadOnlyW			;@ 0x9B SND9B
-	.long wsvReadOnlyW			;@ 0x9C SND9C
-	.long wsvReadOnlyW			;@ 0x9D SND9D
+	.long wsvReadOnlyW			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.
+	.long wsvReadOnlyW			;@ 0x97 SND9697
+	.long wsvReadOnlyW			;@ 0x98 SND9899 SND_OUT_L (ch1-4) left output, 10bit.
+	.long wsvReadOnlyW			;@ 0x99 SND9899
+	.long wsvReadOnlyW			;@ 0x9A SND9A9B SND_OUT_M (ch1-4) mix output, 11bit.
+	.long wsvReadOnlyW			;@ 0x9B SND9A9B
+	.long wsvUnknownW			;@ 0x9C SND9C
+	.long wsvUnknownW			;@ 0x9D SND9D
 	.long wsvHWVolumeW			;@ 0x9E HW Volume
 	.long wsvUnmappedW			;@ 0x9F ---
 
@@ -1482,7 +1482,7 @@ wsvComByteW:				;@ 0xB1
 	stmfd sp!,{r1,spxptr,lr}
 	mov r0,r1
 	bl _debugSerialOutW
-	ldmfd sp!,{r1,spxptr,pc}
+	ldmfd sp!,{r1,spxptr,lr}
 	strb r1,[spxptr,#wsvComByte]
 	ldrb r1,[spxptr,#wsvSerialStatus]
 	tst r1,#0x40					;@ 0 = 9600, 1 = 38400 bps
