@@ -277,40 +277,6 @@ sphinxGetStateSize:	;@ Out r0=state size.
 
 	.pool
 ;@----------------------------------------------------------------------------
-wsvBufferWindows:
-;@----------------------------------------------------------------------------
-	ldr r0,[spxptr,#wsvFgWinXPos]	;@ Win pos/size
-	and r1,r0,#0x000000FF		;@ H start
-	and r2,r0,#0x00FF0000		;@ H end
-	cmp r1,#GAME_WIDTH
-	movpl r1,#GAME_WIDTH
-	add r1,r1,#(SCREEN_WIDTH-GAME_WIDTH)/2
-	add r2,r2,#0x10000
-	cmp r2,#GAME_WIDTH<<16
-	movpl r2,#GAME_WIDTH<<16
-	add r2,r2,#((SCREEN_WIDTH-GAME_WIDTH)/2)<<16
-	cmp r2,r1,lsl#16
-	orr r1,r1,r2,lsl#8
-	mov r1,r1,ror#24
-	movmi r1,#0
-	strh r1,[spxptr,#windowData]
-
-	and r1,r0,#0x0000FF00		;@ V start
-	mov r2,r0,lsr#24			;@ V end
-	cmp r1,#GAME_HEIGHT<<8
-	movpl r1,#GAME_HEIGHT<<8
-	add r1,r1,#((SCREEN_HEIGHT-GAME_HEIGHT)/2)<<8
-	add r2,r2,#1
-	cmp r2,#GAME_HEIGHT
-	movpl r2,#GAME_HEIGHT
-	add r2,r2,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
-	cmp r2,r1,lsr#8
-	orr r1,r1,r2
-	movmi r1,#0
-	strh r1,[spxptr,#windowData+2]
-
-	bx lr
-;@----------------------------------------------------------------------------
 wsvRead16:					;@ I/O read word (0x00-0xFF)
 ;@----------------------------------------------------------------------------
 	tst r0,r0,lsr#1				;@ Odd address?
@@ -1583,12 +1549,13 @@ newFrame:					;@ Called before line 0
 ;@----------------------------------------------------------------------------
 midFrame:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
-	bl wsvBufferWindows
 	ldrb r0,[spxptr,#wsvDispCtrl]
 	strb r0,[spxptr,#wsvLatchedDispCtrl]
-
-	ldmfd sp!,{pc}
+	ldr r0,[spxptr,#wsvFgWinXPos]	;@ Win pos/size
+	str r0,[spxptr,#fgWindowData]
+	ldr r0,[spxptr,#wsvSprWinXPos]	;@ Win pos/size
+	str r0,[spxptr,#sprWindowData]
+	bx lr
 ;@----------------------------------------------------------------------------
 endFrame:
 ;@----------------------------------------------------------------------------

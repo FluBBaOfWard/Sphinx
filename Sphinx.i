@@ -46,7 +46,7 @@ scanline:			.long 0		;@ These 3 must be first in state.
 nextLineChange:		.long 0
 lineState:			.long 0
 
-windowData:			.long 0
+fgWindowData:		.long 0
 
 wsvRegs:
 wsvDispCtrl:		.byte 0		;@ 0x00 Display control
@@ -242,6 +242,8 @@ scrollLine: 		.long 0		;@ Last line scroll was updated.
 ledCounter:			.long 0
 wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 sphinxStateEnd:
+
+sprWindowData:		.long 0
 
 wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2
 wsvMachine:			.byte 0		;@ WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
