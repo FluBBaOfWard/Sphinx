@@ -1377,16 +1377,15 @@ wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
-	mov r0,#128
-	strb r0,[spxptr,#wsvSoundIconTimer]
 	ldrb r0,[spxptr,#wsvSoundOutput]
 	tst r0,#0x80				;@ Headphones?
-	bxne lr
 	ldrb r1,[spxptr,#wsvHWVolume]
-	sub r1,r1,#1
+	subeq r1,r1,#1
 ;@----------------------------------------------------------------------------
 wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
+	mov r0,#128
+	strb r0,[spxptr,#wsvSoundIconTimer]
 	ldrb r0,[spxptr,#wsvSOC]
 	cmp r0,#SOC_ASWAN
 	moveq r0,#2
