@@ -494,7 +494,7 @@ ioInTable:
 	.long wsvUnmappedR			;@ 0xAE ---
 	.long wsvUnmappedR			;@ 0xAF ---
 
-	.long wsvRegR				;@ 0xB0 Interrupt base
+	.long wsvInterruptBaseR		;@ 0xB0 Interrupt base
 	.long wsvComByteR			;@ 0xB1 Serial data
 	.long wsvRegR				;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusR		;@ 0xB3 Serial status
@@ -635,6 +635,30 @@ wsvLCDVolumeR:				;@ 0x1A
 	and r0,r0,#1				;@ Only keep bit 0
 	ldrb r1,[spxptr,#wsvHWVolume]	;@ Only low 2 bits are ever set
 	orr r0,r0,r1,lsl#2
+	bx lr
+;@----------------------------------------------------------------------------
+wsvGetInterruptVector:		;@ return vector in r0, #-1 if error
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+wsvInterruptBaseR:			;@ 0xB0
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvInterruptStatus]
+#ifdef GBA
+	mov r1,r1,lsl#24
+	mov r0,#7
+intVecLoop:
+	movs r1,r1,lsl#1
+	bcs intFound
+	subs r0,r0,#1
+	bne intVecLoop
+intFound:
+#else
+	clz r0,r1
+	rsbs r0,r0,#31
+	movmi r0,#0
+#endif
+	ldrb r1,[spxptr,#wsvInterruptBase]
+	orr r0,r0,r1
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvComByteR:				;@ 0xB1
@@ -876,7 +900,7 @@ ioOutTable:
 	.long wsvUnmappedW			;@ 0xAE ---
 	.long wsvUnmappedW			;@ 0xAF ---
 
-	.long wsvRegW				;@ 0xB0 Interrupt base
+	.long wsvInterruptBaseW		;@ 0xB0 Interrupt base
 	.long wsvComByteW			;@ 0xB1 Serial data
 	.long wsvIntEnableW			;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusW		;@ 0xB3 Serial status
@@ -1161,7 +1185,7 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 	ldrh r6,[spxptr,#wsvDMALength]	;@ r6=length
 	cmp r6,#0
 	beq dmaEnd
-	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT
+	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT+1
 
 dmaLoop:
 	mov r0,r4,lsl#12
@@ -1441,6 +1465,12 @@ wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 	strb r1,[spxptr,#wsvVBlCounter+1]
 	bx lr
 
+;@----------------------------------------------------------------------------
+wsvInterruptBaseW:			;@ 0xB0
+;@----------------------------------------------------------------------------
+	bic r1,r1,#7
+	strb r1,[spxptr,#wsvInterruptBase]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvComByteW:				;@ 0xB1
 ;@----------------------------------------------------------------------------
@@ -1727,30 +1757,6 @@ wsvClearInterruptPins:		;@ r0 = interrupt pins
 	strb r1,[spxptr,#wsvInterruptPins]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvGetInterruptVector:		;@ return vector in r0, #-1 if error
-;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvInterruptStatus]
-	cmp r1,#0
-	moveq r0,#-1
-	bxeq lr
-#ifdef GBA
-	mov r1,r1,lsl#24
-	mov r0,#7
-intVecLoop:
-	movs r1,r1,lsl#1
-	bcs intFound
-	subs r0,r0,#1
-	bne intVecLoop
-intFound:
-#else
-	clz r0,r1
-	rsb r0,r0,#31
-#endif
-	ldrb r1,[spxptr,#wsvInterruptBase]
-	bic r1,r1,#7
-	orr r0,r0,r1
-	bx lr
-;@----------------------------------------------------------------------------
 doSoundDMA:					;@ In r0=SndDmaCtrl
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,lr}
@@ -1788,7 +1794,7 @@ sndDmaCont:
 	mov r2,r2,lsr#16
 	strh r2,[spxptr,#wsvSndDMASrcH]
 	bl cpuReadMem20
-	sub v30cyc,v30cyc,#1*CYCLE
+	sub v30cyc,v30cyc,#7*CYCLE
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
 	mov r1,r0
