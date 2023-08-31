@@ -1165,7 +1165,7 @@ wsvDMALengthW:				;@ 0x46, only WSC.
 	strb r1,[spxptr,#wsvDMALength]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
+wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2*word cycles.
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0xC0
 	strb r1,[spxptr,#wsvDMACtrl]
@@ -1173,19 +1173,21 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2n cycles.
 	bxeq lr
 
 	stmfd sp!,{r4-r8,lr}
+#ifdef __ARM_ARCH_5TE__
+	ldrd r4,r5,[spxptr,#wsvDMASource]
+#else
+	ldr r4,[spxptr,#wsvDMASource]
+	ldr r5,[spxptr,#wsvDMADest]	;@ r5=destination
+#endif
+	movs r6,r5,lsr#16			;@ r6=length
+	beq dmaEnd
+	mov r5,r5,lsl#16
+	sub v30cyc,v30cyc,#5*CYCLE
+	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT
+
 	and r8,r1,#0x40				;@ Inc/dec
 	rsb r8,r8,#0x20
 	mov r7,spxptr
-	ldr r4,[spxptr,#wsvDMASource]
-
-	ldrh r5,[spxptr,#wsvDMADest];@ r5=destination
-	mov r5,r5,lsl#16
-
-	sub v30cyc,v30cyc,#5*CYCLE
-	ldrh r6,[spxptr,#wsvDMALength]	;@ r6=length
-	cmp r6,#0
-	beq dmaEnd
-	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT+1
 
 dmaLoop:
 	mov r0,r4,lsl#12
@@ -1199,15 +1201,17 @@ dmaLoop:
 	bne dmaLoop
 
 	mov spxptr,r7
-	str r4,[spxptr,#wsvDMASource]
 	mov r5,r5,lsr#16
-	strh r5,[spxptr,#wsvDMADest]
+#ifdef __ARM_ARCH_5TE__
+	strd r4,r5,[spxptr,#wsvDMASource]
+#else
+	str r4,[spxptr,#wsvDMASource]
+	str r5,[spxptr,#wsvDMADest]	;@ Store dest plus clear length
+#endif
 
-	strh r6,[spxptr,#wsvDMALength]
 	rsb r8,r8,#0x20
 	strb r8,[spxptr,#wsvDMACtrl]
 dmaEnd:
-
 	ldmfd sp!,{r4-r8,lr}
 	bx lr
 ;@----------------------------------------------------------------------------

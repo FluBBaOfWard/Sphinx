@@ -1,11 +1,11 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.1 - 2023-08-30 (FluBBa)
+V0.3.1 - 2023-08-31 (FluBBa)
 	Fixed sound mixing.
 	Fixed sound icon when writing to the HW volume reg.
 	Fixed reading from port 0xB0 (irq vector).
-	Fixed General & Sound DMA timing.
+	Fixed Sound DMA timing.
 	Better handling of Power Off for LCD Icons.
 
 V0.3.0 - 2023-08-03 (FluBBa)
