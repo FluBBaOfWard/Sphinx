@@ -385,14 +385,14 @@ ioInTable:
 	.long wsvRegR				;@ 0x47 DMA length
 	.long wsvRegR				;@ 0x48 DMA control
 	.long wsvUnmappedR			;@ 0x49 ---
-	.long wsvRegR				;@ 0x4A Sound DMA source
-	.long wsvRegR				;@ 0x4B Sound DMA source
-	.long wsvRegR				;@ 0x4C Sound DMA source
+	.long wsvSndDMASrc0R		;@ 0x4A Sound DMA source
+	.long wsvSndDMASrc1R		;@ 0x4B Sound DMA source
+	.long wsvSndDMASrc2R		;@ 0x4C Sound DMA source
 	.long wsvUnmappedR			;@ 0x4D ---
-	.long wsvRegR				;@ 0x4E Sound DMA length
-	.long wsvRegR				;@ 0x4F Sound DMA length
+	.long wsvSndDMALen0R		;@ 0x4E Sound DMA length
+	.long wsvSndDMALen1R		;@ 0x4F Sound DMA length
 
-	.long wsvRegR				;@ 0x50 Sound DMA length
+	.long wsvSndDMALen2R		;@ 0x50 Sound DMA length
 	.long wsvUnmappedR			;@ 0x51 ---
 	.long wsvRegR				;@ 0x52 Sound DMA control
 	.long wsvUnmappedR			;@ 0x53 ---
@@ -637,7 +637,7 @@ wsvLCDVolumeR:				;@ 0x1A
 	orr r0,r0,r1,lsl#2
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvGetInterruptVector:		;@ return vector in r0, #-1 if error
+wsvGetInterruptVector:		;@ return vector in r0
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
 wsvInterruptBaseR:			;@ 0xB0
@@ -670,6 +670,37 @@ wsvComByteR:				;@ 0xB1
 	mov r0,#0
 	strb r0,[spxptr,#wsvByteReceived]
 	ldrb r0,[spxptr,#wsvComByte]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMASrc0R:				;@ 0x4A, only WSC.
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#sndDmaSource]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMASrc1R:				;@ 0x4B, only WSC.
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#sndDmaSource+1]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMASrc2R:				;@ 0x4C, only WSC.
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#sndDmaSource+2]
+	and r0,r0,#0x0F
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMALen0R:				;@ 0x4E, only WSC.
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#sndDmaLength]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMALen1R:				;@ 0x4F, only WSC.
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#sndDmaLength]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMALen2R:				;@ 0x50, only WSC.
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#sndDmaLength+2]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
@@ -784,7 +815,7 @@ ioOutTable:
 	.long wsvDMASourceW			;@ 0x40	DMA source
 	.long wsvRegW				;@ 0x41 DMA src
 	.long wsvRegW				;@ 0x42 DMA src
-	.long wsvRegW				;@ 0x43 ---
+	.long wsvZeroW				;@ 0x43 ---
 	.long wsvDMADestW			;@ 0x44 DMA destination
 	.long wsvRegW				;@ 0x45 DMA dst
 	.long wsvDMALengthW			;@ 0x46 DMA length
@@ -794,14 +825,14 @@ ioOutTable:
 	.long wsvSndDMASrc0W		;@ 0x4A	Sound DMA source
 	.long wsvSndDMASrc1W		;@ 0x4B Sound DMA src
 	.long wsvSndDMASrc2W		;@ 0x4C Sound DMA src
-	.long wsvRegW				;@ 0x4D Sound DMA src
-	.long wsvRegW				;@ 0x4E Sound DMA length
-	.long wsvRegW				;@ 0x4F Sound DMA len
+	.long wsvZeroW				;@ 0x4D Sound DMA src
+	.long wsvSndDMALen0W		;@ 0x4E Sound DMA length
+	.long wsvSndDMALen1W		;@ 0x4F Sound DMA len
 
-	.long wsvRegW				;@ 0x50 Sound DMA len
-	.long wsvRegW				;@ 0x51 Sound DMA len
+	.long wsvSndDMALen2W		;@ 0x50 Sound DMA len
+	.long wsvZeroW				;@ 0x51 Sound DMA len
 	.long wsvSndDMACtrlW		;@ 0x52 Sound DMA control
-	.long wsvRegW				;@ 0x53 ---
+	.long wsvZeroW				;@ 0x53 ---
 	.long wsvUnmappedW			;@ 0x54 ---
 	.long wsvUnmappedW			;@ 0x55 ---
 	.long wsvUnmappedW			;@ 0x56 ---
@@ -1008,6 +1039,9 @@ wsvUnmappedW:
 wsvRegW:
 	add r2,spxptr,#wsvRegs
 	strb r1,[r2,r0]
+;@----------------------------------------------------------------------------
+wsvZeroW:
+;@----------------------------------------------------------------------------
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -1233,20 +1267,29 @@ wsvSndDMASrc2W:				;@ 0x4C, only WSC.
 	strb r1,[spxptr,#sndDmaSource+2]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 2n cycles.
+wsvSndDMALen0W:				;@ 0x4E, only WSC.
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSndDMALenL]
+	strb r1,[spxptr,#sndDmaLength]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMALen1W:				;@ 0x4F, only WSC.
+;@----------------------------------------------------------------------------
+	strb r1,[spxptr,#wsvSndDMALenL+1]
+	strb r1,[spxptr,#sndDmaLength+1]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMALen2W:				;@ 0x50, only WSC.
+;@----------------------------------------------------------------------------
+	and r1,r1,#0x0F
+	strb r1,[spxptr,#wsvSndDMALenH]
+	strb r1,[spxptr,#sndDmaLength+2]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 7n cycles.
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0xDF
 	strb r1,[spxptr,#wsvSndDMACtrl]
-	tst r1,#0x80
-	bxeq lr
-	ldrh r1,[spxptr,#wsvSndDMASrcL]
-	ldrh r0,[spxptr,#wsvSndDMASrcH]
-	orr r1,r1,r0,lsl#16
-	str r1,[spxptr,#sndDmaSource]
-	ldrh r1,[spxptr,#wsvSndDMALenL]
-	ldrh r0,[spxptr,#wsvSndDMALenH]
-	orr r1,r1,r0,lsl#16
-	str r1,[spxptr,#sndDmaLength]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSysCtrl3W:				;@ 0x62, only WSC
@@ -1764,41 +1807,40 @@ wsvClearInterruptPins:		;@ r0 = interrupt pins
 doSoundDMA:					;@ In r0=SndDmaCtrl
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,lr}
-	mov r4,r0
-	ldrh r1,[spxptr,#wsvSndDMALenL]
-	ldrh r0,[spxptr,#wsvSndDMALenH]
-	orr r1,r1,r0,lsl#16
-	ldrh r2,[spxptr,#wsvSndDMASrcL]
-	ldrh r0,[spxptr,#wsvSndDMASrcH]
-	orr r2,r2,r0,lsl#16
-	subs r1,r1,#1
-	bpl sndDmaCont
-	ands r1,r4,#0x08			;@ Loop?
-	biceq r4,r4,#0x80
-	strbeq r4,[spxptr,#wsvSndDMACtrl]
-	strheq r1,[spxptr,#wsvSndDMALenL]
-	moveq r1,r1,lsr#16
-	strheq r1,[spxptr,#wsvSndDMALenH]
-	ldmfdeq sp!,{r4,pc}
-	ldrne r1,[spxptr,#sndDmaLength]
-	ldrne r2,[spxptr,#sndDmaSource]
-sndDmaCont:
-	strh r1,[spxptr,#wsvSndDMALenL]
-	mov r1,r1,lsr#16
-	strh r1,[spxptr,#wsvSndDMALenH]
-	mov r0,r2,lsl#12
-	and r1,r4,#3
+	and r1,r0,#0x03				;@ Frequency
 	cmp r1,#3
 	movne r1,#1
 	moveq r1,#2
+	rsb r2,r1,r1,lsl#3			;@ *7
+	sub v30cyc,v30cyc,r2,lsl#CYC_SHIFT
+	tst r0,#0x04				;@ Hold ?
+	movne r1,#0					;@ Hold
+	mov r4,r0
+	ldr r2,[spxptr,#sndDmaSource]
+	ldr r3,[spxptr,#sndDmaLength]
+	subs r3,r3,r1
+	bpl sndDmaCont
+	ands r3,r4,#0x08			;@ Loop?
+	biceq r4,r4,#0x80
+	strbeq r4,[spxptr,#wsvSndDMACtrl]
+	streq r3,[spxptr,#sndDmaLength]
+	ldmfdeq sp!,{r4,pc}
+	ldrhne r2,[spxptr,#wsvSndDMASrcL]
+	ldrhne r0,[spxptr,#wsvSndDMASrcH]
+	orrne r2,r2,r0,lsl#16
+	ldrhne r3,[spxptr,#wsvSndDMALenL]
+	ldrhne r0,[spxptr,#wsvSndDMALenH]
+	orrne r3,r3,r0,lsl#16
+sndDmaCont:
 	tst r4,#0x40				;@ Increase/decrease
-	addeq r2,r2,r1
-	subne r2,r2,r1
-	strh r2,[spxptr,#wsvSndDMASrcL]
-	mov r2,r2,lsr#16
-	strh r2,[spxptr,#wsvSndDMASrcH]
-	bl cpuReadMem20
-	sub v30cyc,v30cyc,#7*CYCLE
+	addeq r0,r2,r1
+	subne r0,r2,r1
+	str r0,[spxptr,#sndDmaSource]
+	str r3,[spxptr,#sndDmaLength]
+	ands r0,r1,#0x3				;@ Hold ?, silence.
+	movne r0,r2,lsl#12
+	blne cpuReadMem20
+
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
 	mov r1,r0
