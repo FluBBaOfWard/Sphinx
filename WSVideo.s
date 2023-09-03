@@ -1219,9 +1219,9 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2*word cycles.
 	sub v30cyc,v30cyc,#5*CYCLE
 	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT
 
-	and r8,r1,#0x40				;@ Inc/dec
-	rsb r8,r8,#0x20
-	mov r7,spxptr
+	and r7,r1,#0x40				;@ Inc/dec
+	rsb r7,r7,#0x20
+	mov r8,spxptr
 
 dmaLoop:
 	mov r0,r4,lsl#12
@@ -1229,12 +1229,12 @@ dmaLoop:
 	mov r1,r0
 	mov r0,r5,lsr#4
 	bl dmaWriteMem20W
-	add r4,r4,r8,asr#4
-	add r5,r5,r8,lsl#12
+	add r4,r4,r7,asr#4
+	add r5,r5,r7,lsl#12
 	subs r6,r6,#2
 	bne dmaLoop
 
-	mov spxptr,r7
+	mov spxptr,r8
 	mov r5,r5,lsr#16
 #ifdef __ARM_ARCH_5TE__
 	strd r4,r5,[spxptr,#wsvDMASource]
@@ -1243,8 +1243,8 @@ dmaLoop:
 	str r5,[spxptr,#wsvDMADest]	;@ Store dest plus clear length
 #endif
 
-	rsb r8,r8,#0x20
-	strb r8,[spxptr,#wsvDMACtrl]
+	rsb r7,r7,#0x20
+	strb r7,[spxptr,#wsvDMACtrl]
 dmaEnd:
 	ldmfd sp!,{r4-r8,lr}
 	bx lr
@@ -1797,25 +1797,25 @@ wsvSetInterruptPins:		;@ r0 = interrupt pins
 	strb r0,[spxptr,#wsvInterruptStatus]
 	ldr pc,[spxptr,#irqFunction]
 ;@----------------------------------------------------------------------------
-wsvClearInterruptPins:		;@ r0 = interrupt pins
+wsvClearInterruptPins:		;@ In r0 = interrupt pins
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptPins]
 	bic r1,r1,r0
 	strb r1,[spxptr,#wsvInterruptPins]
 	bx lr
 ;@----------------------------------------------------------------------------
-doSoundDMA:					;@ In r0=SndDmaCtrl
+doSoundDMA:					;@ In r0 = SndDmaCtrl
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,lr}
-	and r1,r0,#0x03				;@ Frequency
+	mov r4,r0
+	and r1,r4,#0x03				;@ Frequency
 	cmp r1,#3
 	movne r1,#1
 	moveq r1,#2
-	rsb r2,r1,r1,lsl#3			;@ *7
-	sub v30cyc,v30cyc,r2,lsl#CYC_SHIFT
-	tst r0,#0x04				;@ Hold ?
+	rsb r0,r1,r1,lsl#3			;@ *7
+	sub v30cyc,v30cyc,r0,lsl#CYC_SHIFT
+	tst r4,#0x04				;@ Hold ?
 	movne r1,#0					;@ Hold
-	mov r4,r0
 	ldr r2,[spxptr,#sndDmaSource]
 	ldr r3,[spxptr,#sndDmaLength]
 	subs r3,r3,r1
@@ -1833,13 +1833,13 @@ doSoundDMA:					;@ In r0=SndDmaCtrl
 	orrne r3,r3,r0,lsl#16
 sndDmaCont:
 	tst r4,#0x40				;@ Increase/decrease
-	addeq r0,r2,r1
-	subne r0,r2,r1
-	str r0,[spxptr,#sndDmaSource]
-	str r3,[spxptr,#sndDmaLength]
+	rsbne r1,r1,#0
 	ands r0,r1,#0x3				;@ Hold ?, silence.
 	movne r0,r2,lsl#12
-	blne cpuReadMem20
+	add r2,r2,r1
+	str r2,[spxptr,#sndDmaSource]
+	str r3,[spxptr,#sndDmaLength]
+	blne cpuReadMem20			;@ Only fetch if not Hold
 
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
