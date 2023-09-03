@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.3.2 - 2023-09-03 (FluBBa)
+	Switched port & value registers for writes.
+
 V0.3.1 - 2023-09-03 (FluBBa)
 	Fixed sound mixing.
 	Fixed sound icon when writing to the HW volume reg.

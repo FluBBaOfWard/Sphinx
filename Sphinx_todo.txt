@@ -3,6 +3,6 @@ Bandai WonderSwan/Sphinx To do
 
 	Palette change per line?
 	Handle LCD on/off.
-	Handle Contrast High/Low for WSC, add 2 images on top.
 	Only enable appropriate registers on the different versions of the SOC.
+	Handle Contrast High/Low for WSC, add 2 images on top.
 	Check sprite start & sprite count.

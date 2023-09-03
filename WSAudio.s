@@ -40,82 +40,82 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 setAllChVolume:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldrb r1,[spxptr,#wsvSound1Vol]
+	ldrb r0,[spxptr,#wsvSound1Vol]
 	bl setCh1Volume
-	ldrb r1,[spxptr,#wsvSound2Vol]
+	ldrb r0,[spxptr,#wsvSound2Vol]
 	bl setCh2Volume
-	ldrb r1,[spxptr,#wsvSound3Vol]
+	ldrb r0,[spxptr,#wsvSound3Vol]
 	bl setCh3Volume
-	ldrb r1,[spxptr,#wsvSound4Vol]
+	ldrb r0,[spxptr,#wsvSound4Vol]
 	bl setCh4Volume
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 setCh1Volume:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSoundCtrl]
-	tst r0,#1					;@ Ch 1 on?
-	moveq r1,#0
-	ldr r0,=vol1_L
-	and r2,r1,#0xF
-	mov r1,r1,lsr#4
-	strb r1,[r0,#vol1_L-vol1_L]
-	strb r2,[r0,#vol1_R-vol1_L]
+	ldrb r1,[spxptr,#wsvSoundCtrl]
+	tst r1,#1					;@ Ch 1 on?
+	moveq r0,#0
+	ldr r1,=vol1_L
+	and r2,r0,#0xF
+	mov r0,r0,lsr#4
+	strb r0,[r1,#vol1_L-vol1_L]
+	strb r2,[r1,#vol1_R-vol1_L]
 	bx lr
 ;@----------------------------------------------------------------------------
 setCh2Volume:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSoundCtrl]
-	ands r2,r0,#0x20			;@ Ch 2 voice on?
-	orrne r2,r1,r1,lsl#16
+	ldrb r1,[spxptr,#wsvSoundCtrl]
+	ands r2,r1,#0x20			;@ Ch 2 voice on?
+	orrne r2,r0,r0,lsl#16
 	strne r2,[spxptr,#currentSampleValue]
-	movne r1,#0					;@ Silence for now
-	tst r0,#2					;@ Ch 2 on?
-	moveq r1,#0
-	ldr r0,=vol1_L
-	and r2,r1,#0xF
-	mov r1,r1,lsr#4
-	strb r1,[r0,#vol2_L-vol1_L]
-	strb r2,[r0,#vol2_R-vol1_L]
+	movne r0,#0					;@ Silence for now
+	tst r1,#2					;@ Ch 2 on?
+	moveq r0,#0
+	ldr r1,=vol1_L
+	and r2,r0,#0xF
+	mov r0,r0,lsr#4
+	strb r0,[r1,#vol2_L-vol1_L]
+	strb r2,[r1,#vol2_R-vol1_L]
 	bx lr
 ;@----------------------------------------------------------------------------
 setCh3Volume:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSoundCtrl]
-	tst r0,#4					;@ Ch 3 on?
-	moveq r1,#0
-	ldr r0,=vol1_L
-	and r2,r1,#0xF
-	mov r1,r1,lsr#4
-	strb r1,[r0,#vol3_L-vol1_L]
-	strb r2,[r0,#vol3_R-vol1_L]
+	ldrb r1,[spxptr,#wsvSoundCtrl]
+	tst r1,#4					;@ Ch 3 on?
+	moveq r0,#0
+	ldr r1,=vol1_L
+	and r2,r0,#0xF
+	mov r0,r0,lsr#4
+	strb r0,[r1,#vol3_L-vol1_L]
+	strb r2,[r1,#vol3_R-vol1_L]
 	bx lr
 ;@----------------------------------------------------------------------------
 setCh4Volume:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSoundCtrl]
-	tst r0,#8					;@ Ch 4 on?
-	moveq r1,#0
-	ldr r0,=vol1_L
-	and r2,r1,#0xF
-	mov r1,r1,lsr#4
-	strb r1,[r0,#vol4_L-vol1_L]
-	strb r2,[r0,#vol4_R-vol1_L]
+	ldrb r1,[spxptr,#wsvSoundCtrl]
+	tst r1,#8					;@ Ch 4 on?
+	moveq r0,#0
+	ldr r1,=vol1_L
+	and r2,r0,#0xF
+	mov r0,r0,lsr#4
+	strb r0,[r1,#vol4_L-vol1_L]
+	strb r2,[r1,#vol4_R-vol1_L]
 	bx lr
 ;@----------------------------------------------------------------------------
 setHyperVoiceValue:
 ;@----------------------------------------------------------------------------
-	ldrh r0,[spxptr,#wsvHyperVCtrl]
+	ldrh r1,[spxptr,#wsvHyperVCtrl]
 	ldrb r2,[spxptr,#wsvSoundOutput]
-	tst r0,#0x80				;@ HyperV Enabled
+	tst r1,#0x80				;@ HyperV Enabled
 	tstne r2,#0x80				;@ HeadPhones Enabled
 	bxeq lr
-//	and r2,r0,#0x6000			;@ Mode, 0=stereo, 1=left, 2=right, 3=mono both.
-	tst r0,#8					;@ Signed value?
-	eorne r1,r1,#0x80
-//	ands r2,r0,#3				;@ Shift amount
-//	movne r1,r1,lsr r2
-	orr r1,r1,r1,lsl#16
-	str r1,[spxptr,#currentSampleValue]
+//	and r2,r1,#0x6000			;@ Mode, 0=stereo, 1=left, 2=right, 3=mono both.
+	tst r1,#8					;@ Signed value?
+	eorne r0,r0,#0x80
+//	ands r2,r1,#3				;@ Shift amount
+//	movne r0,r0,lsr r2
+	orr r0,r0,r0,lsl#16
+	str r0,[spxptr,#currentSampleValue]
 	bx lr
 ;@----------------------------------------------------------------------------
 setTotalVolume:

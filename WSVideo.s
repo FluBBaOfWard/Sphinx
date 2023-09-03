@@ -127,19 +127,19 @@ wsvSetPowerOff:
 ;@----------------------------------------------------------------------------
 wsvSetCartMap:		;@ r0=inTable, r1=outTable
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r6,lr}
+	stmfd sp!,{r4,lr}
 	ldr r2,=cartInTable
 	ldr r3,=cartOutTable
 	mov r4,#0x40
 cartTblLoop:
-	ldr r5,[r0],#4
-	str r5,[r2],#4
-	ldr r5,[r1],#4
-	str r5,[r3],#4
+	ldr lr,[r0],#4
+	str lr,[r2],#4
+	ldr lr,[r1],#4
+	str lr,[r3],#4
 	subs r4,r4,#1
 	bhi cartTblLoop
 
-	ldmfd sp!,{r4-r6,lr}
+	ldmfd sp!,{r4,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 _debugIOUnmappedR:
@@ -197,7 +197,7 @@ wsvRegistersReset:				;@ in r3=SOC
 	moveq r0,#0x80
 	strb r0,[spxptr,#wsvSystemCtrl3]
 
-	ldrb r1,[spxptr,#wsvTotalLines]
+	ldrb r0,[spxptr,#wsvTotalLines]
 	b wsvRefW
 
 ;@----------------------------------------------------------------------------
@@ -717,38 +717,38 @@ wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 wsvWriteHigh:				;@ I/O write (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
-	mov r2,r0,lsl#23
+	mov r2,r1,lsl#23
 	cmp r2,#0xB8<<23
 	bcs wsvUnmappedW
 	stmfd sp!,{r0,r1,spxptr,lr}
 	bl _debugIOUnmappedW
 	ldmfd sp!,{r0,r1,spxptr,lr}
-	and r0,r0,#0xFF
+	and r1,r1,#0xFF
 	b wsvWrite
 ;@----------------------------------------------------------------------------
 wsvWrite16:					;@ I/O write word (0x00-0xFF)
 ;@----------------------------------------------------------------------------
-	tst r0,r0,lsr#1				;@ Odd address?
-	cmpcc r0,#0xC0				;@ Cart?
+	tst r1,r1,lsr#1				;@ Odd address?
+	cmpcc r1,#0xC0				;@ Cart?
 	subcs v30cyc,v30cyc,#1*CYCLE	;@ Eat an extra cpu cycle
 	stmfd sp!,{r0,r1,lr}
-	and r1,r1,#0xFF
+	and r0,r0,#0xFF
 	bl wsvWrite
 	ldmfd sp!,{r0,r1,lr}
-	mov r1,r1,lsr#8
-	add r0,r0,#1
+	mov r0,r0,lsr#8
+	add r1,r1,#1
 ;@----------------------------------------------------------------------------
 wsvWrite:					;@ I/O write (0x00-0xBF)
 ;@----------------------------------------------------------------------------
-	cmp r0,#0x100
-	ldrmi pc,[pc,r0,lsl#2]
+	cmp r1,#0x100
+	ldrmi pc,[pc,r1,lsl#2]
 	b wsvWriteHigh
 ioOutTable:
 	.long wsvDisplayCtrlW		;@ 0x00 Display control
 	.long wsvRegW				;@ 0x01 Background color
 	.long wsvReadOnlyW			;@ 0x02 Current scan line
 	.long wsvRegW				;@ 0x03 Scan line compare
-	.long wsvRegW				;@ 0x04 Sprite table address
+	.long wsvSpriteTblAdrW		;@ 0x04 Sprite table address
 	.long wsvSpriteFirstW		;@ 0x05 Sprite to start with
 	.long wsvRegW				;@ 0x06 Sprite count
 	.long wsvMapAdrW			;@ 0x07 Map table address
@@ -914,7 +914,7 @@ ioOutTable:
 	.long wsvHWVolumeW			;@ 0x9E HW Volume
 	.long wsvUnmappedW			;@ 0x9F ---
 
-	.long wsvHW					;@ 0xA0 Hardware type, SOC_ASWAN / SOC_SPHINX.
+	.long wsvHWW				;@ 0xA0 Hardware type, SOC_ASWAN / SOC_SPHINX.
 	.long wsvUnmappedW			;@ 0xA1 ---
 	.long wsvTimerCtrlW			;@ 0xA2 Timer control
 	.long wsvUnknownW			;@ 0xA3 ???
@@ -1026,7 +1026,7 @@ wsvUnknownW:
 wsvImportantW:
 ;@----------------------------------------------------------------------------
 	add r2,spxptr,#wsvRegs
-	strb r1,[r2,r0]
+	strb r0,[r2,r1]
 	ldr r2,=debugIOUnimplW
 	bx r2
 ;@----------------------------------------------------------------------------
@@ -1038,7 +1038,7 @@ wsvUnmappedW:
 ;@----------------------------------------------------------------------------
 wsvRegW:
 	add r2,spxptr,#wsvRegs
-	strb r1,[r2,r0]
+	strb r0,[r2,r1]
 ;@----------------------------------------------------------------------------
 wsvZeroW:
 ;@----------------------------------------------------------------------------
@@ -1048,8 +1048,8 @@ wsvZeroW:
 wsvDisplayCtrlW:			;@ 0x00, Display Control
 ;@----------------------------------------------------------------------------
 	ldrb r2,[spxptr,#wsvDispCtrl]
-	and r1,r1,#0x3F
-	strb r1,[spxptr,#wsvDispCtrl]
+	and r0,r0,#0x3F
+	strb r0,[spxptr,#wsvDispCtrl]
 dispCnt:
 	ldr r1,[spxptr,#scanline]	;@ r1=scanline
 	add r1,r1,#1
@@ -1069,27 +1069,27 @@ sy1:
 ;@----------------------------------------------------------------------------
 wsvSpriteTblAdrW:			;@ 0x04, Sprite Table Address
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvVideoMode]
-	tst r0,#0x80				;@ Color mode?
-	andne r1,r1,#0x3F
-	andeq r1,r1,#0x1F
-	strb r1,[spxptr,#wsvSprTblAdr]
+	ldrb r1,[spxptr,#wsvVideoMode]
+	tst r1,#0x80				;@ Color mode?
+	andne r0,r0,#0x3F
+	andeq r0,r0,#0x1F
+	strb r0,[spxptr,#wsvSprTblAdr]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x7F
-	strb r1,[spxptr,#wsvSpriteFirst]
+	and r0,r0,#0x7F
+	strb r0,[spxptr,#wsvSpriteFirst]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvMapAdrW:					;@ 0x07 Map table address
 ;@----------------------------------------------------------------------------
 	ldr r2,[spxptr,#wsvBgXScroll]
 	ldrb r3,[spxptr,#wsvMapTblAdr]
-	ldrb r0,[spxptr,#wsvVideoMode]
-	tst r0,#0x80				;@ Color mode?
-	andeq r1,r1,#0x77
-	strb r1,[spxptr,#wsvMapTblAdr]
+	ldrb r1,[spxptr,#wsvVideoMode]
+	tst r1,#0x80				;@ Color mode?
+	andeq r0,r0,#0x77
+	strb r0,[spxptr,#wsvMapTblAdr]
 	b scrollCnt
 ;@----------------------------------------------------------------------------
 wsvFgWinX0W:				;@ 0x08, Foreground Window X start register
@@ -1104,8 +1104,8 @@ wsvFgWinX1W:				;@ 0x0A, Foreground Window X end register
 wsvFgWinY1W:				;@ 0x0B, Foreground Window Y end register
 ;@----------------------------------------------------------------------------
 	ldr r2,[spxptr,#wsvFgWinXPos]
-	add r0,r0,#wsvRegs
-	strb r1,[spxptr,r0]
+	add r1,r1,#wsvRegs
+	strb r0,[spxptr,r1]
 
 windowCnt:
 	ldr r1,[spxptr,#scanline]	;@ r1=scanline
@@ -1137,8 +1137,8 @@ wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
 	ldr r2,[spxptr,#wsvBgXScroll]
 	ldrb r3,[spxptr,#wsvMapTblAdr]
-	add r0,r0,#wsvRegs
-	strb r1,[spxptr,r0]
+	add r1,r1,#wsvRegs
+	strb r0,[spxptr,r1]
 
 scrollCnt:
 	stmfd sp!,{lr}
@@ -1161,49 +1161,48 @@ sy4:
 ;@----------------------------------------------------------------------------
 wsvLCDIconW:				;@ 0x15, Enable/disable LCD icons
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvLCDIcons]
-	ands r1,r1,#6
+	strb r0,[spxptr,#wsvLCDIcons]
+	ands r0,r0,#6
 	bxeq lr
-	cmp r1,#2
-	movne r1,#0
-	strb r1,[spxptr,#wsvOrientation]
+	cmp r0,#2
+	movne r0,#0
+	strb r0,[spxptr,#wsvOrientation]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvRefW:					;@ 0x16, Last scan line.
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvTotalLines]
-	cmp r1,#0x9E
-	movmi r1,#0x9E
-	cmp r1,#0xC8
-	movpl r1,#0xC8
-	add r1,r1,#1
-	str r1,lineStateLastLine
-	mov r0,r1
+	strb r0,[spxptr,#wsvTotalLines]
+	cmp r0,#0x9E
+	movmi r0,#0x9E
+	cmp r0,#0xC8
+	movpl r0,#0xC8
+	add r0,r0,#1
+	str r0,lineStateLastLine
 	b setScreenRefresh
 ;@----------------------------------------------------------------------------
 wsvDMASourceW:				;@ 0x40, only WSC.
 ;@----------------------------------------------------------------------------
-	bic r1,r1,#0x01
-	strb r1,[spxptr,#wsvDMASource]
+	bic r0,r0,#0x01
+	strb r0,[spxptr,#wsvDMASource]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvDMADestW:				;@ 0x44, only WSC.
 ;@----------------------------------------------------------------------------
-	bic r1,r1,#0x01
-	strb r1,[spxptr,#wsvDMADest]
+	bic r0,r0,#0x01
+	strb r0,[spxptr,#wsvDMADest]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvDMALengthW:				;@ 0x46, only WSC.
 ;@----------------------------------------------------------------------------
-	bic r1,r1,#0x01
-	strb r1,[spxptr,#wsvDMALength]
+	bic r0,r0,#0x01
+	strb r0,[spxptr,#wsvDMALength]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2*word cycles.
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0xC0
-	strb r1,[spxptr,#wsvDMACtrl]
-	tst r1,#0x80				;@ Start?
+	and r0,r0,#0xC0
+	strb r0,[spxptr,#wsvDMACtrl]
+	tst r0,#0x80				;@ Start?
 	bxeq lr
 
 	stmfd sp!,{r4-r8,lr}
@@ -1219,7 +1218,7 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2*word cycles.
 	sub v30cyc,v30cyc,#5*CYCLE
 	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT
 
-	and r7,r1,#0x40				;@ Inc/dec
+	and r7,r0,#0x40				;@ Inc/dec
 	rsb r7,r7,#0x20
 	mov r8,spxptr
 
@@ -1251,154 +1250,154 @@ dmaEnd:
 ;@----------------------------------------------------------------------------
 wsvSndDMASrc0W:				;@ 0x4A, only WSC.
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvSndDMASrcL]
-	strb r1,[spxptr,#sndDmaSource]
+	strb r0,[spxptr,#wsvSndDMASrcL]
+	strb r0,[spxptr,#sndDmaSource]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMASrc1W:				;@ 0x4B, only WSC.
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvSndDMASrcL+1]
-	strb r1,[spxptr,#sndDmaSource+1]
+	strb r0,[spxptr,#wsvSndDMASrcL+1]
+	strb r0,[spxptr,#sndDmaSource+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMASrc2W:				;@ 0x4C, only WSC.
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvSndDMASrcH]
-	strb r1,[spxptr,#sndDmaSource+2]
+	strb r0,[spxptr,#wsvSndDMASrcH]
+	strb r0,[spxptr,#sndDmaSource+2]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMALen0W:				;@ 0x4E, only WSC.
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvSndDMALenL]
-	strb r1,[spxptr,#sndDmaLength]
+	strb r0,[spxptr,#wsvSndDMALenL]
+	strb r0,[spxptr,#sndDmaLength]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMALen1W:				;@ 0x4F, only WSC.
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvSndDMALenL+1]
-	strb r1,[spxptr,#sndDmaLength+1]
+	strb r0,[spxptr,#wsvSndDMALenL+1]
+	strb r0,[spxptr,#sndDmaLength+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMALen2W:				;@ 0x50, only WSC.
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x0F
-	strb r1,[spxptr,#wsvSndDMALenH]
-	strb r1,[spxptr,#sndDmaLength+2]
+	and r0,r0,#0x0F
+	strb r0,[spxptr,#wsvSndDMALenH]
+	strb r0,[spxptr,#sndDmaLength+2]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 7n cycles.
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0xDF
-	strb r1,[spxptr,#wsvSndDMACtrl]
+	and r0,r0,#0xDF
+	strb r0,[spxptr,#wsvSndDMACtrl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSysCtrl3W:				;@ 0x62, only WSC
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSystemCtrl3]
-	ands r1,r1,#1				;@ Power Off bit.
-	orr r1,r1,r0				;@ OR SwanCrystal flag (bit 7).
-	strb r1,[spxptr,#wsvSystemCtrl3]
+	ldrb r1,[spxptr,#wsvSystemCtrl3]
+	ands r0,r0,#1				;@ Power Off bit.
+	orr r0,r0,r1				;@ OR SwanCrystal flag (bit 7).
+	strb r0,[spxptr,#wsvSystemCtrl3]
 	bxeq lr
 	b wsvSetPowerOff
 ;@----------------------------------------------------------------------------
 wsvHyperCtrlW:				;@ 0x6A, only WSC
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvHyperVCtrl]
+	strb r0,[spxptr,#wsvHyperVCtrl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHyperChanCtrlW:			;@ 0x6B, only WSC
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x6F
-	strb r1,[spxptr,#wsvHyperVCtrl+1]
+	and r0,r0,#0x6F
+	strb r0,[spxptr,#wsvHyperVCtrl+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvVideoMode]
-	strb r1,[spxptr,#wsvVideoMode]
-	eor r0,r0,r1
-	tst r0,#0x80				;@ Color mode changed?
+	ldrb r1,[spxptr,#wsvVideoMode]
+	strb r0,[spxptr,#wsvVideoMode]
+	eor r1,r1,r0
+	tst r1,#0x80				;@ Color mode changed?
 	bxeq lr
-	and r0,r1,#0x80
+	and r0,r0,#0x80
 	b intEepromSetSize
 ;@----------------------------------------------------------------------------
 wsvFreqLW:					;@ 0x80,0x82,0x84,0x86 Sound frequency low
 ;@----------------------------------------------------------------------------
 	add r2,spxptr,#wsvRegs
-	strb r1,[r2,r0]
-	and r0,r0,#6
+	strb r0,[r2,r1]
+	and r1,r1,#6
 	add r2,spxptr,#pcm1CurrentAddr
-	strb r1,[r2,r0,lsl#1]
+	strb r0,[r2,r1,lsl#1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvFreqHW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
 ;@----------------------------------------------------------------------------
-	and r1,r1,#7				;@ Only low 3 bits
+	and r0,r0,#7				;@ Only low 3 bits
 	add r2,spxptr,#wsvRegs
-	strb r1,[r2,r0]
-	orr r1,r1,#8
-	and r0,r0,#6
-	add r2,spxptr,r0,lsl#1
-	strb r1,[r2,#pcm1CurrentAddr+1]
+	strb r0,[r2,r1]
+	orr r0,r0,#8
+	and r1,r1,#6
+	add r2,spxptr,r1,lsl#1
+	strb r0,[r2,#pcm1CurrentAddr+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvCh1VolumeW:				;@ 0x88 Sound Channel 1 Volume
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSound1Vol]
-	teq r0,r1
+	ldrb r1,[spxptr,#wsvSound1Vol]
+	teq r1,r0
 	bxeq lr
-	strb r1,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
+	strb r0,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
 	b setCh1Volume
 ;@----------------------------------------------------------------------------
 wsvCh2VolumeW:				;@ 0x89 Sound Channel 2 Volume
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSound2Vol]
-	teq r0,r1
+	ldrb r1,[spxptr,#wsvSound2Vol]
+	teq r1,r0
 	bxeq lr
-	strb r1,[spxptr,#wsvSound2Vol]	;@ Each nibble is L & R
+	strb r0,[spxptr,#wsvSound2Vol]	;@ Each nibble is L & R
 	b setCh2Volume
 ;@----------------------------------------------------------------------------
 wsvCh3VolumeW:				;@ 0x8A Sound Channel 3 Volume
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSound3Vol]
-	teq r0,r1
+	ldrb r1,[spxptr,#wsvSound3Vol]
+	teq r1,r0
 	bxeq lr
-	strb r1,[spxptr,#wsvSound3Vol]	;@ Each nibble is L & R
+	strb r0,[spxptr,#wsvSound3Vol]	;@ Each nibble is L & R
 	b setCh3Volume
 ;@----------------------------------------------------------------------------
 wsvCh4VolumeW:				;@ 0x8B Sound Channel 4 Volume
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSound4Vol]
-	teq r0,r1
+	ldrb r1,[spxptr,#wsvSound4Vol]
+	teq r1,r0
 	bxeq lr
-	strb r1,[spxptr,#wsvSound4Vol]	;@ Each nibble is L & R
+	strb r0,[spxptr,#wsvSound4Vol]	;@ Each nibble is L & R
 	b setCh4Volume
 ;@----------------------------------------------------------------------------
 wsvSweepTimeW:				;@ 0x8D Sound sweep time
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x1F				;@ Only low 5 bits
-	strb r1,[spxptr,#wsvSweepTime]
-	add r1,r1,#1
-	sub r1,r1,r1,lsl#26
-	str r1,[spxptr,#sweep3CurrentAddr]
+	and r0,r0,#0x1F				;@ Only low 5 bits
+	strb r0,[spxptr,#wsvSweepTime]
+	add r0,r0,#1
+	sub r0,r0,r0,lsl#26
+	str r0,[spxptr,#sweep3CurrentAddr]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvNoiseCtrlW:				;@ 0x8E Noise Control
 ;@----------------------------------------------------------------------------
-	and r0,r1,#0x17				;@ Only keep enable & tap bits
-	strb r0,[spxptr,#wsvNoiseCtrl]
-	ldr r0,[spxptr,#noise4CurrentAddr]
-	mov r0,r0,lsr#12			;@ Clear taps
-	tst r1,#0x08				;@ Reset?
-	andne r0,r0,#0x4			;@ Keep Ch4 noise on/off
-	tst r1,#0x10				;@ Enable calculation?
-	biceq r0,r0,#0x8
-	orrne r0,r0,#0x8
-	and r1,r1,#7				;@ Which taps?
+	and r1,r0,#0x17				;@ Only keep enable & tap bits
+	strb r1,[spxptr,#wsvNoiseCtrl]
+	ldr r1,[spxptr,#noise4CurrentAddr]
+	mov r1,r1,lsr#12			;@ Clear taps
+	tst r0,#0x08				;@ Reset?
+	andne r1,r1,#0x4			;@ Keep Ch4 noise on/off
+	tst r0,#0x10				;@ Enable calculation?
+	biceq r1,r1,#0x8
+	orrne r1,r1,#0x8
+	and r0,r0,#7				;@ Which taps?
 	adr r2,noiseTaps
-	ldr r1,[r2,r1,lsl#2]
-	orr r0,r1,r0,lsl#12
-	str r0,[spxptr,#noise4CurrentAddr]
+	ldr r0,[r2,r0,lsl#2]
+	orr r1,r0,r1,lsl#12
+	str r1,[spxptr,#noise4CurrentAddr]
 	bx lr
 noiseTaps:
 	.long 0x00000408			;@ Tap bit 7 & 14
@@ -1412,71 +1411,71 @@ noiseTaps:
 ;@----------------------------------------------------------------------------
 wsvSampleBaseW:				;@ 0x8F Sample Base
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvSampleBase]
-	ldr r0,[spxptr,#gfxRAM]
-	add r0,r0,r1,lsl#6
-	str r0,[spxptr,#sampleBaseAddr]
+	strb r0,[spxptr,#wsvSampleBase]
+	ldr r1,[spxptr,#gfxRAM]
+	add r1,r1,r0,lsl#6
+	str r1,[spxptr,#sampleBaseAddr]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSoundCtrlW:				;@ 0x90 Sound Control
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSoundCtrl]
-	teq r0,r1
+	ldrb r1,[spxptr,#wsvSoundCtrl]
+	teq r1,r0
 	bxeq lr
-	strb r1,[spxptr,#wsvSoundCtrl]
-	tst r1,#0x40				;@ Ch 3 sweep on?
-	ldr r0,[spxptr,#sweep3CurrentAddr]
-	biceq r0,r0,#0x100
-	orrne r0,r0,#0x100
-	str r0,[spxptr,#sweep3CurrentAddr]
+	strb r0,[spxptr,#wsvSoundCtrl]
+	tst r0,#0x40				;@ Ch 3 sweep on?
+	ldr r1,[spxptr,#sweep3CurrentAddr]
+	biceq r1,r1,#0x100
+	orrne r1,r1,#0x100
+	str r1,[spxptr,#sweep3CurrentAddr]
 
-	tst r1,#0x80				;@ Ch 4 noise on?
-	ldr r0,[spxptr,#noise4CurrentAddr]
-	biceq r0,r0,#0x4000
-	orrne r0,r0,#0x4000
-	str r0,[spxptr,#noise4CurrentAddr]
+	tst r0,#0x80				;@ Ch 4 noise on?
+	ldr r1,[spxptr,#noise4CurrentAddr]
+	biceq r1,r1,#0x4000
+	orrne r1,r1,#0x4000
+	str r1,[spxptr,#noise4CurrentAddr]
 	b setAllChVolume
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSoundOutput]
-	and r1,r1,#0x0F				;@ Only low 4 bits
-	and r0,r0,#0x80				;@ Keep Headphones bit
-	orr r1,r1,r0
-	strb r1,[spxptr,#wsvSoundOutput]
+	ldrb r1,[spxptr,#wsvSoundOutput]
+	and r0,r0,#0x0F				;@ Only low 4 bits
+	and r1,r1,#0x80				;@ Keep Headphones bit
+	orr r0,r0,r1
+	strb r0,[spxptr,#wsvSoundOutput]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSoundOutput]
 	tst r0,#0x80				;@ Headphones?
-	ldrb r1,[spxptr,#wsvHWVolume]
-	subeq r1,r1,#1
+	ldrb r0,[spxptr,#wsvHWVolume]
+	subeq r0,r0,#1
 ;@----------------------------------------------------------------------------
 wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
-	mov r0,#128
-	strb r0,[spxptr,#wsvSoundIconTimer]
-	ldrb r0,[spxptr,#wsvSOC]
-	cmp r0,#SOC_ASWAN
-	moveq r0,#2
-	movne r0,#3
-	cmp r1,r0
-	movcs r1,r0
-	
-	and r1,r1,#0x03				;@ Only low 2 bits
-	strb r1,[spxptr,#wsvHWVolume]
+	mov r1,#128
+	strb r1,[spxptr,#wsvSoundIconTimer]
+	ldrb r1,[spxptr,#wsvSOC]
+	cmp r1,#SOC_ASWAN
+	moveq r1,#2
+	movne r1,#3
+	cmp r0,r1
+	movcs r0,r1
+
+	and r0,r0,#0x03				;@ Only low 2 bits
+	strb r0,[spxptr,#wsvHWVolume]
 	b setTotalVolume
 ;@----------------------------------------------------------------------------
-wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
+wsvHWW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSystemCtrl1]
-	and r0,r0,#0x83				;@ These can't be changed once set.
-	and r1,r1,#0x8D				;@ Only these bits can be set.
-	orr r1,r1,r0
-	strb r1,[spxptr,#wsvSystemCtrl1]
-	eor r0,r0,r1
-	tst r0,#1					;@ Boot rom locked?
+	ldrb r1,[spxptr,#wsvSystemCtrl1]
+	and r1,r1,#0x83				;@ These can't be changed once set.
+	and r0,r0,#0x8D				;@ Only these bits can be set.
+	orr r0,r0,r1
+	strb r0,[spxptr,#wsvSystemCtrl1]
+	eor r1,r1,r0
+	tst r1,#1					;@ Boot rom locked?
 	bxeq lr
 	mov r0,#0					;@ Remove boot rom overlay
 	b setBootRomOverlay
@@ -1484,48 +1483,47 @@ wsvHW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 wsvTimerCtrlW:				;@ 0xA2 Timer control
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x0F
-	strb r1,[spxptr,#wsvTimerControl]
+	and r0,r0,#0x0F
+	strb r0,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerLowW:				;@ 0xA4 HBlank timer low
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvHBlTimerFreq]
-	strb r1,[spxptr,#wsvHBlCounter]
+	strb r0,[spxptr,#wsvHBlTimerFreq]
+	strb r0,[spxptr,#wsvHBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerHighW:				;@ 0xA5 HBlank timer high
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvHBlTimerFreq+1]
-	strb r1,[spxptr,#wsvHBlCounter+1]
+	strb r0,[spxptr,#wsvHBlTimerFreq+1]
+	strb r0,[spxptr,#wsvHBlCounter+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerLowW:				;@ 0xA6 VBlank timer low
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvVBlTimerFreq]
-	strb r1,[spxptr,#wsvVBlCounter]
+	strb r0,[spxptr,#wsvVBlTimerFreq]
+	strb r0,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvVBlTimerFreq+1]
-	strb r1,[spxptr,#wsvVBlCounter+1]
+	strb r0,[spxptr,#wsvVBlTimerFreq+1]
+	strb r0,[spxptr,#wsvVBlCounter+1]
 	bx lr
 
 ;@----------------------------------------------------------------------------
 wsvInterruptBaseW:			;@ 0xB0
 ;@----------------------------------------------------------------------------
-	bic r1,r1,#7
-	strb r1,[spxptr,#wsvInterruptBase]
+	bic r0,r0,#7
+	strb r0,[spxptr,#wsvInterruptBase]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvComByteW:				;@ 0xB1
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r1,spxptr,lr}
-	mov r0,r1
+	stmfd sp!,{r0,spxptr,lr}
 	bl _debugSerialOutW
-	ldmfd sp!,{r1,spxptr,lr}
-	strb r1,[spxptr,#wsvComByte]
+	ldmfd sp!,{r0,spxptr,lr}
+	strb r0,[spxptr,#wsvComByte]
 	ldrb r1,[spxptr,#wsvSerialStatus]
 	tst r1,#0x40					;@ 0 = 9600, 1 = 38400 bps
 	moveq r0,#2560					;@ 3072000/(9600/8)
@@ -1538,21 +1536,21 @@ wsvComByteW:				;@ 0xB1
 ;@----------------------------------------------------------------------------
 wsvIntEnableW:				;@ 0xB2
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvInterruptPins]
-	strb r1,[spxptr,#wsvInterruptEnable]
+	ldrb r1,[spxptr,#wsvInterruptPins]
+	strb r0,[spxptr,#wsvInterruptEnable]
 	and r0,r0,r1
 	and r0,r0,#0x0F
 	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSerialStatusW:			;@ 0xB3
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvSerialStatus]
-	and r1,r1,#0xC0				;@ Mask out writeable bits. 0x20 is reset Overrun.
-	strb r1,[spxptr,#wsvSerialStatus]
-	eor r0,r0,r1
-	tst r0,#0x80				;@ Serial enable changed?
+	ldrb r1,[spxptr,#wsvSerialStatus]
+	and r0,r0,#0xC0				;@ Mask out writeable bits. 0x20 is reset Overrun.
+	strb r0,[spxptr,#wsvSerialStatus]
+	eor r1,r1,r0
+	tst r1,#0x80				;@ Serial enable changed?
 	bxeq lr
-	tst r1,#0x80				;@ Serial enable now?
+	tst r0,#0x80				;@ Serial enable now?
 	mov r0,#0x01				;@ #0 = Serial transmit buffer empty
 	bne wsvSetInterruptPins
 	orr r0,r0,#0x09				;@ #0, 3 = Serial transmit, receive
@@ -1560,8 +1558,8 @@ wsvSerialStatusW:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvInterruptStatus]
-	bic r0,r0,r1
+	ldrb r1,[spxptr,#wsvInterruptStatus]
+	bic r0,r1,r0
 	ldrb r1,[spxptr,#wsvInterruptEnable]
 	ldrb r2,[spxptr,#wsvInterruptPins]
 	and r2,r2,r1
@@ -1572,7 +1570,7 @@ wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
 wsvNMICtrlW:				;@ 0xB7
 ;@----------------------------------------------------------------------------
-	strb r1,[spxptr,#wsvNMIControl]
+	strb r0,[spxptr,#wsvNMIControl]
 	ldrb r0,[spxptr,#wsvLowBattery]
 	b wsvSetLowBattery
 
@@ -1843,7 +1841,6 @@ sndDmaCont:
 
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
-	mov r1,r0
 	beq wsvCh2VolumeW
 	b setHyperVoiceValue
 ;@----------------------------------------------------------------------------
