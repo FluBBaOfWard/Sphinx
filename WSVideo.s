@@ -186,6 +186,8 @@ wsvRegistersReset:				;@ in r3=SOC
 	mov r0,#0x84
 	movne r0,#0x86
 	strb r0,[spxptr,#wsvSystemCtrl1]
+	mov r0,#LCD_ICON_TIME_VALUE
+	strb r0,[spxptr,#wsvCartIconTimer]
 	mov r0,#0x90
 	movne r0,#0x9F
 	strb r0,[spxptr,#wsvColor01]
@@ -1454,7 +1456,7 @@ wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
 wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
-	mov r1,#128
+	mov r1,#LCD_ICON_TIME_VALUE
 	strb r1,[spxptr,#wsvSoundIconTimer]
 	ldrb r1,[spxptr,#wsvSOC]
 	cmp r1,#SOC_ASWAN
@@ -1582,7 +1584,7 @@ wsvSetHeadphones:			;@ r0 = on/off
 	biceq r0,r0,#0x80
 	orrne r0,r0,#0x80
 	strb r0,[spxptr,#wsvSoundOutput]
-	mov r0,#128
+	mov r0,#LCD_ICON_TIME_VALUE
 	strb r0,[spxptr,#wsvSoundIconTimer]
 	b setTotalVolume
 ;@----------------------------------------------------------------------------
@@ -2316,21 +2318,21 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	orr r0,r0,r2,lsl#6
 	ldrb r2,[spxptr,#wsvSoundOutput]
 	tst r2,#0x80				;@ Headphones?
-	orrne r0,r0,#LCD_ICON_HEAD
-	ldrb r2,[spxptr,#wsvSystemCtrl1]
-	eor r2,r2,r2,lsr#7
-	tst r2,#0x01
-	orrne r0,r0,#LCD_ICON_CART
+	orrne r0,r0,#LCD_ICON_HEADPHONE
+	ldrb r2,[spxptr,#wsvCartIconTimer]
+	subs r2,r2,#1
+	strbpl r2,[spxptr,#wsvCartIconTimer]
+	orrhi r0,r0,#LCD_ICON_CARTRIDGE
 	ldrb r2,[spxptr,#wsvLowBattery]
 	cmp r2,#0
-	orrne r0,r0,#LCD_ICON_BATT
+	orrne r0,r0,#LCD_ICON_BATTERY
 	ldrb r2,[spxptr,#wsvSoundIconTimer]
 	subs r2,r2,#1
 	strbpl r2,[spxptr,#wsvSoundIconTimer]
 	orrhi r0,r0,#LCD_ICON_TIME
 	ldrb r2,[spxptr,#wsvSystemCtrl3]
 	tst r2,#1
-	orreq r0,r0,#LCD_ICON_POWR
+	orreq r0,r0,#LCD_ICON_POWER
 	movne r0,#0
 	eors r1,r1,r0
 	bxeq lr
@@ -2392,7 +2394,7 @@ redrawColorIcons:
 	strh r3,[r2],#0x40
 
 	tst r0,#LCD_ICON_TIME
-	tstne r0,#LCD_ICON_HEAD		;@ HeadPhones
+	tstne r0,#LCD_ICON_HEADPHONE	;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#26]
 	strh r3,[r2],#0x40
@@ -2419,7 +2421,7 @@ chkVoluIcon:
 	strh r3,[r2],#0x40
 
 chkBattIcon:
-	tst r0,#LCD_ICON_BATT		;@ Low battery
+	tst r0,#LCD_ICON_BATTERY	;@ Low battery
 	moveq r3,r4
 	ldrhne r3,[r1,#40]
 	strh r3,[r2],#0x40
@@ -2428,19 +2430,19 @@ chkBattIcon:
 	ldrhne r3,[r1,#44]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_SLEP		;@ Sleep Mode
+	tst r0,#LCD_ICON_SLEEP		;@ Sleep Mode
 	moveq r3,r4
 	ldrhne r3,[r1,#46]
 	strh r3,[r2],#0x40
 	ldrhne r3,[r1,#48]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_CART		;@ Cart OK?
+	tst r0,#LCD_ICON_CARTRIDGE	;@ Cart OK?
 	moveq r3,r4
 	ldrhne r3,[r1,#50]
 	strh r3,[r2],#0x40
 
-	tst r0,#LCD_ICON_POWR		;@ Power On?
+	tst r0,#LCD_ICON_POWER		;@ Power On?
 	moveq r3,r4
 	ldrhne r3,[r1,#52]
 	strh r3,[r2],#0x40
@@ -2458,24 +2460,24 @@ redrawMonoIcons:
 	add r2,r2,#0x40*21
 	ldrh r4,[r1]
 
-	tst r0,#LCD_ICON_POWR		;@ Power On?
+	tst r0,#LCD_ICON_POWER		;@ Power On?
 	moveq r3,r4
 	ldrhne r3,[r1,#0x02]
 	strh r3,[r2,#0x04]
 
-	tst r0,#LCD_ICON_CART		;@ Cart OK?
+	tst r0,#LCD_ICON_CARTRIDGE	;@ Cart OK?
 	moveq r3,r4
 	ldrhne r3,[r1,#0x06]
 	strh r3,[r2,#0x08]
 	ldrhne r3,[r1,#0x08]
 	strh r3,[r2,#0x0A]
 
-	tst r0,#LCD_ICON_SLEP		;@ Sleep Mode
+	tst r0,#LCD_ICON_SLEEP		;@ Sleep Mode
 	moveq r3,r4
 	ldrhne r3,[r1,#0x0A]
 	strh r3,[r2,#0x0C]
 
-	tst r0,#LCD_ICON_BATT		;@ Low battery
+	tst r0,#LCD_ICON_BATTERY	;@ Low battery
 	moveq r3,r4
 	ldrhne r3,[r1,#0x10]
 	strh r3,[r2,#0x12]
@@ -2487,7 +2489,7 @@ redrawMonoIcons:
 	strh r3,[r2,#0x18]
 
 	tst r0,#LCD_ICON_TIME
-	tstne r0,#LCD_ICON_HEAD		;@ HeadPhones
+	tstne r0,#LCD_ICON_HEADPHONE	;@ HeadPhones
 	moveq r3,r4
 	ldrhne r3,[r1,#0x24]
 	strh r3,[r2,#0x26]

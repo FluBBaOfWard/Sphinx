@@ -212,8 +212,9 @@ typedef struct {
 	u8 wsvInterruptPins;
 	u8 wsvByteReceived;
 	u8 wsvSoundIconTimer;
+	u8 wsvCartIconTimer;
 	u8 wsvSleepMode__;
-	u8 wsvPadding14[3];
+	u8 wsvPadding14[2];
 
 	u32 enabledLCDIcons;
 	u32 dispLine;

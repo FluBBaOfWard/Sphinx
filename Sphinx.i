@@ -14,24 +14,28 @@
 #define HW_POCKETCHALLENGEV2 (4)
 #define HW_SELECT_END        (5)
 
-#define SOC_ASWAN		(0)
-#define SOC_SPHINX		(1)
-#define SOC_SPHINX2		(2)
+#define SOC_ASWAN			(0)
+#define SOC_SPHINX			(1)
+#define SOC_SPHINX2			(2)
 
-#define LCD_ICON_SLEP	(1<<0)
-#define LCD_ICON_VERT	(1<<1)
-#define LCD_ICON_HORZ	(1<<2)
-#define LCD_ICON_DOT1	(1<<3)
-#define LCD_ICON_DOT2	(1<<4)
-#define LCD_ICON_DOT3	(1<<5)
-#define LCD_ICON_VOLU	(3<<6)
-#define LCD_ICON_VOL1	(1<<6)
-#define LCD_ICON_VOL2	(2<<6)
-#define LCD_ICON_HEAD	(1<<8)
-#define LCD_ICON_BATT	(1<<9)
-#define LCD_ICON_CART	(1<<10)
-#define LCD_ICON_POWR	(1<<11)
-#define LCD_ICON_TIME	(1<<12)
+#define LCD_ICON_SLEEP		(1<<0)
+#define LCD_ICON_VERT		(1<<1)
+#define LCD_ICON_HORZ		(1<<2)
+#define LCD_ICON_DOT1		(1<<3)
+#define LCD_ICON_DOT2		(1<<4)
+#define LCD_ICON_DOT3		(1<<5)
+#define LCD_ICON_VOLU		(3<<6)
+#define LCD_ICON_VOL1		(1<<6)
+#define LCD_ICON_VOL2		(2<<6)
+#define LCD_ICON_HEADPHONE	(1<<8)
+#define LCD_ICON_BATTERY	(1<<9)
+#define LCD_ICON_CARTRIDGE	(1<<10)
+#define LCD_ICON_POWER		(1<<11)
+/** Timer for sound icons is on/off */
+#define LCD_ICON_TIME		(1<<12)
+
+/** Time for sound icons */
+#define LCD_ICON_TIME_VALUE (128)
 
 /** Game screen width in pixels */
 #define GAME_WIDTH  (224)
@@ -232,8 +236,9 @@ wsvLowBatPin:		.byte 0
 wsvInterruptPins:	.byte 0
 wsvByteReceived:	.byte 0
 wsvSoundIconTimer:	.byte 0
+wsvCartIconTimer:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding14:		.space 3
+wsvPadding14:		.space 2
 
 enabledLCDIcons:	.long 0
 dispLine: 			.long 0		;@ Last line dispCtrl was updated.

@@ -1,8 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.2 - 2023-09-03 (FluBBa)
+V0.3.2 - 2023-09-10 (FluBBa)
 	Switched port & value registers for writes.
+	Fixed cartridge icon timer.
 
 V0.3.1 - 2023-09-03 (FluBBa)
 	Fixed sound mixing.
