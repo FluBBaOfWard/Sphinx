@@ -928,7 +928,7 @@ ioOutTable:
 	.long wsvReadOnlyW			;@ 0xA9 HBlank counter high
 	.long wsvReadOnlyW			;@ 0xAA VBlank counter low
 	.long wsvReadOnlyW			;@ 0xAB VBlank counter high
-	.long wsvUnknownW			;@ 0xAC ???
+	.long wsv0xACW				;@ 0xAC Power Off???
 	.long wsvUnmappedW			;@ 0xAD ---
 	.long wsvUnmappedW			;@ 0xAE ---
 	.long wsvUnmappedW			;@ 0xAF ---
@@ -1513,6 +1513,13 @@ wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 	strb r0,[spxptr,#wsvVBlCounter+1]
 	bx lr
 
+;@----------------------------------------------------------------------------
+wsv0xACW:					;@ 0xAC
+;@----------------------------------------------------------------------------
+	ands r0,r0,#1				;@ Power Off bit?
+	strb r0,[spxptr,#wsv0xAC]
+	bxeq lr
+	b wsvSetPowerOff
 ;@----------------------------------------------------------------------------
 wsvInterruptBaseW:			;@ 0xB0
 ;@----------------------------------------------------------------------------

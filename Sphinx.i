@@ -173,7 +173,8 @@ wsvVBlTimerFreq:	.short 0	;@ 0xA6/0xA7 VBlank Timer 'frequency'
 wsvHBlCounter:		.short 0	;@ 0xA8/0xA9 HBlank Counter - 1/12000s
 wsvVBlCounter:		.short 0	;@ 0xAA/0xAB VBlank Counter - 1/75s
 
-wsvPadding11:		.space 4	;@ 0xAC - 0xAF ???
+wsv0xAC:			.space 1	;@ 0xAC Power Off???
+wsvPadding11:		.space 3	;@ 0xAD - 0xAF ???
 
 wsvInterruptBase:	.byte 0		;@ 0xB0 Interrupt base
 wsvComByte:			.byte 0		;@ 0xB1 Communication byte

@@ -2,8 +2,9 @@ Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 V0.3.2 - 2023-09-10 (FluBBa)
-	Switched port & value registers for writes.
+	Added writes to register 0xAC.
 	Fixed cartridge icon timer.
+	Switched port & value registers for writes.
 
 V0.3.1 - 2023-09-03 (FluBBa)
 	Fixed sound mixing.
@@ -13,13 +14,13 @@ V0.3.1 - 2023-09-03 (FluBBa)
 	Better handling of Power Off for LCD Icons.
 
 V0.3.0 - 2023-08-03 (FluBBa)
-	Moved cart stuff out of Sphinx.
 	Added per line emulation of Display Control register.
 	Added per line emulation of FG Window register.
 	Added per line emulation of Map Address register.
 	Added 16bit IO access.
 	Added sprite ram to save state.
 	Optimized tile map rendering.
+	Moved cart stuff out of Sphinx.
 
 V0.2.2 - 2023-04-21 (FluBBa)
 	Fixed WS sound levels.
@@ -48,18 +49,18 @@ V0.1.8 - 2022-08-15 (FluBBa)
 	WS refresh rate can control NDS refresh rate.
 
 V0.1.7 - 2022-08-10 (FluBBa)
-	Fixed DMA a bit.
 	Added Luxsor 2 mapping registers.
+	Fixed DMA a bit.
 	Fixed window handling a bit.
+	Fixed reseting of total scan lines.
 	Mute Ch2 when playing samples.
 	Tweaked Sprite DMA timing.
 	All DMA now consumes cycles.
-	Fixed reseting of total scan lines.
 
 V0.1.6 - 2022-04-20 (FluBBa)
+	Added sound button handling.
 	Fixed sound DMA a bit.
 	Fixed load/save state.
-	Added sound button handling.
 
 V0.1.5 - 2022-03-09 (FluBBa)
 	Added support for RTC.
@@ -75,13 +76,13 @@ V0.1.3 - 2021-12-30 (FluBBa)
 	Fixed map table address handling.
 
 V0.1.2 - 2021-12-11 (FluBBa)
+	Added sound.
 	Fixed color background and foreground.
 	Fixed mono background and foreground.
 	Fixed sprites.
 	Fixed interrupts and timers.
 	Fixed handling of register 0xA0.
 	Fixed opaque 2bit plane sprites.
-	Added sound.
 
 V0.1.1 - 2021-10-17 (FluBBa)
 	Started port to Nintendo DS & devkitPro.
