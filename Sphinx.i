@@ -265,6 +265,7 @@ scrollBuff:			.long 0
 
 sphinxStateSize = sphinxStateEnd-sphinxState
 sphinxSize:
+	.previous
 
 ;@----------------------------------------------------------------------------
 
