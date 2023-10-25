@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.3.5 - 2023-10-25 (FluBBa)
+	Fixed IO register differences between mono/color mode.
+
 V0.3.2 - 2023-09-24 (FluBBa)
 	Added writes to register 0xAC.
 	Fixed cartridge icon timer.
