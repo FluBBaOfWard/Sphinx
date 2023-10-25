@@ -1849,6 +1849,9 @@ skipSprLoop:
 	bhi skipSprLoop
 	ldmfd sp!,{r4-r8,pc}
 
+#ifdef GBA
+	.section .ewram, "ax", %progbits	;@ For the GBA
+#endif
 ;@----------------------------------------------------------------------------
 wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 ;@----------------------------------------------------------------------------
@@ -2084,6 +2087,7 @@ chkHorzIcon:
 
 	ldmfd sp!,{r4-r5,pc}
 
+;@----------------------------------------------------------------------------
 defaultInTable:
 	.long wsvRegR				;@ 0x00 Display control
 	.long wsvRegR				;@ 0x01 Background color
@@ -2289,6 +2293,7 @@ defaultInTable:
 	.long intEepromStatusR		;@ 0xBE int-eeprom status
 	.long wsvUnknownR			;@ 0xBF ???
 
+;@----------------------------------------------------------------------------
 defaultOutTable:
 	.long wsvDisplayCtrlW		;@ 0x00 Display control
 	.long wsvRegW				;@ 0x01 Background color
