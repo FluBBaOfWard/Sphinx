@@ -3,7 +3,7 @@
 //  Bandai WonderSwan Video emulation for GBA/NDS.
 //
 //  Created by Fredrik Ahlström on 2006-07-23.
-//  Copyright © 2006-2023 Fredrik Ahlström. All rights reserved.
+//  Copyright © 2006-2024 Fredrik Ahlström. All rights reserved.
 //
 
 #ifdef __arm__
@@ -618,12 +618,17 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 wsvMapAdrW:					;@ 0x07 Map table address
 ;@----------------------------------------------------------------------------
-	ldr r2,[spxptr,#wsvBgXScroll]
-	ldrb r3,[spxptr,#wsvMapTblAdr]
+#ifdef NDS
+	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
+#else
+	ldr r2,[spxptr,#wsvBGScrollBak]
+	ldr r3,[spxptr,#wsvFGScrollBak]
+#endif
 	ldrb r1,[spxptr,#wsvVideoMode]
 	tst r1,#0x80				;@ Color mode?
 	andeq r0,r0,#0x77
 	strb r0,[spxptr,#wsvMapTblAdr]
+	strb r0,[spxptr,#wsvBGScrollBak+1]
 	b scrollCnt
 ;@----------------------------------------------------------------------------
 wsvFgWinX0W:				;@ 0x08, Foreground Window X start register
@@ -669,10 +674,16 @@ wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 ;@----------------------------------------------------------------------------
 wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
-	ldr r2,[spxptr,#wsvBgXScroll]
-	ldrb r3,[spxptr,#wsvMapTblAdr]
+#ifdef NDS
+	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
+#else
+	ldr r2,[spxptr,#wsvBGScrollBak]
+	ldr r3,[spxptr,#wsvFGScrollBak]
+#endif
 	add r1,r1,#wsvRegs
 	strb r0,[spxptr,r1]
+	add r1,r1,#(wsvBGScrollBak/2) - (wsvRegs+0x10)
+	strb r0,[spxptr,r1,lsl#1]
 
 scrollCnt:
 	stmfd sp!,{lr}
@@ -1182,8 +1193,12 @@ endFrame:
 	bl dispCnt
 	ldr r2,[spxptr,#wsvFgWinXPos]
 	bl windowCnt
-	ldr r2,[spxptr,#wsvBgXScroll]
-	ldrb r3,[spxptr,#wsvMapTblAdr]
+#ifdef NDS
+	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
+#else
+	ldr r2,[spxptr,#wsvBGScrollBak]
+	ldr r3,[spxptr,#wsvFGScrollBak]
+#endif
 	bl scrollCnt
 	bl gfxEndFrame
 	bl wsvDMASprites
@@ -1572,7 +1587,7 @@ tx4ColTileLoop1:
 bgColor:
 	stmfd sp!,{lr}
 	ldr r8,[spxptr,#scrollBuff]
-	ldrb r7,[r8,#4]!
+	ldrb r7,[r8,#1]!
 	mov r1,#GAME_HEIGHT
 bgCAdrLoop:
 	ldrb r9,[r8],#8
@@ -1649,7 +1664,7 @@ bgm16Loop:
 bgMono:
 	stmfd sp!,{lr}
 	ldr r8,[spxptr,#scrollBuff]
-	ldrb r7,[r8,#4]!
+	ldrb r7,[r8,#1]!
 	mov r1,#GAME_HEIGHT
 bgMAdrLoop:
 	ldrb r9,[r8],#8
@@ -1722,43 +1737,35 @@ bgm4Loop:
 ;@----------------------------------------------------------------------------
 copyScrollValues:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4-r10}
+	stmfd sp!,{r4-r8}
 	ldr r1,[spxptr,#scrollBuff]
-	ldrb r10,[r1,#4]
+	ldrb r7,[r1,#1]
 
-	mov r7,#(SCREEN_HEIGHT-GAME_HEIGHT)/2
-	add r0,r0,r7,lsl#3			;@ 8 bytes per row
-	mov r3,#0x100-(SCREEN_WIDTH-GAME_WIDTH)/2
-	sub r3,r3,r7,lsl#16
-	ldr r4,=0x00FF00FF
-	mov r2,#GAME_HEIGHT
+	mov r6,#((SCREEN_HEIGHT-GAME_HEIGHT)/2)<<23
+	add r0,r0,r6,lsr#20			;@ 8 bytes per row
+	mov r4,#(0x100-(SCREEN_WIDTH-GAME_WIDTH)/2)<<7
+	sub r4,r4,r6
+	mov r5,#GAME_HEIGHT
 setScrlLoop:
-	ldmia r1!,{r5,r9}
-	mov r6,r5,lsr#16
-	mov r5,r5,lsl#16
-	orr r6,r6,r6,lsl#8
-	orr r5,r5,r5,lsr#8
-	and r6,r4,r6
-	and r5,r4,r5,lsr#8
-	add r6,r6,r3
-	add r5,r5,r3
-	add r8,r5,r7,lsl#16
-	tst r8,#0x1000000
-	subne r5,r5,#0x1000000
-	add r8,r6,r7,lsl#16
-	tst r8,#0x1000000
-	subne r6,r6,#0x1000000
-	eor r9,r9,r10
-	tst r9,#0x0F
-	addne r5,r5,#0x1000000
-	tst r9,#0xF0
-	addne r6,r6,#0x1000000
-	stmia r0!,{r5,r6}
-	add r7,r7,#1
-	subs r2,r2,#1
+	ldmia r1!,{r2,r3}
+	eor r8,r7,r2,lsr#8
+	bic r2,r2,#0xFF00
+	add r2,r2,r4,lsr#7
+	add r3,r3,r4,lsr#7
+	cmn r6,r2,lsl#7
+	eormi r2,r2,#0x1000000
+	cmn r6,r3,lsl#7
+	eormi r3,r3,#0x1000000
+	tst r8,#0x0F
+	eorne r2,r2,#0x1000000
+	tst r8,#0xF0
+	eorne r3,r3,#0x1000000
+	stmia r0!,{r2,r3}
+	add r6,r6,#1<<23
+	subs r5,r5,#1
 	bne setScrlLoop
 
-	ldmfd sp!,{r4-r10}
+	ldmfd sp!,{r4-r8}
 	bx lr
 
 ;@----------------------------------------------------------------------------

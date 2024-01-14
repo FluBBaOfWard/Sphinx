@@ -3,7 +3,7 @@
 //  Bandai WonderSwan SOC emulation for GBA/NDS.
 //
 //  Created by Fredrik Ahlström on 2006-07-23.
-//  Copyright © 2006-2023 Fredrik Ahlström. All rights reserved.
+//  Copyright © 2006-2024 Fredrik Ahlström. All rights reserved.
 //
 ;@ ASM header for the Bandai WonderSwan SOC emulator
 
@@ -51,6 +51,8 @@ nextLineChange:		.long 0
 lineState:			.long 0
 
 fgWindowData:		.long 0
+wsvBGScrollBak:		.long 0		;@ Extra buff for scroll
+wsvFGScrollBak:		.long 0
 
 wsvRegs:
 wsvDispCtrl:		.byte 0		;@ 0x00 Display control
