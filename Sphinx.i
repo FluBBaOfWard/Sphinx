@@ -7,6 +7,10 @@
 //
 ;@ ASM header for the Bandai WonderSwan SOC emulator
 
+#if !__ASSEMBLER__
+	#error This header file is only for use in assembly files!
+#endif
+
 #define HW_AUTO              (0)
 #define HW_WONDERSWAN        (1)
 #define HW_WONDERSWANCOLOR   (2)
@@ -84,7 +88,7 @@ wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
 wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
 wsvPadding0:		.space 3	;@ 0x17 - 0x19 ???
 wsvLCDVolume:		.byte 0		;@ 0x1A LCD Volume icon
-wsvPadding0_1:		.space 1	;@ 00x1B ???
+wsvPadding0_1:		.space 1	;@ 0x1B ???
 
 wsvColor01:			.byte 0		;@ 0x1C Color 0 & 1
 wsvColor23:			.byte 0		;@ 0x1D Color 2 & 3
