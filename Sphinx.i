@@ -158,7 +158,7 @@ wsvSampleBase:		.byte 0		;@ 0x8F Sound wave base
 wsvSoundCtrl:		.byte 0		;@ 0x90 Sound control
 wsvSoundOutput:		.byte 0		;@ 0x91 Sound output
 wsvNoiseCntr:		.short 0	;@ 0x92/0x93 Noise Counter Shift Register (15 bits)
-wsvVolume:			.byte 0		;@ 0x94 Volume (4 bit)
+wsvCh2VoiceVol:		.byte 0		;@ 0x94 Ch2 Voice Volume
 
 wsvPadding6:		.byte 0		;@ 0x95 Hyper Sound sample?
 wsvSoundOutR:		.short 0	;@ 0x96/0x97 Sound out Right, 10  bits
@@ -228,7 +228,7 @@ pcm3CurrentAddr:	.long 0		;@ Ch3 Current address
 pcm4CurrentAddr:	.long 0		;@ Ch4 Current address
 noise4CurrentAddr:	.long 0		;@ Ch4 noise Current address
 sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current address
-currentSampleValue: .long 0		;@ Ch2/Hyper Voice sample
+currentSampleValue: .long 0		;@ Hyper Voice sample
 sampleBaseAddr:		.long 0		;@ Current sample base address
 
 missingSamplesCnt:	.long 0		;@ Number of missing samples from last sound callback.

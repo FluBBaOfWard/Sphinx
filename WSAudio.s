@@ -18,6 +18,7 @@
 	.global setCh4Volume
 	.global setHyperVoiceValue
 	.global setTotalVolume
+	.global vol2_L
 
 	.syntax unified
 	.arm
@@ -65,18 +66,30 @@ setCh1Volume:
 setCh2Volume:
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSoundCtrl]
-	ands r2,r1,#0x20			;@ Ch 2 voice on?
-	orrne r2,r0,r0,lsl#16
-	strne r2,[spxptr,#currentSampleValue]
-	movne r0,#0					;@ Silence for now
+	tst r1,#0x20				;@ Ch 2 voice on?
+	bne doCh2Voice
 	tst r1,#2					;@ Ch 2 on?
 	moveq r0,#0
-	ldr r1,=vol1_L
-	and r2,r0,#0xF
+	ldr r2,=vol2_L
+	and r1,r0,#0xF
 	mov r0,r0,lsr#4
-	strb r0,[r1,#vol2_L-vol1_L]
-	strb r2,[r1,#vol2_R-vol1_L]
+	strb r0,[r2]
+	strb r1,[r2,#4]
 	bx lr
+doCh2Voice:
+	ldrb r2,[spxptr,#wsvCh2VoiceVol]
+	movs r1,r2,lsl#29			;@ Left vol
+	movcs r1,r0,lsr#1			;@ 50%
+	movmi r1,r0					;@ 100%
+	movs r2,r2,lsl#31			;@ Right vol
+	movcs r2,r0,lsr#1			;@ 50%
+	movmi r2,r0					;@ 100%
+
+	ldr r0,=vol2_L
+	strb r1,[r0]
+	strb r2,[r0,#4]
+	bx lr
+
 ;@----------------------------------------------------------------------------
 setCh3Volume:
 ;@----------------------------------------------------------------------------
@@ -109,12 +122,18 @@ setHyperVoiceValue:
 	tst r1,#0x80				;@ HyperV Enabled
 	tstne r2,#0x80				;@ HeadPhones Enabled
 	bxeq lr
+
+	movs r0,r0,lsl#24
+	orrmi r0,r0,#7
+	ands r2,r1,#0x0C
+	biceq r0,r0,#7
+	cmpne r2,#0x08				;@ Sign extend?
+	orrmi r0,r0,#7				;@ Unsigned negated
+	bichi r1,r1,#0x03			;@ Ignore shift
+	and r2,r1,#0x03				;@ Mask shift amount
+	mov r0,r0,ror r2
+	mov r0,r0,lsr#16
 //	and r2,r1,#0x6000			;@ Mode, 0=stereo, 1=left, 2=right, 3=mono both.
-	tst r1,#8					;@ Signed value?
-	eorne r0,r0,#0x80
-//	ands r2,r1,#3				;@ Shift amount
-//	movne r0,r0,lsr r2
-	orr r0,r0,r0,lsl#16
 	str r0,[spxptr,#currentSampleValue]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -123,7 +142,7 @@ setTotalVolume:
 	ldrb r1,[spxptr,#wsvHWVolume]
 	ldrb r0,[spxptr,#wsvSoundOutput]
 	tst r0,#0x80				;@ Headphones?
-	movne r1,#3
+	movne r1,#4
 	adr r2,hw1Volumes
 	ldrb r0,[spxptr,#wsvSOC]
 	cmp r0,#SOC_ASWAN
@@ -133,15 +152,17 @@ setTotalVolume:
 	str r1,[r0,#totalVolume-vol1_L]
 	bx lr
 hw1Volumes:
-	mov r2,#0x80000000
-	mov r2,r2,lsl#5
-	mov r2,r2,lsl#6
-	mov r2,r2,lsl#6
-hw2Volumes:
-	mov r2,#0x80000000
+	mov r2,r2,lsr#32
 	mov r2,r2,lsl#4
 	mov r2,r2,lsl#5
-	mov r2,r2,lsl#6
+	mov r2,r2,lsl#5
+	add r2,r9,r2,lsl#5		;@ Headphones
+hw2Volumes:
+	mov r2,r2,lsr#32
+	mov r2,r2,lsl#3
+	mov r2,r2,lsl#4
+	mov r2,r2,lsl#5
+	add r2,r9,r2,lsl#5		;@ Headphones
 
 ;@----------------------------------------------------------------------------
 
@@ -168,7 +189,7 @@ hw2Volumes:
 ;@ r6  = Channel 4
 ;@ r7  = Noise LFSR
 ;@ r8  = Ch3 Sweep
-;@ r9  = Ch2/HyperVoice sample.
+;@ r9  = HyperVoice sample.
 ;@ r10 = Sample pointer
 ;@ r11 = Current sample
 ;@ lr  = Current volume
@@ -214,17 +235,16 @@ innerMixLoop:
 	bne innerMixLoop
 ;@----------------------------------------------------------------------------
 
-	mov r2,#0xFE000000
 	ldrb r11,[r10,r3,lsr#28]	;@ Channel 1
 	add r10,r10,#0x10
 	tst r3,#0x08000000
 	movne r11,r11,lsr#4
-	ands r11,r11,#0xF
+	and r11,r11,#0xF
 vol1_L:
 	mov lr,#0x00				;@ Volume left
 vol1_R:
-	orrsne lr,lr,#0xFF0000		;@ Volume right
-	mlane r2,lr,r11,r2
+	orr lr,lr,#0xFF0000			;@ Volume right
+	mul r2,lr,r11
 
 	ldrb r11,[r10,r4,lsr#28]	;@ Channel 2
 	add r10,r10,#0x10
@@ -236,7 +256,6 @@ vol2_L:
 vol2_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
-	add r2,r2,r9
 
 	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
 	add r10,r10,#0x10
@@ -274,8 +293,7 @@ vol4_R:
 	mov r5,r5,ror#21
 noSweep:
 totalVolume:
-	mov r2,r2,lsl#6
-	eor r2,r2,#0x00008000
+	add r2,r9,r2,lsl#5
 	cmp r0,#0
 	strpl r2,[r1],#4
 	bhi mixLoop					;@ ?? cycles according to No$gba

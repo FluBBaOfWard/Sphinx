@@ -500,6 +500,13 @@ wsvSndDMALen2R:				;@ 0x50, only WSC.
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#sndDmaLength+2]
 	bx lr
+
+;@----------------------------------------------------------------------------
+wsvHyperChanCtrlR:			;@ 0x6B, only WSC
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvHyperVCtrl+1]
+	and r0,r0,#0x6F
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
@@ -861,8 +868,8 @@ wsvHyperCtrlW:				;@ 0x6A, only WSC
 ;@----------------------------------------------------------------------------
 wsvHyperChanCtrlW:			;@ 0x6B, only WSC
 ;@----------------------------------------------------------------------------
-	and r0,r0,#0x6F
 	strb r0,[spxptr,#wsvHyperVCtrl+1]
+	tst r0,#0x10				;@ Reset Left/Right?
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvFreqLW:					;@ 0x80,0x82,0x84,0x86 Sound frequency low
@@ -967,6 +974,12 @@ wsvSoundCtrlW:				;@ 0x90 Sound Control
 	teq r1,r0
 	bxeq lr
 	strb r0,[spxptr,#wsvSoundCtrl]
+	tst r0,#0x20				;@ Ch 2 voice on?
+	ldr r2,=vol2_L
+	ldreq r1,ch2OpCode
+	ldrne r1,ch2OpCode+4
+	str r1,[r2,#8]
+
 	tst r0,#0x40				;@ Ch 3 sweep on?
 	ldr r1,[spxptr,#sweep3CurrentAddr]
 	biceq r1,r1,#0x100
@@ -978,7 +991,11 @@ wsvSoundCtrlW:				;@ 0x90 Sound Control
 	biceq r1,r1,#0x4000
 	orrne r1,r1,#0x4000
 	str r1,[spxptr,#noise4CurrentAddr]
+
 	b setAllChVolume
+ch2OpCode:
+	mlane r2,lr,r11,r2
+	add r2,lr,r2
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91 Sound ouput
 ;@----------------------------------------------------------------------------
@@ -1361,7 +1378,7 @@ doSoundDMA:					;@ In r0 = SndDmaCtrl
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,lr}
 	mov r4,r0
-	and r1,r4,#0x03				;@ Frequency
+	and r1,r4,#0x03				;@ DMA Frequency
 	cmp r1,#3
 	movne r1,#1
 	moveq r1,#2
@@ -1371,33 +1388,33 @@ doSoundDMA:					;@ In r0 = SndDmaCtrl
 	movne r1,#0					;@ Hold
 	ldr r2,[spxptr,#sndDmaSource]
 	ldr r3,[spxptr,#sndDmaLength]
-	subs r3,r3,r1
-	bpl sndDmaCont
-	ands r3,r4,#0x08			;@ Loop?
-	biceq r4,r4,#0x80
-	strbeq r4,[spxptr,#wsvSndDMACtrl]
-	streq r3,[spxptr,#sndDmaLength]
-	ldmfdeq sp!,{r4,pc}
-	ldrhne r2,[spxptr,#wsvSndDMASrcL]
-	ldrhne r0,[spxptr,#wsvSndDMASrcH]
-	orrne r2,r2,r0,lsl#16
-	ldrhne r3,[spxptr,#wsvSndDMALenL]
-	ldrhne r0,[spxptr,#wsvSndDMALenH]
-	orrne r3,r3,r0,lsl#16
-sndDmaCont:
+	mov r0,r2,lsl#12
 	tst r4,#0x40				;@ Increase/decrease
-	rsbne r1,r1,#0
-	ands r0,r1,#0x3				;@ Hold ?, silence.
-	movne r0,r2,lsl#12
-	add r2,r2,r1
+	subne r2,r2,r1
+	addeq r2,r2,r1
+	subs r3,r3,r1
+	blle checkSndDMAEnd			;@ Less or equal.
 	str r2,[spxptr,#sndDmaSource]
 	str r3,[spxptr,#sndDmaLength]
-	blne cpuReadMem20			;@ Only fetch if not Hold
+	bl cpuReadMem20				;@ Fetch data
 
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
 	beq wsvCh2VolumeW
 	b setHyperVoiceValue
+;@----------------------------------------------------------------------------
+checkSndDMAEnd:
+	tst r4,#0x08				;@ Loop?
+	biceq r4,r4,#0x80			;@ Nope.
+	strbeq r4,[spxptr,#wsvSndDMACtrl]
+	bxeq lr
+	ldrh r2,[spxptr,#wsvSndDMASrcL]
+	ldrh r1,[spxptr,#wsvSndDMASrcH]
+	orr r2,r2,r1,lsl#16
+	ldrh r3,[spxptr,#wsvSndDMALenL]
+	ldrh r1,[spxptr,#wsvSndDMALenH]
+	orr r3,r3,r1,lsl#16
+	bx lr
 ;@----------------------------------------------------------------------------
 T_data:
 	.long DIRTYTILES+0x200
@@ -2205,7 +2222,7 @@ defaultInTable:
 	.long wsvUnmappedR			;@ 0x68 ---
 	.long wsvUnmappedR			;@ 0x69 ---
 	.long wsvImportantR			;@ 0x6A Hyper control
-	.long wsvImportantR			;@ 0x6B Hyper Chan control
+	.long wsvHyperChanCtrlR		;@ 0x6B Hyper Chan control
 	.long wsvUnmappedR			;@ 0x6C ---
 	.long wsvUnmappedR			;@ 0x6D ---
 	.long wsvUnmappedR			;@ 0x6E ---
