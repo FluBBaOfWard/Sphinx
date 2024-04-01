@@ -17,6 +17,7 @@
 	.global setCh3Volume
 	.global setCh4Volume
 	.global setHyperVoiceValue
+	.global setSoundOutput
 	.global setTotalVolume
 	.global vol2_L
 
@@ -132,37 +133,54 @@ setHyperVoiceValue:
 	bichi r1,r1,#0x03			;@ Ignore shift
 	and r2,r1,#0x03				;@ Mask shift amount
 	mov r0,r0,ror r2
-	mov r0,r0,lsr#16
-//	and r2,r1,#0x6000			;@ Mode, 0=stereo, 1=left, 2=right, 3=mono both.
+	mov r0,r0,lsr#16			;@ Left
+	ands r2,r1,#0x6000			;@ Mode, 0=stereo, 1=left, 2=right, 3=mono both.
+	cmp r2,#0x4000
+	moveq r0,r0,lsl#16			;@ Right
+	cmp r2,#0x6000
+	orreq r0,r0,r0,lsl#16		;@ Mono
 	str r0,[spxptr,#currentSampleValue]
 	bx lr
 ;@----------------------------------------------------------------------------
-setTotalVolume:
+setSoundOutput:				;@ r0 = wsvSoundOutput
 ;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvHWVolume]
-	ldrb r0,[spxptr,#wsvSoundOutput]
+	and r1,r0,#0x6
 	tst r0,#0x80				;@ Headphones?
-	movne r1,#4
-	adr r2,hw1Volumes
-	ldrb r0,[spxptr,#wsvSOC]
-	cmp r0,#SOC_ASWAN
-	adrne r2,hw2Volumes
-	ldr r1,[r2,r1,lsl#2]
+	movne r1,#0x8
+	adr r2,mixerVolumes
+	ldr r1,[r2,r1,lsl#1]
 	ldr r0,=vol1_L
 	str r1,[r0,#totalVolume-vol1_L]
 	bx lr
+mixerVolumes:
+	mov r2,r2,lsl#8
+	mov r2,r2,lsl#7
+	mov r2,r2,lsl#6
+	mov r2,r2,lsl#5
+	add r2,r9,r2,lsl#5		;@ Headphones
+
+;@----------------------------------------------------------------------------
+setTotalVolume:
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvHWVolume]
+	adr r2,hw1Volumes
+	ldrb r1,[spxptr,#wsvSOC]
+	cmp r1,#SOC_ASWAN
+	adrne r2,hw2Volumes
+	ldr r0,[r2,r0,lsl#2]
+	ldr r1,=mix8Vol
+	str r0,[r1]
+	bx lr
 hw1Volumes:
 	mov r2,r2,lsr#32
-	mov r2,r2,lsl#4
-	mov r2,r2,lsl#5
-	mov r2,r2,lsl#5
-	add r2,r9,r2,lsl#5		;@ Headphones
+	mov r2,r2,lsr#1
+	mov r2,r2,lsr#0
+	mov r2,r2,lsr#0
 hw2Volumes:
 	mov r2,r2,lsr#32
-	mov r2,r2,lsl#3
-	mov r2,r2,lsl#4
-	mov r2,r2,lsl#5
-	add r2,r9,r2,lsl#5		;@ Headphones
+	mov r2,r2,lsr#2
+	mov r2,r2,lsr#1
+	mov r2,r2,lsr#0
 
 ;@----------------------------------------------------------------------------
 

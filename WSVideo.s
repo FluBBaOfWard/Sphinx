@@ -1004,7 +1004,7 @@ wsvSoundOutputW:			;@ 0x91 Sound ouput
 	and r1,r1,#0x80				;@ Keep Headphones bit
 	orr r0,r0,r1
 	strb r0,[spxptr,#wsvSoundOutput]
-	bx lr
+	b setSoundOutput
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
@@ -1015,8 +1015,6 @@ wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
 wsvHWVolumeW:				;@ 0x9E HW Volume?
 ;@----------------------------------------------------------------------------
-	mov r1,#LCD_ICON_TIME_VALUE
-	strb r1,[spxptr,#wsvSoundIconTimer]
 	ldrb r1,[spxptr,#wsvSOC]
 	cmp r1,#SOC_ASWAN
 	moveq r1,#2
@@ -1026,6 +1024,8 @@ wsvHWVolumeW:				;@ 0x9E HW Volume?
 
 	and r0,r0,#0x03				;@ Only low 2 bits
 	strb r0,[spxptr,#wsvHWVolume]
+	mov r1,#LCD_ICON_TIME_VALUE
+	strb r1,[spxptr,#wsvSoundIconTimer]
 	b setTotalVolume
 ;@----------------------------------------------------------------------------
 wsvHWW:						;@ 0xA0, Color/Mono, boot rom lock
@@ -1150,9 +1150,9 @@ wsvSetHeadphones:			;@ r0 = on/off
 	biceq r0,r0,#0x80
 	orrne r0,r0,#0x80
 	strb r0,[spxptr,#wsvSoundOutput]
-	mov r0,#LCD_ICON_TIME_VALUE
-	strb r0,[spxptr,#wsvSoundIconTimer]
-	b setTotalVolume
+	mov r1,#LCD_ICON_TIME_VALUE
+	strb r1,[spxptr,#wsvSoundIconTimer]
+	b setSoundOutput
 ;@----------------------------------------------------------------------------
 wsvSetLowBattery:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
