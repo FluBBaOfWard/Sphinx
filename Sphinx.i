@@ -219,8 +219,8 @@ wsvBnk3SlctX:		.short 0	;@ 0xD4/0xD5 BNK3SLCT - ROM Bank selector for segment 3
 wsvPadding13:		.space 42	;@ 0xD6 - 0xFF ???
 
 ;@----------------------------------------------------------------------------
-sndDmaSource:		.long 0		;@ Original Sound DMA source address
-sndDmaLength:		.long 0		;@ Original Sound DMA length
+sndDmaSource:		.long 0		;@ Sound DMA source address (current)
+sndDmaLength:		.long 0		;@ Sound DMA length (current)
 
 pcm1CurrentAddr:	.long 0		;@ Ch1 Current address
 pcm2CurrentAddr:	.long 0		;@ Ch2 Current address

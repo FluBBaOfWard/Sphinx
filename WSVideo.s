@@ -1376,16 +1376,16 @@ wsvClearInterruptPins:		;@ In r0 = interrupt pins
 ;@----------------------------------------------------------------------------
 doSoundDMA:					;@ In r0 = SndDmaCtrl
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4,lr}
-	mov r4,r0
-	and r1,r4,#0x03				;@ DMA Frequency
+	and r1,r0,#0x03				;@ DMA Frequency
 	cmp r1,#3
 	movne r1,#1
 	moveq r1,#2
-	rsb r0,r1,r1,lsl#3			;@ *7
-	sub v30cyc,v30cyc,r0,lsl#CYC_SHIFT
-	tst r4,#0x04				;@ Hold ?
-	movne r1,#0					;@ Hold
+	rsb r2,r1,r1,lsl#3			;@ *7
+	sub v30cyc,v30cyc,r2,lsl#CYC_SHIFT
+	tst r0,#0x04				;@ Hold ?
+	bne sdmaHold				;@ Hold
+	stmfd sp!,{r4,lr}
+	mov r4,r0
 	ldr r2,[spxptr,#sndDmaSource]
 	ldr r3,[spxptr,#sndDmaLength]
 	mov r0,r2,lsl#12
@@ -1400,6 +1400,11 @@ doSoundDMA:					;@ In r0 = SndDmaCtrl
 
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
+	beq wsvCh2VolumeW
+	b setHyperVoiceValue
+sdmaHold:
+	tst r0,#0x10				;@ Ch2Vol/HyperVoice
+	mov r0,#0
 	beq wsvCh2VolumeW
 	b setHyperVoiceValue
 ;@----------------------------------------------------------------------------
