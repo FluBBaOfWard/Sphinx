@@ -35,7 +35,9 @@ typedef struct {
 	u32 nextLineChange;
 	u32 lineState;
 
-	u32 windowData;
+	u32 unused0;
+	u32 wsvBGScrollBak;		// Extra buff for scroll
+	u32 wsvFGScrollBak;
 //wsvRegs:
 	u8 wsvDispCtrl;
 	u8 wsvBGColor;

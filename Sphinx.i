@@ -54,7 +54,7 @@ scanline:			.long 0		;@ These 3 must be first in state.
 nextLineChange:		.long 0
 lineState:			.long 0
 
-fgWindowData:		.long 0
+unused0:			.long 0
 wsvBGScrollBak:		.long 0		;@ Extra buff for scroll
 wsvFGScrollBak:		.long 0
 
@@ -160,7 +160,7 @@ wsvSoundOutput:		.byte 0		;@ 0x91 Sound output
 wsvNoiseCntr:		.short 0	;@ 0x92/0x93 Noise Counter Shift Register (15 bits)
 wsvCh2VoiceVol:		.byte 0		;@ 0x94 Ch2 Voice Volume
 
-wsvPadding6:		.byte 0		;@ 0x95 Hyper Sound sample?
+wsvSoundTest:		.byte 0		;@ 0x95 Sound test
 wsvSoundOutR:		.short 0	;@ 0x96/0x97 Sound out Right, 10  bits
 wsvSoundOutL:		.short 0	;@ 0x98/0x99 Sound out Left,  10  bits
 wsvSoundOutM:		.short 0	;@ 0x9A/0x9B Sound out Mixed, 11  bits

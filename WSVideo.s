@@ -493,7 +493,7 @@ wsvSndDMALen0R:				;@ 0x4E, only WSC.
 ;@----------------------------------------------------------------------------
 wsvSndDMALen1R:				;@ 0x4F, only WSC.
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#sndDmaLength]
+	ldrb r0,[spxptr,#sndDmaLength+1]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMALen2R:				;@ 0x50, only WSC.
@@ -562,10 +562,12 @@ wsvUnknownW:
 ;@----------------------------------------------------------------------------
 wsvImportantW:
 ;@----------------------------------------------------------------------------
+	mov r11,r11					;@ No$GBA breakpoint
 	add r2,spxptr,#wsvRegs
 	strb r0,[r2,r1]
-	ldr r2,=debugIOUnimplW
-	bx r2
+	stmfd sp!,{spxptr,lr}
+	bl debugIOUnimplW
+	ldmfd sp!,{spxptr,pc}
 ;@----------------------------------------------------------------------------
 wsvReadOnlyW:
 ;@----------------------------------------------------------------------------
@@ -621,7 +623,7 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 ;@----------------------------------------------------------------------------
 wsvMapAdrW:					;@ 0x07 Map table address
 ;@----------------------------------------------------------------------------
-#ifdef NDS
+#ifdef __ARM_ARCH_5TE__
 	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
 #else
 	ldr r2,[spxptr,#wsvBGScrollBak]
@@ -677,7 +679,7 @@ wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 ;@----------------------------------------------------------------------------
 wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
-#ifdef NDS
+#ifdef __ARM_ARCH_5TE__
 	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
 #else
 	ldr r2,[spxptr,#wsvBGScrollBak]
@@ -685,7 +687,7 @@ wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 #endif
 	add r1,r1,#wsvRegs
 	strb r0,[spxptr,r1]
-	add r1,r1,#(wsvBGScrollBak/2) - (wsvRegs+0x10)
+	add r1,r1,#(wsvBGScrollBak/2) - wsvBgXScroll
 	strb r0,[spxptr,r1,lsl#1]
 
 scrollCnt:
@@ -1193,8 +1195,6 @@ midFrame:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvDispCtrl]
 	strb r0,[spxptr,#wsvLatchedDispCtrl]
-	ldr r0,[spxptr,#wsvFgWinXPos]	;@ Win pos/size
-	str r0,[spxptr,#fgWindowData]
 	ldr r0,[spxptr,#wsvSprWinXPos]	;@ Win pos/size
 	str r0,[spxptr,#sprWindowData]
 	bx lr
@@ -1206,7 +1206,7 @@ endFrame:
 	bl dispCnt
 	ldr r2,[spxptr,#wsvFgWinXPos]
 	bl windowCnt
-#ifdef NDS
+#ifdef __ARM_ARCH_5TE__
 	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
 #else
 	ldr r2,[spxptr,#wsvBGScrollBak]
@@ -2478,7 +2478,7 @@ defaultOutTable:
 	.long wsvReadOnlyW			;@ 0x92 Noise LFSR value low
 	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
 	.long wsvRegW				;@ 0x94 Sound voice control
-	.long wsvRegW				;@ 0x95 Sound Hyper voice
+	.long wsvRegW				;@ 0x95 Sound Test
 	.long wsvReadOnlyW			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.
 	.long wsvReadOnlyW			;@ 0x97 SND9697
 	.long wsvReadOnlyW			;@ 0x98 SND9899 SND_OUT_L (ch1-4) left output, 10bit.
