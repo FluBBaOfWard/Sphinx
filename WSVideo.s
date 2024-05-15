@@ -442,14 +442,11 @@ wsvInterruptBaseR:			;@ 0xB0
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptStatus]
 #ifdef GBA
-	mov r1,r1,lsl#24
-	mov r0,#7
-intVecLoop:
-	movs r1,r1,lsl#1
-	bcs intFound
-	subs r0,r0,#1
-	bne intVecLoop
-intFound:
+;@ Lookup the IRQ vector using a 16-bit Debruijn sequence.
+	mov r0,#0x09<<24
+	orr r0,#0xAF<<16
+	mul r1,r0,r1
+	mov r0,r1,lsr#28
 #else
 	clz r0,r1
 	rsbs r0,r0,#31
@@ -2478,7 +2475,7 @@ defaultOutTable:
 	.long wsvReadOnlyW			;@ 0x92 Noise LFSR value low
 	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
 	.long wsvRegW				;@ 0x94 Sound voice control
-	.long wsvRegW				;@ 0x95 Sound Test
+	.long wsvImportantW			;@ 0x95 Sound Test
 	.long wsvReadOnlyW			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.
 	.long wsvReadOnlyW			;@ 0x97 SND9697
 	.long wsvReadOnlyW			;@ 0x98 SND9899 SND_OUT_L (ch1-4) left output, 10bit.

@@ -230,7 +230,7 @@ typedef struct {
 	u8 wsvMachine;				// WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
 	u8 wsvPadding15[2];
 
-	void *irqFunction;			// IRQ callback
+	void (*irqFunction)(bool pin);	// IRQ callback
 
 	void *gfxRAM;
 	void *paletteRAM;
@@ -240,7 +240,7 @@ typedef struct {
 
 } Sphinx;
 
-void wsVideoReset(void *irqFunction(), void *ram, int soc);
+void wsVideoReset(void (*irqFunction)(bool pin), void *ram, int soc);
 
 /**
  * Saves the state of the chip to the destination.

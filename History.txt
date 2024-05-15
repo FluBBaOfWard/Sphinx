@@ -1,12 +1,13 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.6 - 2024-05-05 (FluBBa)
+V0.3.6 - 2024-05-15 (FluBBa)
 	Fixed repeating sound DMA.
 	Fixed HyperVoice scaling/mode.
 	Fixed debugging of register writes.
 	Optimized copyScrollValues a tiny bit.
 	Optimized wsVideoInit a tiny bit.
+	Optimized IRQ vector calculation.
 
 V0.3.5 - 2023-10-25 (FluBBa)
 	Fixed IO register differences between mono/color mode.
