@@ -5,7 +5,6 @@
 //  Created by Fredrik Ahlström on 2006-07-23.
 //  Copyright © 2006-2024 Fredrik Ahlström. All rights reserved.
 //
-;@ ASM header for the Bandai WonderSwan SOC emulator
 
 #if !__ASSEMBLER__
 	#error This header file is only for use in assembly files!

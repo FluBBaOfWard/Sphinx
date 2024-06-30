@@ -1788,7 +1788,7 @@ wsvDMASprites:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{spxptr,lr}
 
-	add r0,spxptr,#wsvSpriteRAM
+	add r0,spxptr,#wsvSpriteRAM			;@ Destination
 	ldr r1,[spxptr,#gfxRAM]
 	ldrb r2,[spxptr,#wsvSprTblAdr]
 	add r1,r1,r2,lsl#9
@@ -2308,11 +2308,11 @@ defaultInTable:
 	.long wsvImportantR			;@ 0xB7 NMI ctrl, bit 4.
 	.long wsvUnmappedR			;@ 0xB8 ---
 	.long wsvUnmappedR			;@ 0xB9 ---
-	.long intEepromDataLowR		;@ 0xBA int-eeprom data low
-	.long intEepromDataHighR	;@ 0xBB int-eeprom data high
-	.long intEepromAdrLowR		;@ 0xBC int-eeprom address low
-	.long intEepromAdrHighR		;@ 0xBD int-eeprom address high
-	.long intEepromStatusR		;@ 0xBE int-eeprom status
+	.long intEepromDataLowR		;@ 0xBA Internal eeprom data low
+	.long intEepromDataHighR	;@ 0xBB Internal eeprom data high
+	.long intEepromAdrLowR		;@ 0xBC Internal eeprom address low
+	.long intEepromAdrHighR		;@ 0xBD Internal eeprom address high
+	.long intEepromStatusR		;@ 0xBE Internal eeprom status
 	.long wsvUnknownR			;@ 0xBF ???
 
 ;@----------------------------------------------------------------------------
@@ -2514,11 +2514,11 @@ defaultOutTable:
 	.long wsvNMICtrlW			;@ 0xB7 NMI ctrl
 	.long wsvUnmappedW			;@ 0xB8 ---
 	.long wsvUnmappedW			;@ 0xB9 ---
-	.long intEepromDataLowW		;@ 0xBA int-eeprom data low
-	.long intEepromDataHighW	;@ 0xBB int-eeprom data high
-	.long intEepromAdrLowW		;@ 0xBC int-eeprom address low
-	.long intEepromAdrHighW		;@ 0xBD int-eeprom address high
-	.long intEepromCommandW		;@ 0xBE int-eeprom command
+	.long intEepromDataLowW		;@ 0xBA Internal eeprom data low
+	.long intEepromDataHighW	;@ 0xBB Internal eeprom data high
+	.long intEepromAdrLowW		;@ 0xBC Internal eeprom address low
+	.long intEepromAdrHighW		;@ 0xBD Internal eeprom address high
+	.long intEepromCommandW		;@ 0xBE Internal eeprom command
 	.long wsvUnknownW			;@ 0xBF ???
 
 ;@----------------------------------------------------------------------------
