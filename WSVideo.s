@@ -442,11 +442,14 @@ wsvInterruptBaseR:			;@ 0xB0
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptStatus]
 #ifdef GBA
-;@ Lookup the IRQ vector using a 16-bit Debruijn sequence.
-	mov r0,#0x09<<24
-	orr r0,#0xAF<<16
-	mul r1,r0,r1
-	mov r0,r1,lsr#28
+	mov r1,r1,lsl#24
+	mov r0,#7
+intVecLoop:
+	movs r1,r1,lsl#1
+	bcs intFound
+	subs r0,r0,#1
+	bne intVecLoop
+intFound:
 #else
 	clz r0,r1
 	rsbs r0,r0,#31
