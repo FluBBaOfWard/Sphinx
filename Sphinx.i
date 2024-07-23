@@ -215,7 +215,11 @@ wsvBnk0SlctX:		.byte 0		;@ 0xCF ROM Bank Base Selector for segments 4-$F
 wsvBnk1SlctX:		.short 0	;@ 0xD0/0xD1 SRAM Bank selector
 wsvBnk2SlctX:		.short 0	;@ 0xD2/0xD3 BNK2SLCT - ROM Bank selector for segment 2
 wsvBnk3SlctX:		.short 0	;@ 0xD4/0xD5 BNK3SLCT - ROM Bank selector for segment 3
-wsvPadding13:		.space 42	;@ 0xD6 - 0xFF ???
+wsvCartTimer:		.byte 0		;@ 0xD6 Cart Timer
+wsvPadding13:		.space 1	;@ 0xD7 ???
+wsvADPCMW:			.byte 0		;@ 0xD8 ADPCM Write
+wsvADPCMR:			.byte 0		;@ 0xD9 ADPCM Read
+wsvPadding14:		.space 38	;@ 0xDA - 0xFF ???
 
 ;@----------------------------------------------------------------------------
 sndDmaSource:		.long 0		;@ Sound DMA source address (current)
@@ -244,7 +248,7 @@ wsvByteReceived:	.byte 0
 wsvSoundIconTimer:	.byte 0
 wsvCartIconTimer:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding14:		.space 2
+wsvPadding15:		.space 2
 
 enabledLCDIcons:	.long 0
 dispLine: 			.long 0		;@ Last line dispCtrl was updated.
@@ -258,7 +262,7 @@ sprWindowData:		.long 0
 
 wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2
 wsvMachine:			.byte 0		;@ WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
-wsvPadding15:		.space 2
+wsvPadding16:		.space 2
 
 irqFunction:		.long 0		;@ IRQ function
 

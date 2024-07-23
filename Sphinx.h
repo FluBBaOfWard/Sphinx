@@ -192,7 +192,11 @@ typedef struct {
 	u16 wsvBnk1SlctX;
 	u16 wsvBnk2SlctX;
 	u16 wsvBnk3SlctX;
-	u8 wsvPadding13[42];
+	u8 wsvCartTimer;			// 0xD6 Cart Timer
+	u8 wsvPadding13[1];
+	u8 wsvADPCMW;				// 0xD8 ADPCM Write
+	u8 wsvADPCMR;				// 0xD9 ADPCM Read
+	u8 wsvPadding14[38];
 //------------------------------
 	u32 sndDmaSource;			// Original Sound DMA source address
 	u32 sndDmaLength;			// Original Sound DMA length
@@ -216,7 +220,7 @@ typedef struct {
 	u8 wsvSoundIconTimer;
 	u8 wsvCartIconTimer;
 	u8 wsvSleepMode__;
-	u8 wsvPadding14[2];
+	u8 wsvPadding15[2];
 
 	u32 enabledLCDIcons;
 	u32 dispLine;
@@ -228,7 +232,7 @@ typedef struct {
 
 	u8 wsvSOC;					// ASWAN, SPHINX or SPHINX2
 	u8 wsvMachine;				// WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
-	u8 wsvPadding15[2];
+	u8 wsvPadding16[2];
 
 	void (*irqFunction)(bool pin);	// IRQ callback
 
