@@ -1,6 +1,7 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Handle double buffered tile maps better, see Hataraku Chocobo.
 	Fix HyperVoice stereo handling.
 	Palette change per line?
 	Handle LCD on/off.

@@ -1040,6 +1040,16 @@ wsvHWW:						;@ 0xA0, Color/Mono, boot rom lock
 	eor r1,r1,r0
 	tst r1,#1					;@ Boot rom locked?
 	bxeq lr
+
+	ldr r0,=ioOutTable			;@ Disable write to SPHINX2 registers
+	ldr r1,=wsvUnmappedW
+	mov r2,#0x70
+sp2DisLoop:
+	str r1,[r0,r2,lsl#2]
+	add r2,r2,#1
+	cmp r2,#0x78
+	bne sp2DisLoop
+
 	mov r0,#0					;@ Remove boot rom overlay
 	b setBootRomOverlay
 
@@ -1121,9 +1131,9 @@ wsvSerialStatusW:			;@ 0xB3
 	tst r1,#0x80				;@ Serial enable changed?
 	bxeq lr
 	tst r0,#0x80				;@ Serial enable now?
-	mov r0,#0x01				;@ #0 = Serial transmit buffer empty
+	mov r0,#SERTX_IRQ_F			;@ #0 = Serial transmit buffer empty
 	bne wsvSetInterruptPins
-	orr r0,r0,#0x09				;@ #0, 3 = Serial transmit, receive
+	orr r0,r0,#SERRX_IRQ_F		;@ #0, 3 = Serial transmit, receive
 	b wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
@@ -1142,7 +1152,18 @@ wsvNMICtrlW:				;@ 0xB7
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvNMIControl]
 	ldrb r0,[spxptr,#wsvLowBattery]
-	b wsvSetLowBattery
+;@----------------------------------------------------------------------------
+wsvSetLowBattery:			;@ r0 = on/off
+;@----------------------------------------------------------------------------
+	strb r0,[spxptr,#wsvLowBattery]
+	ldrb r1,[spxptr,#wsvNMIControl]
+	tst r1,#0x10
+	moveq r0,#0
+	ldrb r1,[spxptr,#wsvLowBatPin]
+	strb r0,[spxptr,#wsvLowBatPin]
+	cmp r0,r1
+	bne V30SetNMIPin
+	bx lr
 
 ;@----------------------------------------------------------------------------
 wsvSetHeadphones:			;@ r0 = on/off
@@ -1156,32 +1177,20 @@ wsvSetHeadphones:			;@ r0 = on/off
 	strb r1,[spxptr,#wsvSoundIconTimer]
 	b setSoundOutput
 ;@----------------------------------------------------------------------------
-wsvSetLowBattery:			;@ r0 = on/off
-;@----------------------------------------------------------------------------
-	strb r0,[spxptr,#wsvLowBattery]
-	ldrb r1,[spxptr,#wsvNMIControl]
-	tst r1,#0x10
-	moveq r0,#0
-	ldrb r1,[spxptr,#wsvLowBatPin]
-	strb r0,[spxptr,#wsvLowBatPin]
-	cmp r0,r1
-	bne V30SetNMIPin
-	bx lr
-;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
 
 	ldr r5,=0xFE00FE00
 	ldr r6,=0x00010001
+	ldr r8,[spxptr,#scrollBuff]
 	ldr r10,[spxptr,#gfxRAM]
 
 	ldrb r1,[spxptr,#wsvVideoMode]
-//	tst r1,#0x80				;@ Color Mode / 64kB RAM?
 	adr lr,tMapRet
 	tst r1,#0x40				;@ 4 bit planes?
-	beq bgMono
-	b bgColor
+	beq bgMap4Render
+	b bgMap16Render
 
 tMapRet:
 	ldmfd sp!,{r4-r11,pc}
@@ -1218,7 +1227,7 @@ endFrame:
 	ldrh r1,[spxptr,#wsvVBlCounter]
 	subs r1,r1,#1
 	bmi noTimerVBlIrq
-	orreq r0,r0,#0x20				;@ #5 = VBlank timer
+	orreq r0,r0,#VBLTM_IRQ_F		;@ #5 = VBlank timer
 	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noVBlIrq
 	tst r2,#0x8						;@ Repeat?
@@ -1227,7 +1236,7 @@ noVBlIrq:
 	tst r2,#0x4						;@ VBlank timer enabled?
 	strhne r1,[spxptr,#wsvVBlCounter]
 noTimerVBlIrq:
-	orr r0,r0,#0x40					;@ #6 = VBlank
+	orr r0,r0,#VBLST_IRQ_F			;@ #6 = VBlank
 	bl wsvSetInterruptPins
 
 	ldmfd sp!,{pc}
@@ -1300,18 +1309,18 @@ checkScanlineIRQ:
 	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
 	mov r0,#0
-	orreq r0,r0,#0x10			;@ #4 = Line compare
+	orreq r0,r0,#LINE_IRQ_F		;@ #4 = Line compare
 
 	ldr r2,[spxptr,#serialIRQCounter]
 	cmp r2,#0
 	subspl r2,r2,256			;@ Cycles per scanline
 	str r2,[spxptr,#serialIRQCounter]
-	orrcc r0,r0,#0x01			;@ #0 = Serial transmit
+	orrcc r0,r0,#SERTX_IRQ_F	;@ #0 = Serial transmit
 
 	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
 	bmi noTimerHBlIrq
-	orreq r0,r0,#0x80			;@ #7 = HBlank timer
+	orreq r0,r0,#HBLTM_IRQ_F	;@ #7 = HBlank timer
 	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noHBlIrq
 	tst r2,#0x2					;@ Repeat?
@@ -1348,7 +1357,7 @@ skipSound:
 wsvSetInterruptExternal:	;@ r0 = irq pin state
 ;@----------------------------------------------------------------------------
 	cmp r0,#0
-	mov r0,#4				;@ External interrupt is bit/number 2.
+	mov r0,#EXTRN_IRQ_F			;@ External interrupt is bit/number 2.
 	beq wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSetInterruptPins:		;@ r0 = interrupt pins
@@ -1595,24 +1604,24 @@ tx4ColTileLoop1:
 	bx lr
 
 ;@-------------------------------------------------------------------------------
-;@ bgChrFinish				;end of frame...
+;@ bgMapFinish				;end of frame...
 ;@-------------------------------------------------------------------------------
-;@	ldr r5,=0xFE00FE00
+;@	r5 = 0xFE00FE00
+;@	r8 = scrollBuff
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
-bgColor:
+bgMap16Render:
 	stmfd sp!,{lr}
-	ldr r8,[spxptr,#scrollBuff]
 	ldrb r7,[r8,#1]!
 	mov r1,#GAME_HEIGHT
-bgCAdrLoop:
+bgM16AdrLoop:
 	ldrb r9,[r8],#8
 	cmp r9,r7
-	bne bgCAdrDone
+	bne bgM16AdrDone
 	subs r1,r1,#1
-	bne bgCAdrLoop
+	bne bgM16AdrLoop
 	mov r9,#-1
-bgCAdrDone:
+bgM16AdrDone:
 	orrne r7,r7,r9,lsl#24
 	add r11,r10,#0x10000			;@ Size of wsRAM, ptr to DIRTYTILES.
 
@@ -1676,25 +1685,25 @@ bgm16Loop:
 	bx lr
 
 ;@-------------------------------------------------------------------------------
-;@ bgChrFinish				;end of frame...
+;@ bgMapFinish				;end of frame...
 ;@-------------------------------------------------------------------------------
-;@	ldr r5,=0xFE00FE00
-;@	ldr r6,=0x00010001
+;@	r5 = 0xFE00FE00
+;@	r6 = 0x00010001
+;@	r8 = scrollBuff
 ;@ MSB          LSB
 ;@ hvbppppnnnnnnnnn
-bgMono:
+bgMap4Render:
 	stmfd sp!,{lr}
-	ldr r8,[spxptr,#scrollBuff]
 	ldrb r7,[r8,#1]!
 	mov r1,#GAME_HEIGHT
-bgMAdrLoop:
+bgM4AdrLoop:
 	ldrb r9,[r8],#8
 	cmp r9,r7
-	bne bgMAdrDone
+	bne bgM4AdrDone
 	subs r1,r1,#1
-	bne bgMAdrLoop
+	bne bgM4AdrLoop
 	mov r9,#-1
-bgMAdrDone:
+bgM4AdrDone:
 	orrne r7,r7,r9,lsl#24
 	add r11,r10,#0x10000			;@ Size of wsRAM, ptr to DIRTYTILES.
 
@@ -2120,6 +2129,8 @@ chkHorzIcon:
 
 	ldmfd sp!,{r4-r5,pc}
 
+	.section .rodata
+	.align 2
 ;@----------------------------------------------------------------------------
 defaultInTable:
 	.long wsvRegR				;@ 0x00 Display control
@@ -2447,14 +2458,14 @@ defaultOutTable:
 	.long wsvUnmappedW			;@ 0x6E ---
 	.long wsvUnmappedW			;@ 0x6F ---
 
-	.long wsvReadOnlyW			;@ 0x70 Unknown70, LCD settings on SC?
-	.long wsvReadOnlyW			;@ 0x71 Unknown71
-	.long wsvReadOnlyW			;@ 0x72 Unknown72
-	.long wsvReadOnlyW			;@ 0x73 Unknown73
-	.long wsvReadOnlyW			;@ 0x74 Unknown74
-	.long wsvReadOnlyW			;@ 0x75 Unknown75
-	.long wsvReadOnlyW			;@ 0x76 Unknown76
-	.long wsvReadOnlyW			;@ 0x77 Unknown77
+	.long wsvImportantW			;@ 0x70 Unknown70, LCD settings on SC?
+	.long wsvImportantW			;@ 0x71 Unknown71
+	.long wsvImportantW			;@ 0x72 Unknown72
+	.long wsvImportantW			;@ 0x73 Unknown73
+	.long wsvImportantW			;@ 0x74 Unknown74
+	.long wsvImportantW			;@ 0x75 Unknown75
+	.long wsvImportantW			;@ 0x76 Unknown76
+	.long wsvImportantW			;@ 0x77 Unknown77
 	.long wsvUnmappedW			;@ 0x78 ---
 	.long wsvUnmappedW			;@ 0x79 ---
 	.long wsvUnmappedW			;@ 0x7A ---

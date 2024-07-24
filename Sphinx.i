@@ -45,6 +45,18 @@
 /** Game screen height in pixels */
 #define GAME_HEIGHT (144)
 
+;@----------------------------------------------------------------------------
+;@ Internal IRQ flags
+	.equ SERTX_IRQ_F,	0x01			;@ Serial Transmit IRQ flag
+	.equ KEYPD_IRQ_F,	0x02			;@ Key press IRQ flag
+	.equ EXTRN_IRQ_F,	0x04			;@ External (cart) IRQ flag
+	.equ SERRX_IRQ_F,	0x08			;@ Serial Receive IRQ flag
+	.equ LINE_IRQ_F,	0x10			;@ Drawing line IRQ flag
+	.equ VBLTM_IRQ_F,	0x20			;@ VBlank Timer IRQ flag
+	.equ VBLST_IRQ_F,	0x40			;@ VBlank begin IRQ flag
+	.equ HBLTM_IRQ_F,	0x80			;@ HBlank Timer IRQ flag
+;@----------------------------------------------------------------------------
+
 	spxptr		.req r12
 						;@ WSVideo.s
 	.struct 0
