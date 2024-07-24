@@ -1193,8 +1193,6 @@ newFrame:					;@ Called before line 0
 ;@----------------------------------------------------------------------------
 midFrame:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvDispCtrl]
-	strb r0,[spxptr,#wsvLatchedDispCtrl]
 	ldr r0,[spxptr,#wsvSprWinXPos]	;@ Win pos/size
 	str r0,[spxptr,#sprWindowData]
 	bx lr
@@ -1640,6 +1638,11 @@ bgCAdrDone:
 	ldmfd sp!,{pc}
 
 bgm16Start:
+	add r3,spxptr,r2
+	ldrb r4,[r3,#cachedMaps-1]!
+	cmp r4,r1
+	strbne r1,[r3]
+	orrne r2,r2,#0x80000000
 	orr r2,r2,r2,lsl#8
 	add r8,r11,r1,lsl#6
 	add r1,r10,r1,lsl#11
@@ -1717,6 +1720,11 @@ bgMAdrDone:
 	ldmfd sp!,{pc}
 
 bgm4Start:
+	add r3,spxptr,r2
+	ldrb r4,[r3,#cachedMaps-1]!
+	cmp r4,r1
+	strbne r1,[r3]
+	orrne r2,r2,#0x80000000
 	orr r2,r2,r2,lsl#8
 	add r8,r11,r1,lsl#6
 	add r1,r10,r1,lsl#11

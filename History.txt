@@ -1,7 +1,8 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.6 - 2024-06-30 (FluBBa)
+V0.3.6 - 2024-07-24 (FluBBa)
+	Fixed cache bug in tile map rendering.
 	Fixed repeating sound DMA.
 	Fixed HyperVoice scaling/mode.
 	Fixed debugging of register writes.

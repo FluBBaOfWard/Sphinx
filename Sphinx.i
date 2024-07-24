@@ -239,7 +239,6 @@ missingSamplesCnt:	.long 0		;@ Number of missing samples from last sound callbac
 serialIRQCounter:	.long 0		;@ How many cycles to send byte.
 
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
-wsvLatchedDispCtrl:	.byte 0		;@ Latched Display Control
 wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
 wsvLowBatPin:		.byte 0
@@ -248,7 +247,7 @@ wsvByteReceived:	.byte 0
 wsvSoundIconTimer:	.byte 0
 wsvCartIconTimer:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding15:		.space 2
+wsvPadding15:		.space 3
 
 enabledLCDIcons:	.long 0
 dispLine: 			.long 0		;@ Last line dispCtrl was updated.
@@ -259,6 +258,7 @@ wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 sphinxStateEnd:
 
 sprWindowData:		.long 0
+cachedMaps:			.space 4
 
 wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2
 wsvMachine:			.byte 0		;@ WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2

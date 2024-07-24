@@ -211,7 +211,6 @@ typedef struct {
 	u32 serialIRQCounter;		// How many cycles to send byte.
 
 	u8 wsvLatchedSprCnt;		// Latched Sprite count
-	u8 wsvLatchedDispCtrl;		// Latched Display Control
 	u8 wsvOrientation;
 	u8 wsvLowBattery;
 	u8 wsvLowBatPin;
@@ -220,7 +219,7 @@ typedef struct {
 	u8 wsvSoundIconTimer;
 	u8 wsvCartIconTimer;
 	u8 wsvSleepMode__;
-	u8 wsvPadding15[2];
+	u8 wsvPadding15[3];
 
 	u32 enabledLCDIcons;
 	u32 dispLine;
@@ -229,6 +228,9 @@ typedef struct {
 	u32 ledCounter;
 	u8 wsvSpriteRAM[0x200];
 	// End of Sphinx state
+
+	u32 sprWindowData;
+	u8 cachedMaps[4];
 
 	u8 wsvSOC;					// ASWAN, SPHINX or SPHINX2
 	u8 wsvMachine;				// WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
