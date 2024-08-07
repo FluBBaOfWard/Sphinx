@@ -736,6 +736,12 @@ wsvDMASourceW:				;@ 0x40, only WSC.
 	strb r0,[spxptr,#wsvDMASource]
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvDMASourceHW:				;@ 0x42, only WSC.
+;@----------------------------------------------------------------------------
+	and r0,r0,#0x0F
+	strb r0,[spxptr,#wsvDMASource+2]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvDMADestW:				;@ 0x44, only WSC.
 ;@----------------------------------------------------------------------------
 	bic r0,r0,#0x01
@@ -764,6 +770,7 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2*word cycles.
 #endif
 	movs r6,r5,lsr#16			;@ r6=length
 	beq dmaEnd
+	mov r4,r4,lsl#12
 	mov r5,r5,lsl#16
 	sub v30cyc,v30cyc,#5*CYCLE
 	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT
@@ -773,17 +780,18 @@ wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2*word cycles.
 	mov r8,spxptr
 
 dmaLoop:
-	mov r0,r4,lsl#12
+	mov r0,r4
 	bl dmaReadMem20W
 	mov r1,r0
 	mov r0,r5,lsr#4
 	bl dmaWriteMem20W
-	add r4,r4,r7,asr#4
+	add r4,r4,r7,lsl#8
 	add r5,r5,r7,lsl#12
 	subs r6,r6,#2
 	bne dmaLoop
 
 	mov spxptr,r8
+	mov r4,r4,lsr#12
 	mov r5,r5,lsr#16
 #ifdef __ARM_ARCH_5TE__
 	strd r4,r5,[spxptr,#wsvDMASource]
@@ -2409,7 +2417,7 @@ defaultOutTable:
 			;@ DMA registers, only WSC
 	.long wsvDMASourceW			;@ 0x40	DMA source
 	.long wsvRegW				;@ 0x41 DMA src
-	.long wsvRegW				;@ 0x42 DMA src
+	.long wsvDMASourceHW		;@ 0x42 DMA src
 	.long wsvZeroW				;@ 0x43 ---
 	.long wsvDMADestW			;@ 0x44 DMA destination
 	.long wsvRegW				;@ 0x45 DMA dst
