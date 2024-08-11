@@ -19,6 +19,7 @@
 	.global wsVideoInit
 	.global wsVideoReset
 	.global wsvSetCartMap
+	.global wsvSetIOPortOut
 	.global wsvDoScanline
 	.global wsvRead
 	.global wsvRead16
@@ -204,6 +205,12 @@ cartTblLoop:
 	bhi cartTblLoop
 
 	ldmfd sp!,{r4,lr}
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSetIOPortOut:		;@ r0=port, r1=function
+;@----------------------------------------------------------------------------
+	ldr r2,=ioOutTable
+	str r1,[r2,r0,lsl#2]
 	bx lr
 ;@----------------------------------------------------------------------------
 _debugIOUnmappedR:

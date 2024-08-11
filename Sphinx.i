@@ -221,7 +221,7 @@ wsvRTCCommand:		.byte 0		;@ 0xCA RTC Command
 wsvRTCData:			.byte 0		;@ 0xCB RTC Data
 wsvGPIOEnable:		.byte 0		;@ 0xCC GP IO Enable
 wsvGPIOData:		.byte 0		;@ 0xCD GP IO Data
-wsvWWitch:			.byte 0		;@ 0xCE WonderWitch IO Data
+wsvBank1Map:		.byte 0		;@ 0xCE Map Flash/ROM to SRAM area
 
 wsvBnk0SlctX:		.byte 0		;@ 0xCF ROM Bank Base Selector for segments 4-$F
 wsvBnk1SlctX:		.short 0	;@ 0xD0/0xD1 SRAM Bank selector
