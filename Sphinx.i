@@ -97,7 +97,8 @@ wsvFgYScroll:		.byte 0		;@ 0x13 Foreground Y-Scroll
 wsvLCDControl:		.byte 0		;@ 0x14 LCD control (on/off?)
 wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
 wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
-wsvPadding0:		.space 3	;@ 0x17 - 0x19 ???
+wsvVSync:			.byte 0		;@ 0x17 LCD_VSYNC
+wsvPadding0:		.space 2	;@ 0x18 - 0x19 ???
 wsvLCDVolume:		.byte 0		;@ 0x1A LCD Volume icon
 wsvPadding0_1:		.space 1	;@ 0x1B ???
 

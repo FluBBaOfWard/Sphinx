@@ -1165,15 +1165,17 @@ wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
 wsvNMICtrlW:				;@ 0xB7
 ;@----------------------------------------------------------------------------
-	strb r0,[spxptr,#wsvNMIControl]
+	and r1,r0,#0x10
+	strb r1,[spxptr,#wsvNMIControl]
 	ldrb r0,[spxptr,#wsvLowBattery]
 ;@----------------------------------------------------------------------------
 wsvSetLowBattery:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
+	cmp r0,#0
+	movne r0,#0x10
 	strb r0,[spxptr,#wsvLowBattery]
 	ldrb r1,[spxptr,#wsvNMIControl]
-	tst r1,#0x10
-	moveq r0,#0
+	and r0,r0,r1
 	ldrb r1,[spxptr,#wsvLowBatPin]
 	strb r0,[spxptr,#wsvLowBatPin]
 	cmp r0,r1
@@ -2342,7 +2344,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0xB4 Interrupt status
 	.long IOPortA_R				;@ 0xB5 keypad
 	.long wsvZeroR				;@ 0xB6 Interrupt acknowledge
-	.long wsvImportantR			;@ 0xB7 NMI ctrl, bit 4.
+	.long wsvRegR				;@ 0xB7 NMI ctrl, bit 4.
 	.long wsvUnmappedR			;@ 0xB8 ---
 	.long wsvUnmappedR			;@ 0xB9 ---
 	.long intEepromDataLowR		;@ 0xBA Internal eeprom data low
@@ -2378,7 +2380,7 @@ defaultOutTable:
 	.long wsvRegW				;@ 0x14 LCD control (on/off?)
 	.long wsvLCDIconW			;@ 0x15 LCD icons
 	.long wsvRefW				;@ 0x16 Total scan lines
-	.long wsvImportantW			;@ 0x17 Vsync line
+	.long wsvRegW				;@ 0x17 Vsync line
 	.long wsvUnmappedW			;@ 0x18 ---
 	.long wsvUnmappedW			;@ 0x19 ---
 	.long wsvUnknownW			;@ 0x1A Volume Icons, LCD sleep
