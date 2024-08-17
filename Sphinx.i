@@ -66,12 +66,12 @@ nextLineChange:		.long 0
 lineState:			.long 0
 
 unused0:			.long 0
-wsvBGScrollBak:		.long 0		;@ Extra buff for scroll
-wsvFGScrollBak:		.long 0
+wsvBgScrollBak:		.long 0		;@ Extra buff for scroll
+wsvFgScrollBak:		.long 0
 
 wsvRegs:
 wsvDispCtrl:		.byte 0		;@ 0x00 Display control
-wsvBGColor:			.byte 0		;@ 0x01 Background color
+wsvBgColor:			.byte 0		;@ 0x01 Background color
 wsvCurrentLine:		.byte 0		;@ 0x02 Current scan line
 wsvLineCompare:		.byte 0		;@ 0x03 Scan line compare for IRQ
 wsvSprTblAdr:		.byte 0		;@ 0x04 Sprite table address
@@ -100,7 +100,7 @@ wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
 wsvVSync:			.byte 0		;@ 0x17 LCD_VSYNC
 wsvPadding0:		.space 2	;@ 0x18 - 0x19 ???
 wsvLCDVolume:		.byte 0		;@ 0x1A LCD Volume icon
-wsvPadding0_1:		.space 1	;@ 0x1B ???
+wsvPadding1:		.space 1	;@ 0x1B ???
 
 wsvColor01:			.byte 0		;@ 0x1C Color 0 & 1
 wsvColor23:			.byte 0		;@ 0x1D Color 2 & 3
@@ -128,16 +128,15 @@ wsvDMASource:		.long 0		;@ 0x40-0x43 DMA source adr bits 19-0
 wsvDMADest:			.short 0	;@ 0x44/0x45 DMA destination adr bits 15-0
 wsvDMALength:		.short 0	;@ 0x46/0x47 DMA length bits 15-0
 wsvDMACtrl:			.byte 0		;@ 0x48 DMA control, bit 7 start
-wsvPadding1:		.space 1	;@ 0x49 ???
+wsvPadding2:		.space 1	;@ 0x49 ???
 
 wsvSndDMASrcL:		.short 0	;@ 0x4A-0x4B Sound DMA source adr bits 15-0
 wsvSndDMASrcH:		.short 0	;@ 0x4C-0x4D Sound DMA source adr bits 19-16
 wsvSndDMALenL:		.short 0	;@ 0x4E-0x4F Sound DMA length bits 15-0
 wsvSndDMALenH:		.short 0	;@ 0x50-0x51 Sound DMA length bits 19-16
 wsvSndDMACtrl:		.byte 0		;@ 0x52 Sound DMA control, bit 7 start
-wsvPadding2:		.space 1	;@ 0x53 ???
 
-wsvPadding3:		.space 12	;@ 0x54 - 0x5F ???
+wsvPadding3:		.space 13	;@ 0x53 - 0x5F ???
 
 wsvVideoMode:		.byte 0		;@ 0x60 Video rendering mode
 wsvPadding4:		.space 1	;@ 0x61 ???
@@ -195,7 +194,7 @@ wsv0xAC:			.space 1	;@ 0xAC Power Off???
 wsvPadding11:		.space 3	;@ 0xAD - 0xAF ???
 
 wsvInterruptBase:	.byte 0		;@ 0xB0 Interrupt base
-wsvComByte:			.byte 0		;@ 0xB1 Communication byte
+wsvComByte:			.byte 0		;@ 0xB1 Serial Communication byte
 wsvInterruptEnable:	.byte 0		;@ 0xB2 Interrupt enable
 wsvSerialStatus:	.byte 0		;@ 0xB3 Serial status
 wsvInterruptStatus:	.byte 0		;@ 0xB4 Interrupt status
@@ -220,7 +219,7 @@ wsvExtEEPROMCmd:	.short 0	;@ 0xC8/0xC9 External EEPROM command/status
 
 wsvRTCCommand:		.byte 0		;@ 0xCA RTC Command
 wsvRTCData:			.byte 0		;@ 0xCB RTC Data
-wsvGPIOEnable:		.byte 0		;@ 0xCC GP IO Enable
+wsvGPIOEnable:		.byte 0		;@ 0xCC GP IO Enable/Direction
 wsvGPIOData:		.byte 0		;@ 0xCD GP IO Data
 wsvBank1Map:		.byte 0		;@ 0xCE Map Flash/ROM to SRAM area
 
@@ -270,7 +269,7 @@ ledCounter:			.long 0
 wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 sphinxStateEnd:
 
-sprWindowData:		.long 0
+;@sprWindowData:		.long 0
 cachedMaps:			.space 4
 
 wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2
@@ -278,6 +277,7 @@ wsvMachine:			.byte 0		;@ WonderSwan, WonderSwanColor, SwanCrystal or PocketChal
 wsvPadding16:		.space 2
 
 irqFunction:		.long 0		;@ IRQ function
+txFunction:			.long 0		;@ Serial out function
 
 gfxRAM:				.long 0		;@ 0x4000/0x10000
 paletteRAM:			.long 0		;@ 0x0200

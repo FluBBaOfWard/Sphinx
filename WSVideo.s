@@ -37,6 +37,7 @@
 	.global wsvPushVolumeButton
 	.global wsvSetHeadphones
 	.global wsvSetLowBattery
+	.global wsvSetSerialByteIn
 
 	.syntax unified
 	.arm
@@ -71,7 +72,7 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=crystal, r12=spxptr
+wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc, r3=txFunc
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
@@ -86,14 +87,9 @@ wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=c
 	str r0,[spxptr,#serialIRQCounter]
 
 	ldmfd sp!,{r0-r3}
-	strb r1,[spxptr,#wsvMachine]
-	strb r3,[spxptr,#wsvSOC]
-	cmp r0,#0
-	adreq r0,dummyIrqFunc
-	str r0,[spxptr,#irqFunction]
 
-	str r2,[spxptr,#gfxRAM]
-	add r0,r2,#0xFE00
+	str r0,[spxptr,#gfxRAM]
+	add r0,r0,#0xFE00
 	str r0,[spxptr,#paletteRAM]
 	ldr r0,=DISP_BUFF
 	str r0,[spxptr,#dispBuff]
@@ -102,7 +98,23 @@ wsVideoReset:		;@ r0=IrqFunc, r1=machine, r2=ram+LUTs, r3=SOC 0=mono,1=color,2=c
 	ldr r0,=SCROLL_BUFF
 	str r0,[spxptr,#scrollBuff]
 
-	mov r0,r3
+	strb r1,[spxptr,#wsvMachine]
+	cmp r1,#HW_WONDERSWAN
+	cmpne r1,#HW_POCKETCHALLENGEV2
+	moveq r0,#SOC_ASWAN
+	movne r0,#SOC_SPHINX
+	cmp r1,#HW_SWANCRYSTAL
+	moveq r0,#SOC_SPHINX2
+	strb r0,[spxptr,#wsvSOC]
+
+	cmp r2,#0
+	adreq r2,dummyIrqFunc
+	str r2,[spxptr,#irqFunction]
+	cmp r3,#0
+	adreq r3,dummyIrqFunc
+	str r3,[spxptr,#txFunction]
+
+	;@ r0=SOC
 	bl wsvInitIOMap
 
 	ldmfd sp!,{lr}
@@ -228,9 +240,9 @@ _debugIOUnmappedW:
 	ldr r3,=debugIOUnmappedW
 	bx r3
 ;@----------------------------------------------------------------------------
-_debugSerialOutW:
+handleSerialOutW:
 ;@----------------------------------------------------------------------------
-	ldr r3,=debugSerialOutW
+	ldr r3,[spxptr,#txFunction]
 	bx r3
 ;@----------------------------------------------------------------------------
 memCopy:
@@ -442,41 +454,6 @@ wsvLCDVolumeR:				;@ 0x1A
 	orr r0,r0,r1,lsl#2
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvGetInterruptVector:		;@ return vector in r0
-;@----------------------------------------------------------------------------
-;@----------------------------------------------------------------------------
-wsvInterruptBaseR:			;@ 0xB0
-;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvInterruptStatus]
-#ifdef GBA
-	mov r1,r1,lsl#24
-	mov r0,#7
-intVecLoop:
-	movs r1,r1,lsl#1
-	bcs intFound
-	subs r0,r0,#1
-	bne intVecLoop
-intFound:
-#else
-	clz r0,r1
-	rsbs r0,r0,#31
-	movmi r0,#0
-#endif
-	ldrb r1,[spxptr,#wsvInterruptBase]
-	orr r0,r0,r1
-	bx lr
-;@----------------------------------------------------------------------------
-wsvComByteR:				;@ 0xB1
-;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
-	mov r0,#0x08				;@ #3 = Serial receive
-	bl wsvClearInterruptPins
-	ldmfd sp!,{lr}
-	mov r0,#0
-	strb r0,[spxptr,#wsvByteReceived]
-	ldrb r0,[spxptr,#wsvComByte]
-	bx lr
-;@----------------------------------------------------------------------------
 wsvSndDMASrc0R:				;@ 0x4A, only WSC.
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#sndDmaSource]
@@ -513,6 +490,41 @@ wsvHyperChanCtrlR:			;@ 0x6B, only WSC
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvHyperVCtrl+1]
 	and r0,r0,#0x6F
+	bx lr
+;@----------------------------------------------------------------------------
+wsvGetInterruptVector:		;@ return vector in r0
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+wsvInterruptBaseR:			;@ 0xB0
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvInterruptStatus]
+#ifdef GBA
+	mov r1,r1,lsl#24
+	mov r0,#7
+intVecLoop:
+	movs r1,r1,lsl#1
+	bcs intFound
+	subs r0,r0,#1
+	bne intVecLoop
+intFound:
+#else
+	clz r0,r1
+	rsbs r0,r0,#31
+	movmi r0,#0
+#endif
+	ldrb r1,[spxptr,#wsvInterruptBase]
+	orr r0,r0,r1
+	bx lr
+;@----------------------------------------------------------------------------
+wsvComByteR:				;@ 0xB1
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+	mov r0,#SERRX_IRQ_F			;@ #3 = Serial receive
+	bl wsvClearInterruptPins
+	ldmfd sp!,{lr}
+	mov r0,#0
+	strb r0,[spxptr,#wsvByteReceived]
+	ldrb r0,[spxptr,#wsvComByte]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
@@ -631,16 +643,16 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 wsvMapAdrW:					;@ 0x07 Map table address
 ;@----------------------------------------------------------------------------
 #ifdef __ARM_ARCH_5TE__
-	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
+	ldrd r2,r3,[spxptr,#wsvBgScrollBak]
 #else
-	ldr r2,[spxptr,#wsvBGScrollBak]
-	ldr r3,[spxptr,#wsvFGScrollBak]
+	ldr r2,[spxptr,#wsvBgScrollBak]
+	ldr r3,[spxptr,#wsvFgScrollBak]
 #endif
 	ldrb r1,[spxptr,#wsvVideoMode]
 	tst r1,#0x80				;@ Color mode?
 	andeq r0,r0,#0x77
 	strb r0,[spxptr,#wsvMapTblAdr]
-	strb r0,[spxptr,#wsvBGScrollBak+1]
+	strb r0,[spxptr,#wsvBgScrollBak+1]
 	b scrollCnt
 ;@----------------------------------------------------------------------------
 wsvFgWinX0W:				;@ 0x08, Foreground Window X start register
@@ -687,14 +699,14 @@ wsvFgScrXW:					;@ 0x12, Foreground Horizontal Scroll register
 wsvFgScrYW:					;@ 0x13, Foreground Vertical Scroll register
 ;@----------------------------------------------------------------------------
 #ifdef __ARM_ARCH_5TE__
-	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
+	ldrd r2,r3,[spxptr,#wsvBgScrollBak]
 #else
-	ldr r2,[spxptr,#wsvBGScrollBak]
-	ldr r3,[spxptr,#wsvFGScrollBak]
+	ldr r2,[spxptr,#wsvBgScrollBak]
+	ldr r3,[spxptr,#wsvFgScrollBak]
 #endif
 	add r1,r1,#wsvRegs
 	strb r0,[spxptr,r1]
-	add r1,r1,#(wsvBGScrollBak/2) - wsvBgXScroll
+	add r1,r1,#(wsvBgScrollBak/2) - wsvBgXScroll
 	strb r0,[spxptr,r1,lsl#1]
 
 scrollCnt:
@@ -1116,7 +1128,7 @@ wsvInterruptBaseW:			;@ 0xB0
 wsvComByteW:				;@ 0xB1
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,spxptr,lr}
-	bl _debugSerialOutW
+	bl handleSerialOutW
 	ldmfd sp!,{r0,spxptr,lr}
 	strb r0,[spxptr,#wsvComByte]
 	ldrb r1,[spxptr,#wsvSerialStatus]
@@ -1126,7 +1138,7 @@ wsvComByteW:				;@ 0xB1
 	tst r1,#0x80					;@ Serial enabled?
 	moveq r0,#-1
 	str r0,[spxptr,#serialIRQCounter]
-	mov r0,#0x01					;@ #0 = Serial transmit
+	mov r0,#SERTX_IRQ_F				;@ #0 = Serial transmit
 	b wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntEnableW:				;@ 0xB2
@@ -1194,6 +1206,14 @@ wsvSetHeadphones:			;@ r0 = on/off
 	strb r1,[spxptr,#wsvSoundIconTimer]
 	b setSoundOutput
 ;@----------------------------------------------------------------------------
+wsvSetSerialByteIn:			;@ r0=byte in, Needs spxptr
+;@----------------------------------------------------------------------------
+	strb r0,[spxptr,#wsvComByte]
+	mov r0,#1
+	strb r0,[spxptr,#wsvByteReceived]
+	mov r0,#SERRX_IRQ_F				;@ #3 = Serial receive
+	b wsvSetInterruptPins
+;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r11,lr}
@@ -1220,7 +1240,7 @@ newFrame:					;@ Called before line 0
 midFrame:
 ;@----------------------------------------------------------------------------
 	ldr r0,[spxptr,#wsvSprWinXPos]	;@ Win pos/size
-	str r0,[spxptr,#sprWindowData]
+	;@str r0,[spxptr,#sprWindowData]
 	bx lr
 ;@----------------------------------------------------------------------------
 endFrame:
@@ -1231,10 +1251,10 @@ endFrame:
 	ldr r2,[spxptr,#wsvFgWinXPos]
 	bl windowCnt
 #ifdef __ARM_ARCH_5TE__
-	ldrd r2,r3,[spxptr,#wsvBGScrollBak]
+	ldrd r2,r3,[spxptr,#wsvBgScrollBak]
 #else
-	ldr r2,[spxptr,#wsvBGScrollBak]
-	ldr r3,[spxptr,#wsvFGScrollBak]
+	ldr r2,[spxptr,#wsvBgScrollBak]
+	ldr r3,[spxptr,#wsvFgScrollBak]
 #endif
 	bl scrollCnt
 	bl gfxEndFrame

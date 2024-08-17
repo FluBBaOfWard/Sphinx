@@ -1,10 +1,11 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
+	Remove dependencies on debug logging.
 	Stop DMA from SRAM and slow ROM.
 	Handle double buffered tile maps better, see Hataraku Chocobo.
 	Fix HyperVoice stereo handling.
 	Palette change per line?
 	Handle LCD on/off.
-	Handle Contrast High/Low for WSC, add 2 images on top.
+	Handle Contrast High/Low for WSC, change Y every other frame.
 	Check sprite start & sprite count.
