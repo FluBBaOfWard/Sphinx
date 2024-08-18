@@ -248,7 +248,8 @@ sampleBaseAddr:		.long 0		;@ Current sample base address
 
 missingSamplesCnt:	.long 0		;@ Number of missing samples from last sound callback.
 
-serialIRQCounter:	.long 0		;@ How many cycles to send byte.
+serialRXCounter:	.long 0		;@ How many cycles to receive byte.
+serialTXCounter:	.long 0		;@ How many cycles to send byte.
 
 wsvLatchedSprCnt:	.byte 0		;@ Latched Sprite count
 wsvOrientation:		.byte 0
@@ -256,10 +257,11 @@ wsvLowBattery:		.byte 0
 wsvLowBatPin:		.byte 0
 wsvInterruptPins:	.byte 0
 wsvByteReceived:	.byte 0
+wsvSerialBufFull:	.byte 0
 wsvSoundIconTimer:	.byte 0
 wsvCartIconTimer:	.byte 0
 wsvSleepMode__:		.byte 0
-wsvPadding15:		.space 3
+wsvPadding15:		.space 2
 
 enabledLCDIcons:	.long 0
 dispLine: 			.long 0		;@ Last line dispCtrl was updated.
@@ -277,6 +279,7 @@ wsvMachine:			.byte 0		;@ WonderSwan, WonderSwanColor, SwanCrystal or PocketChal
 wsvPadding16:		.space 2
 
 irqFunction:		.long 0		;@ IRQ function
+rxFunction:			.long 0		;@ Serial in empty function
 txFunction:			.long 0		;@ Serial out function
 
 gfxRAM:				.long 0		;@ 0x4000/0x10000

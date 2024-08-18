@@ -361,20 +361,23 @@ typedef struct {
 	/// Ch3 sweep Current addr
 	u32 sweep3CurrentAddr;
 
+	/// How many cycles to receive byte.
+	u32 serialRXCounter;
 	/// How many cycles to send byte.
-	u32 serialIRQCounter;
+	u32 serialTXCounter;
 
 	/// Latched Sprite count
-	u8 wsvLatchedSprCnt;
-	u8 wsvOrientation;
-	u8 wsvLowBattery;
-	u8 wsvLowBatPin;
-	u8 wsvInterruptPins;
-	u8 wsvByteReceived;
-	u8 wsvSoundIconTimer;
-	u8 wsvCartIconTimer;
-	u8 wsvSleepMode__;
-	u8 wsvPadding15[3];
+	u8 latchedSprCnt;
+	u8 orientation;
+	u8 lowBattery;
+	u8 lowBatPin;
+	u8 interruptPins;
+	u8 byteReceived;
+	u8 serialBufFull;
+	u8 soundIconTimer;
+	u8 cartIconTimer;
+	u8 sleepMode__;
+	u8 padding15[2];
 
 	u32 enabledLCDIcons;
 	/// Last line dispCtrl was updated.
@@ -392,13 +395,15 @@ typedef struct {
 	u8 cachedMaps[4];
 
 	/// ASWAN, SPHINX or SPHINX2
-	u8 wsvSOC;
+	u8 soc;
 	/// WonderSwan, WonderSwanColor, SwanCrystal or PocketChallengeV2
-	u8 wsvMachine;
-	u8 wsvPadding16[2];
+	u8 machine;
+	u8 padding16[2];
 
 	/// IRQ callback
 	void (*irqFunction)(bool pin);
+	/// Serial in empty function
+	void (*rxFunction)(void);
 	/// Serial out function
 	void (*txFunction)(u8 val);
 
@@ -410,7 +415,7 @@ typedef struct {
 
 } Sphinx;
 
-void wsVideoReset(void *ram, int soc, void (*irqFunction)(bool pin), void (*txFunction)(u8 val));
+void wsVideoReset(void *ram, int soc, void (*irqFunction)(bool pin));
 
 /**
  * Saves the state of the chip to the destination.

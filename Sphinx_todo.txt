@@ -1,7 +1,6 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
-	Remove dependencies on debug logging.
 	Stop DMA from SRAM and slow ROM.
 	Handle double buffered tile maps better, see Hataraku Chocobo.
 	Fix HyperVoice stereo handling.

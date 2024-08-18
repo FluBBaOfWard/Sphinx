@@ -72,7 +72,7 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc, r3=txFunc
+wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
@@ -84,7 +84,8 @@ wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc, r3=txFunc
 	ldr r1,[r2],#4
 	mov r0,#-1
 	stmia spxptr,{r0-r2}		;@ Reset scanline, nextChange & lineState
-	str r0,[spxptr,#serialIRQCounter]
+	str r0,[spxptr,#serialRXCounter]
+	str r0,[spxptr,#serialTXCounter]
 
 	ldmfd sp!,{r0-r3}
 
@@ -110,8 +111,8 @@ wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc, r3=txFunc
 	cmp r2,#0
 	adreq r2,dummyIrqFunc
 	str r2,[spxptr,#irqFunction]
-	cmp r3,#0
-	adreq r3,dummyIrqFunc
+	adr r3,dummyIrqFunc
+	str r3,[spxptr,#rxFunction]
 	str r3,[spxptr,#txFunction]
 
 	;@ r0=SOC
@@ -244,6 +245,13 @@ handleSerialOutW:
 ;@----------------------------------------------------------------------------
 	ldr r3,[spxptr,#txFunction]
 	bx r3
+;@----------------------------------------------------------------------------
+callSerialInEmpty:
+;@----------------------------------------------------------------------------
+	stmfd sp!,{spxptr,lr}
+	ldr r3,[spxptr,#rxFunction]
+	blx r3
+	ldmfd sp!,{spxptr,pc}
 ;@----------------------------------------------------------------------------
 memCopy:
 ;@----------------------------------------------------------------------------
@@ -521,19 +529,19 @@ wsvComByteR:				;@ 0xB1
 	stmfd sp!,{lr}
 	mov r0,#SERRX_IRQ_F			;@ #3 = Serial receive
 	bl wsvClearInterruptPins
-	ldmfd sp!,{lr}
+	bl callSerialInEmpty
 	mov r0,#0
-	strb r0,[spxptr,#wsvByteReceived]
-	ldrb r0,[spxptr,#wsvComByte]
-	bx lr
+	strb r0,[spxptr,#wsvSerialBufFull]
+	ldrb r0,[spxptr,#wsvByteReceived]
+	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvSerialStatus]
-	ldr r1,[spxptr,#serialIRQCounter]
+	ldr r1,[spxptr,#serialTXCounter]
 	cmp r1,#0					;@ Send complete?
 	orrmi r0,r0,#4
-	ldrb r1,[spxptr,#wsvByteReceived]
+	ldrb r1,[spxptr,#wsvSerialBufFull]
 	cmp r1,#0					;@ Receive buffer full?
 	orrne r0,r0,#1
 	bx lr
@@ -1127,17 +1135,14 @@ wsvInterruptBaseW:			;@ 0xB0
 ;@----------------------------------------------------------------------------
 wsvComByteW:				;@ 0xB1
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r0,spxptr,lr}
-	bl handleSerialOutW
-	ldmfd sp!,{r0,spxptr,lr}
-	strb r0,[spxptr,#wsvComByte]
 	ldrb r1,[spxptr,#wsvSerialStatus]
-	tst r1,#0x40					;@ 0 = 9600, 1 = 38400 bps
-	moveq r0,#2560					;@ 3072000/(9600/8)
-	movne r0,#640					;@ 3072000/(38400/8)
 	tst r1,#0x80					;@ Serial enabled?
-	moveq r0,#-1
-	str r0,[spxptr,#serialIRQCounter]
+	bxeq lr
+	strb r0,[spxptr,#wsvComByte]
+	tst r1,#0x40					;@ 0 = 9600, 1 = 38400 bps
+	moveq r2,#2560					;@ 3072000/(9600/8)
+	movne r2,#640					;@ 3072000/(38400/8)
+	str r2,[spxptr,#serialTXCounter]
 	mov r0,#SERTX_IRQ_F				;@ #0 = Serial transmit
 	b wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
@@ -1157,11 +1162,17 @@ wsvSerialStatusW:			;@ 0xB3
 	eor r1,r1,r0
 	tst r1,#0x80				;@ Serial enable changed?
 	bxeq lr
+	mov r1,#-1
+	str r1,[spxptr,#serialTXCounter]
+	str r1,[spxptr,#serialRXCounter]
 	tst r0,#0x80				;@ Serial enable now?
+	mov r0,#SERTX_IRQ_F|SERRX_IRQ_F		;@ #0 = Serial transmit, 3 = receive
+	beq wsvClearInterruptPins
+	stmfd sp!,{lr}
+	bl callSerialInEmpty
+	ldmfd sp!,{lr}
 	mov r0,#SERTX_IRQ_F			;@ #0 = Serial transmit buffer empty
-	bne wsvSetInterruptPins
-	orr r0,r0,#SERRX_IRQ_F		;@ #0, 3 = Serial transmit, receive
-	b wsvClearInterruptPins
+	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
@@ -1208,11 +1219,15 @@ wsvSetHeadphones:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
 wsvSetSerialByteIn:			;@ r0=byte in, Needs spxptr
 ;@----------------------------------------------------------------------------
-	strb r0,[spxptr,#wsvComByte]
-	mov r0,#1
+	ldrb r1,[spxptr,#wsvSerialStatus]
+	tst r1,#0x80					;@ Serial enabled?
+	bxeq lr
 	strb r0,[spxptr,#wsvByteReceived]
-	mov r0,#SERRX_IRQ_F				;@ #3 = Serial receive
-	b wsvSetInterruptPins
+	tst r1,#0x40					;@ 0 = 9600, 1 = 38400 bps
+	moveq r2,#2560					;@ 3072000/(9600/8)
+	movne r2,#640					;@ 3072000/(38400/8)
+	str r2,[spxptr,#serialRXCounter]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
@@ -1348,11 +1363,9 @@ checkScanlineIRQ:
 	mov r0,#0
 	orreq r0,r0,#LINE_IRQ_F		;@ #4 = Line compare
 
-	ldr r2,[spxptr,#serialIRQCounter]
-	cmp r2,#0
-	subspl r2,r2,256			;@ Cycles per scanline
-	str r2,[spxptr,#serialIRQCounter]
-	orrcc r0,r0,#SERTX_IRQ_F	;@ #0 = Serial transmit
+	ldrb r1,[spxptr,#wsvSerialStatus]
+	tst r1,#0x80
+	blne checkSerialRxTx
 
 	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
@@ -1389,6 +1402,27 @@ skipSound:
 	subs r0,r0,#144				;@ Return from emulation loop on this scanline
 	movne r0,#1
 	ldmfd sp!,{pc}
+
+;@----------------------------------------------------------------------------
+checkSerialRxTx:
+;@----------------------------------------------------------------------------
+	ldr r2,[spxptr,#serialRXCounter]
+	cmp r2,#0
+	subspl r2,r2,256			;@ Cycles per scanline
+	str r2,[spxptr,#serialRXCounter]
+	orrcc r0,r0,#SERRX_IRQ_F	;@ #3 = Serial receive
+	strbcc r0,[spxptr,#wsvSerialBufFull]
+
+	ldr r2,[spxptr,#serialTXCounter]
+	cmp r2,#0
+	subspl r2,r2,256			;@ Cycles per scanline
+	str r2,[spxptr,#serialTXCounter]
+	bxcs lr
+	orrcc r0,r0,#SERTX_IRQ_F	;@ #0 = Serial transmit
+	stmfd sp!,{r0,spxptr,lr}
+	ldrb r0,[spxptr,#wsvComByte]
+	bl handleSerialOutW
+	ldmfd sp!,{r0,spxptr,pc}
 
 ;@----------------------------------------------------------------------------
 wsvSetInterruptExternal:	;@ r0 = irq pin state
