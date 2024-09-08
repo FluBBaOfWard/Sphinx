@@ -250,7 +250,8 @@ callSerialInEmpty:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{spxptr,lr}
 	ldr r3,[spxptr,#rxFunction]
-	blx r3
+	mov lr,pc
+	bx r3
 	ldmfd sp!,{spxptr,pc}
 ;@----------------------------------------------------------------------------
 memCopy:
