@@ -37,6 +37,8 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 	str r0,[spxptr,#sweep3CurrentAddr]
 	ldr r0,=0x00000408
 	str r0,[spxptr,#noise4CurrentAddr]
+	ldr r0,[spxptr,#gfxRAM]
+	str r0,[spxptr,#sampleBaseAddr]
 
 ;@----------------------------------------------------------------------------
 setAllChVolume:
@@ -157,7 +159,7 @@ mixerVolumes:
 	mov r2,r2,lsl#7
 	mov r2,r2,lsl#6
 	mov r2,r2,lsl#5
-	add r2,r9,r2,lsl#5		;@ Headphones
+	add r2,r9,r2,lsl#5			;@ Headphones
 
 ;@----------------------------------------------------------------------------
 setTotalVolume:
@@ -191,7 +193,11 @@ hw2Volumes:
 #endif
 	.align 2
 
+#ifdef GBA
+#define PSG_DIVIDE 24
+#else
 #define PSG_DIVIDE 16
+#endif
 #define PSG_ADDITION 0x00008000*PSG_DIVIDE
 #define PSG_SWEEP_ADD 0x00020000*PSG_DIVIDE
 
@@ -313,7 +319,13 @@ noSweep:
 totalVolume:
 	add r2,r9,r2,lsl#5
 	cmp r0,#0
+#ifdef GBA
+	add r2,r2,r2,lsr#16
+	mov r2,r2,lsr#9
+	strbpl r2,[r1],#1
+#else
 	strpl r2,[r1],#4
+#endif
 	bhi mixLoop					;@ ?? cycles according to No$gba
 
 	mov r2,r7,lsr#17
