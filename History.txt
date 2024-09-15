@@ -1,8 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.7 - 2024-09-08 (FluBBa)
+V0.3.7 - 2024-09-15 (FluBBa)
 	Added sound mixing for the GBA.
+	Added correct LCD color for SwanCrystal.
 	Fixed some small bugs in the DMA.
 	Fixed serial port emulation.
 

@@ -280,12 +280,13 @@ wsvRegistersReset:				;@ in r3=SOC
 	strb r0,[spxptr,#wsvSystemCtrl1]
 	mov r0,#LCD_ICON_TIME_VALUE
 	strb r0,[spxptr,#wsvCartIconTimer]
-	mov r0,#0x90
-	movne r0,#0x9F
-	strb r0,[spxptr,#wsvColor01]
 	mov r0,#0x02
 	movne r0,#0x03
 	strb r0,[spxptr,#wsvHWVolume]
+	cmpne r1,#SOC_SPHINX2
+	mov r0,#0x90
+	movne r0,#0x9F
+	strb r0,[spxptr,#wsvColor01]
 	cmp r1,#SOC_SPHINX2
 	mov r0,#0
 	moveq r0,#0x80
