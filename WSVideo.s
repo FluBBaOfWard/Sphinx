@@ -2524,7 +2524,7 @@ defaultOutTable:
 	.long wsvImportantW			;@ 0x67 Hyper Voice Right channel (upper byte)
 	.long wsvImportantW			;@ 0x68 Hyper Voice Shadow (lower byte? Left?)
 	.long wsvImportantW			;@ 0x69 Hyper Voice Shadow (upper byte? Right?)
-	.long wsvImportantW			;@ 0x6A Hyper Voice control
+	.long wsvHyperCtrlW			;@ 0x6A Hyper Voice control
 	.long wsvHyperChanCtrlW		;@ 0x6B Hyper Chan control
 	.long wsvUnmappedW			;@ 0x6C ---
 	.long wsvUnmappedW			;@ 0x6D ---
