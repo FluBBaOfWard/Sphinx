@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.3.8 - 2024-09-21 (FluBBa)
+	Fixed reading/writing register 0x1A.
+
 V0.3.7 - 2024-09-15 (FluBBa)
 	Added sound mixing for the GBA.
 	Added correct LCD color for SwanCrystal.

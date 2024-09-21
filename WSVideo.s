@@ -455,13 +455,17 @@ wsvVCountR:					;@ 0x03
 ;@----------------------------------------------------------------------------
 wsvLCDVolumeR:				;@ 0x1A
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r0,spxptr,lr}
-	bl _debugIOUnimplR
-	ldmfd sp!,{r0,spxptr,lr}
-	ldrb r0,[spxptr,#wsvLCDVolume]
-	and r0,r0,#1				;@ Only keep bit 0
-	ldrb r1,[spxptr,#wsvHWVolume]	;@ Only low 2 bits are ever set
-	orr r0,r0,r1,lsl#2
+	ldr r1,[spxptr,#enabledLCDIcons]
+	and r0,r1,LCD_ICON_SLEEP	;@ #1
+	tst r1,#LCD_ICON_TIME
+	bxeq lr
+	tst r1,LCD_ICON_HEADPHONE
+	orrne r0,r0,#0x02
+	orreq r0,r0,#0x10
+	tst r1,#LCD_ICON_VOL1
+	orrne r0,r0,#0x08
+	tst r1,#LCD_ICON_VOL2
+	orrne r0,r0,#0x04
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSndDMASrc0R:				;@ 0x4A, only WSC.
@@ -758,6 +762,15 @@ wsvRefW:					;@ 0x16, Last scan line.
 	add r0,r0,#1
 	str r0,lineStateLastLine
 	b setScreenRefresh
+;@----------------------------------------------------------------------------
+wsvLCDVolumeW:				;@ 0x1A
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvLCDControl]
+	and r0,r0,#1
+	orr r1,r1,#1
+	eor r1,r1,r0
+	strb r1,[spxptr,#wsvLCDControl]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvDMASourceW:				;@ 0x40, only WSC.
 ;@----------------------------------------------------------------------------
@@ -2439,7 +2452,7 @@ defaultOutTable:
 	.long wsvRegW				;@ 0x17 Vsync line
 	.long wsvUnmappedW			;@ 0x18 ---
 	.long wsvUnmappedW			;@ 0x19 ---
-	.long wsvUnknownW			;@ 0x1A Volume Icons, LCD sleep
+	.long wsvLCDVolumeW			;@ 0x1A Volume Icons, LCD sleep
 	.long wsvUnmappedW			;@ 0x1B ---
 	.long wsvRegW				;@ 0x1C Pal mono pool 0
 	.long wsvRegW				;@ 0x1D Pal mono pool 1

@@ -99,7 +99,7 @@ wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
 wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
 wsvVSync:			.byte 0		;@ 0x17 LCD_VSYNC
 wsvPadding0:		.space 2	;@ 0x18 - 0x19 ???
-wsvLCDVolume:		.byte 0		;@ 0x1A LCD Volume icon
+wsvLCDVolume:		.byte 0		;@ 0x1A LCD Volume icons
 wsvPadding1:		.space 1	;@ 0x1B ???
 
 wsvColor01:			.byte 0		;@ 0x1C Color 0 & 1
