@@ -3,7 +3,7 @@
 //  Bandai WonderSwan Video emulation for GBA/NDS.
 //
 //  Created by Fredrik Ahlström on 2006-07-23.
-//  Copyright © 2006-2024 Fredrik Ahlström. All rights reserved.
+//  Copyright © 2006-2025 Fredrik Ahlström. All rights reserved.
 //
 
 #ifdef __arm__
@@ -513,8 +513,8 @@ wsvInterruptBaseR:			;@ 0xB0
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptStatus]
 #ifdef GBA
-	mov r1,r1,lsl#24
 	mov r0,#7
+	mov r1,r1,lsl#24
 intVecLoop:
 	movs r1,r1,lsl#1
 	bcs intFound
@@ -980,8 +980,11 @@ wsvSweepTimeW:				;@ 0x8D Sound sweep time
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0x1F				;@ Only low 5 bits
 	strb r0,[spxptr,#wsvSweepTime]
+	ldr r1,[spxptr,#sweep3CurrentAddr]
 	add r0,r0,#1
 	sub r0,r0,r0,lsl#26
+	and r1,r1,#0x100
+	orr r0,r0,r1
 	str r0,[spxptr,#sweep3CurrentAddr]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1496,9 +1499,9 @@ doSoundDMA:					;@ In r0 = SndDmaCtrl
 	beq wsvCh2VolumeW
 	b setHyperVoiceValue
 sdmaHold:
-	tst r0,#0x10				;@ Ch2Vol/HyperVoice
-	mov r0,#0
+	ands r0,r0,#0x10			;@ Ch2Vol/HyperVoice
 	beq wsvCh2VolumeW
+	mov r0,#0
 	b setHyperVoiceValue
 ;@----------------------------------------------------------------------------
 checkSndDMAEnd:
