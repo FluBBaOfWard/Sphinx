@@ -94,7 +94,7 @@ wsvBgYScroll:		.byte 0		;@ 0x11 Background Y-Scroll
 wsvFgXScroll:		.byte 0		;@ 0x12 Foreground X-Scroll
 wsvFgYScroll:		.byte 0		;@ 0x13 Foreground Y-Scroll
 
-wsvLCDControl:		.byte 0		;@ 0x14 LCD control (on/off?)
+wsvLCDControl:		.byte 0		;@ 0x14 LCD control (on/off, WSC contrast)
 wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
 wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
 wsvVSync:			.byte 0		;@ 0x17 LCD_VSYNC
@@ -149,8 +149,17 @@ wsvHyperVR:			.short 0	;@ 0x66 HyperVoice Right channel
 wsvHyperVSL:		.byte 0		;@ 0x68 HyperVoice Shadow (lower byte? left?)
 wsvHyperVSH:		.byte 0		;@ 0x69 HyperVoice Shadow (upper byte? right?)
 wsvHyperVCtrl:		.short 0	;@ 0x6A HyperVoice control
+wsvPadding5_1:		.space 4	;@ 0x6C - 0x6F ???
 
-wsvPadding5_1:		.space 20	;@ 0x6C - 0x7F ???
+wsvSCLCDCtrl0:		.byte 0		;@ 0x70 SC LCD control 0
+wsvSCLCDCtrl1:		.byte 0		;@ 0x71 SC LCD control 1
+wsvSCLCDCtrl2:		.byte 0		;@ 0x72 SC LCD control 2
+wsvSCLCDCtrl3:		.byte 0		;@ 0x73 SC LCD control 3
+wsvSCLCDCtrl4:		.byte 0		;@ 0x74 SC LCD control 4
+wsvSCLCDCtrl5:		.byte 0		;@ 0x75 SC LCD control 5
+wsvSCLCDCtrl6:		.byte 0		;@ 0x76 SC LCD control 6
+wsvSCLCDCtrl7:		.byte 0		;@ 0x77 SC LCD control 7
+wsvPadding6:		.space 8	;@ 0x78 - 0x7F ???
 
 wsvSound1Freq:		.short 0	;@ 0x80/0x81 Sound ch 1 pitch bits 10-0
 wsvSound2Freq:		.short 0	;@ 0x82/0x83 Sound ch 2 pitch bits 10-0

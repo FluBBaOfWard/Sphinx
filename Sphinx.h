@@ -85,7 +85,7 @@ typedef struct {
 	/// 0x13 Foreground Y-Scroll
 	u8 fgYScroll;
 
-	/// 0x14 LCD control (on/off?)
+	/// 0x14 LCD control (on/off, WSC contrast)
 	u8 lcdControl;
 	/// 0x15 LCD icons
 	u8 lcdIcons;
@@ -192,8 +192,27 @@ typedef struct {
 	u8 hyperVCtrl;
 	/// 0x6B HyperVoice channel control
 	u8 hyperVChnCtrl;
-	/// 0x5C - 0x7F No registers
-	u8 padding5_1[20];
+	/// 0x6C - 0x6F No registers
+	u8 padding5_1[4];
+
+	/// 0x70 SC LCD control 0
+	u8 scLCDCtrl0;
+	/// 0x71 SC LCD control 1
+	u8 scLCDCtrl1;
+	/// 0x72 SC LCD control 2
+	u8 scLCDCtrl2;
+	/// 0x73 SC LCD control 3
+	u8 scLCDCtrl3;
+	/// 0x74 SC LCD control 4
+	u8 scLCDCtrl4;
+	/// 0x75 SC LCD control 5
+	u8 scLCDCtrl5;
+	/// 0x76 SC LCD control 6
+	u8 scLCDCtrl6;
+	/// 0x77 SC LCD control 7
+	u8 scLCDCtrl7;
+	/// 0x78 - 0x7F No registers
+	u8 padding6[8];
 
 	/// 0x80/0x81 Sound ch 1 pitch bits 10-0
 	u16 sound1Freq;

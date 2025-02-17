@@ -199,7 +199,7 @@ hw2Volumes:
 #define PSG_DIVIDE 16
 #endif
 #define PSG_ADDITION 0x00008000*PSG_DIVIDE
-#define PSG_SWEEP_ADD 0x00020000*PSG_DIVIDE
+#define PSG_SWEEP_ADD 0x00010000*PSG_DIVIDE
 
 ;@----------------------------------------------------------------------------
 #ifdef WSAUDIO_LOW
@@ -312,8 +312,8 @@ vol4_R:
 	bcc noSweep
 	subcs r8,r8,r8,lsl#26
 	ldrsb lr,[spxptr,#wsvSweepValue]
-	mov lr,lr,lsl#21
-	add r5,lr,r5,ror#11
+	mov r5,r5,ror#11
+	add r5,r5,lr,lsl#21
 	mov r5,r5,ror#21
 noSweep:
 totalVolume:

@@ -983,7 +983,7 @@ wsvSweepTimeW:				;@ 0x8D Sound sweep time
 	ldr r1,[spxptr,#sweep3CurrentAddr]
 	add r0,r0,#1
 	sub r0,r0,r0,lsl#26
-	and r1,r1,#0x100
+	and r1,r1,#0x100			;@ Keep sweep enabled.
 	orr r0,r0,r1
 	str r0,[spxptr,#sweep3CurrentAddr]
 	bx lr
@@ -1035,14 +1035,14 @@ wsvSoundCtrlW:				;@ 0x90 Sound Control
 	ldrne r1,ch2OpCode+4
 	str r1,[r2,#8]
 
-	tst r0,#0x40				;@ Ch 3 sweep on?
 	ldr r1,[spxptr,#sweep3CurrentAddr]
+	tst r0,#0x40				;@ Ch 3 sweep on?
 	biceq r1,r1,#0x100
 	orrne r1,r1,#0x100
 	str r1,[spxptr,#sweep3CurrentAddr]
 
-	tst r0,#0x80				;@ Ch 4 noise on?
 	ldr r1,[spxptr,#noise4CurrentAddr]
+	tst r0,#0x80				;@ Ch 4 noise on?
 	biceq r1,r1,#0x4000
 	orrne r1,r1,#0x4000
 	str r1,[spxptr,#noise4CurrentAddr]
