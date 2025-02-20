@@ -225,7 +225,6 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 	stmfd sp!,{r4-r11,lr}
 	add r2,spxptr,#pcm1CurrentAddr
 	ldmia r2,{r3-r10}
-	mov r0,r0,lsl#3
 mixLoop:
 	mov r11,r3,lsl#20			;@ Pre-load r11 & lr with frequency.
 	mov lr,r4,lsl#20
@@ -254,9 +253,9 @@ innerMixLoop:
 	eorsne r2,r2,r7,lsl#21
 	orreq r7,r7,#0x00010000
 
-	sub r0,r0,#1
-	tst r0,#7
-	bne innerMixLoop
+	subs r0,r0,#0x10000000
+	bmi innerMixLoop
+	bic r0,r0,#0xF0000000
 ;@----------------------------------------------------------------------------
 
 	ldrb r11,[r10,r3,lsr#28]	;@ Channel 1
@@ -318,7 +317,7 @@ vol4_R:
 noSweep:
 totalVolume:
 	add r2,r9,r2,lsl#5
-	cmp r0,#0
+	subs r0,r0,#1
 #ifdef GBA
 	add r2,r2,r2,lsr#16
 	mov r2,r2,lsr#9
