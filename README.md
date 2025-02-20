@@ -1,6 +1,8 @@
-# Sphinx V0.3.8
+# Sphinx V0.3.9
 
 Bandai WonderSwan(Color/Crystal) System On a Chip emulator for GBA/NDS.
+
+Make sure RAM is aligned to 16 bytes, the sound mixer is dependant on this.
 
 ## Projects that use this code
 

@@ -148,7 +148,10 @@ setSoundOutput:				;@ r0 = wsvSoundOutput
 ;@----------------------------------------------------------------------------
 	and r1,r0,#0x6
 	tst r0,#0x80				;@ Headphones?
-	movne r1,#0x8
+	biceq r0,r0,#0x08			;@ Disable headphones out if not connected.
+	movne r1,#8					;@ Headphones
+	tst r0,#0x9					;@ Is any output enabled?
+	moveq r1,#9					;@ No sound
 	adr r2,mixerVolumes
 	ldr r1,[r2,r1,lsl#1]
 	ldr r0,=vol1_L
@@ -160,13 +163,14 @@ mixerVolumes:
 	mov r2,r2,lsl#6
 	mov r2,r2,lsl#5
 	add r2,r9,r2,lsl#5			;@ Headphones
+	mov r2,r2,lsr#32			;@ No sound
 
 ;@----------------------------------------------------------------------------
 setTotalVolume:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvHWVolume]
-	adr r2,hw1Volumes
 	ldrb r1,[spxptr,#wsvSOC]
+	adr r2,hw1Volumes
 	cmp r1,#SOC_ASWAN
 	adrne r2,hw2Volumes
 	ldr r0,[r2,r0,lsl#2]
@@ -225,7 +229,6 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 	stmfd sp!,{r4-r11,lr}
 	add r2,spxptr,#pcm1CurrentAddr
 	ldmia r2,{r3-r10}
-	mov r0,r0,lsl#3
 mixLoop:
 	mov r11,r3,lsl#20			;@ Pre-load r11 & lr with frequency.
 	mov lr,r4,lsl#20
@@ -254,13 +257,12 @@ innerMixLoop:
 	eorsne r2,r2,r7,lsl#21
 	orreq r7,r7,#0x00010000
 
-	sub r0,r0,#1
-	tst r0,#7
-	bne innerMixLoop
+	subs r0,r0,#0x10000000
+	bmi innerMixLoop
+	bic r0,r0,#0xF0000000
 ;@----------------------------------------------------------------------------
 
 	ldrb r11,[r10,r3,lsr#28]	;@ Channel 1
-	add r10,r10,#0x10
 	tst r3,#0x08000000
 	movne r11,r11,lsr#4
 	and r11,r11,#0xF
@@ -270,10 +272,9 @@ vol1_R:
 	orr lr,lr,#0xFF0000			;@ Volume right
 	mul r2,lr,r11
 
-	ldrb r11,[r10,r4,lsr#28]	;@ Channel 2
-	add r10,r10,#0x10
-	tst r4,#0x08000000
-	movne r11,r11,lsr#4
+	orrs r11,r10,r4,lsr#28
+	ldrb r11,[r11,#0x10]		;@ Channel 2
+	movcs r11,r11,lsr#4
 	ands r11,r11,#0xF
 vol2_L:
 	mov lr,#0x00				;@ Volume left
@@ -281,10 +282,9 @@ vol2_R:
 	orr lr,lr,#0xFF0000			;@ Volume right
 	mlane r2,lr,r11,r2			;@ This is changed in wsvSoundCtrlW
 
-	ldrb r11,[r10,r5,lsr#28]	;@ Channel 3
-	add r10,r10,#0x10
-	tst r5,#0x08000000
-	movne r11,r11,lsr#4
+	orrs r11,r10,r5,lsr#28
+	ldrb r11,[r11,#0x20]		;@ Channel 3
+	movcs r11,r11,lsr#4
 	ands r11,r11,#0xF
 vol3_L:
 	mov lr,#0x00				;@ Volume left
@@ -292,13 +292,12 @@ vol3_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r7,#0x4000				;@ Channel 4 Noise enabled?
-	ldrbeq r11,[r10,r6,lsr#28]	;@ Channel 4 PCM
-	sub r10,r10,#0x30
-	andsne r11,r7,#0x00010000
-	movne r11,#0xFF
-	tst r6,#0x08000000
-	movne r11,r11,lsr#4
+	movs r11,r7,lsl#17			;@ Channel 4 Noise enabled? (#0x4000)
+	orrspl r11,r10,r6,lsr#28
+	ldrbpl r11,[r11,#0x30]		;@ Channel 4 PCM
+	movcs r11,r11,lsr#4
+	movsmi r11,r7,lsl#15
+	movmi r11,#0x0F
 	ands r11,r11,#0xF
 vol4_L:
 	mov lr,#0x00				;@ Volume left
@@ -317,8 +316,8 @@ vol4_R:
 	mov r5,r5,ror#21
 noSweep:
 totalVolume:
-	add r2,r9,r2,lsl#5
-	cmp r0,#0
+	add r2,r9,r2,lsl#5			;@ This is updated by setSoundOutput
+	subs r0,r0,#1
 #ifdef GBA
 	add r2,r2,r2,lsr#16
 	mov r2,r2,lsr#9

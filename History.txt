@@ -1,6 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.3.9 - 2025-02-22 (FluBBa)
+	Optimized sound rendering.
+	Fixed sound output control register.
+
 V0.3.8 - 2025-02-18 (FluBBa)
 	Fixed reading/writing register 0x1A.
 	Fixed ch2 sample playing.
