@@ -37,7 +37,7 @@
 /** Timer for sound icons is on/off */
 #define LCD_ICON_TIME		(1<<12)
 
-/** Time for sound icons */
+/** Time for latched icons (sound & cartridge) */
 #define LCD_ICON_TIME_VALUE (128)
 
 /** Game screen width in pixels */
@@ -98,8 +98,9 @@ wsvLCDControl:		.byte 0		;@ 0x14 LCD control (on/off, WSC contrast)
 wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
 wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
 wsvVSync:			.byte 0		;@ 0x17 LCD_VSYNC
-wsvPadding0:		.space 2	;@ 0x18 - 0x19 ???
-wsvLCDVolume:		.byte 0		;@ 0x1A LCD Volume icons
+wsvLineCounter:		.byte 0		;@ 0x18 Write current scan line.
+wsvPadding0:		.space 1	;@ 0x19 ???
+wsvLatchedIcons:	.byte 0		;@ 0x1A Latched LCD icons
 wsvPadding1:		.space 1	;@ 0x1B ???
 
 wsvColor01:			.byte 0		;@ 0x1C Color 0 & 1
@@ -199,7 +200,7 @@ wsvVBlTimerFreq:	.short 0	;@ 0xA6/0xA7 VBlank Timer 'frequency'
 wsvHBlCounter:		.short 0	;@ 0xA8/0xA9 HBlank Counter - 1/12000s
 wsvVBlCounter:		.short 0	;@ 0xAA/0xAB VBlank Counter - 1/75s
 
-wsv0xAC:			.space 1	;@ 0xAC Power Off???
+wsvPowerOff:		.byte 0		;@ 0xAC Power Off
 wsvPadding11:		.space 3	;@ 0xAD - 0xAF ???
 
 wsvInterruptBase:	.byte 0		;@ 0xB0 Interrupt base

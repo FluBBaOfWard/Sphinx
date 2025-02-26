@@ -93,10 +93,12 @@ typedef struct {
 	u8 totalLines;
 	/// 0x17 LCD_VSYNC
 	u8 vSync;
-	/// 0x18 - 0x19 No registers
-	u8 padding0[2];
-	/// 0x1A LCD Volume icon
-	u8 LCDVolume;
+	/// 0x18 Write current scan line
+	u8 lineCounter;
+	/// 0x19 No register
+	u8 padding0[1];
+	/// 0x1A LCD Cartridge & Volume icons
+	u8 latchedIcons;
 	/// 0x1B No register
 	u8 padding1[1];
 
@@ -283,8 +285,8 @@ typedef struct {
 	/// 0xAA/0xAB VBlank Counter - 1/75s
 	u16 vblCounter;
 
-	/// 0xAC Power off?
-	u8 reg0xAC;
+	/// 0xAC Power off
+	u8 powerOff;
 	/// 0xAD - 0xAF No registers
 	u8 padding11[3];
 

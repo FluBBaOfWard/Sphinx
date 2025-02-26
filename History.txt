@@ -1,9 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.9 - 2025-02-22 (FluBBa)
+V0.3.9 - 2025-02-24 (FluBBa)
+	Fixed sound output control (0x91) register.
+	Fixed latched icons (0x1A) register.
 	Optimized sound rendering.
-	Fixed sound output control register.
 
 V0.3.8 - 2025-02-18 (FluBBa)
 	Fixed reading/writing register 0x1A.
@@ -28,7 +29,7 @@ V0.3.5 - 2023-10-25 (FluBBa)
 	Fixed IO register differences between mono/color mode.
 
 V0.3.2 - 2023-09-24 (FluBBa)
-	Added writes to register 0xAC.
+	Added writes to PowerOff (0xAC) register.
 	Fixed cartridge icon timer.
 	Switched port & value registers for writes.
 

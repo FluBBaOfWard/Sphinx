@@ -132,12 +132,26 @@ wsvSetPowerOff:
 	strb r0,[r1]
 
 	bl wsvRegistersReset
-	ldrb r0,[spxptr,#wsvSystemCtrl3]
+	ldrb r0,[spxptr,#wsvPowerOff]
 	orr r0,r0,#1
-	strb r0,[spxptr,#wsvSystemCtrl3]
+	strb r0,[spxptr,#wsvPowerOff]
 	bl setMuteSoundChip
-	bl wsvUpdateIcons
+	bl clearLCD
+	bl gfxEndFrame
+	bl setupEmuBackground
 	ldmfd sp!,{pc}
+;@----------------------------------------------------------------------------
+clearLCD:
+;@----------------------------------------------------------------------------
+	ldr r0,[spxptr,#dispBuff]
+	mov r1,#159
+clearLCDLoop:
+	ldrb r2,[r0,r1]
+	and r2,r2,#0
+	strb r2,[r0,r1]
+	subs r1,r1,#2
+	bpl clearLCDLoop
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvInitIOMap:		;@ r0=SOC
 ;@----------------------------------------------------------------------------
@@ -160,6 +174,7 @@ ioTblLoop:
 	ldr r1,=wsvUnmappedR
 	ldr r2,=wsvUnmappedW
 	cmp r0,#SOC_ASWAN
+	streq r2,[r4,#0xAC<<2]	;@ Power Off not on ASWAN
 	moveq r5,#0x40
 	movne r5,#0x70			;@ SPHINX
 ioASLoop:
@@ -196,6 +211,7 @@ modeMono:
 	ldr r2,=wsvUnmappedW
 ioMode0Loop:
 	cmp r5,#0x60				;@ Skip 0x60 since it's used to switch back to color mode.
+	cmpne r5,#0x62				;@ Skip 0x62, works in mono mode (on WSC & SC).
 	strne r1,[r3,r5,lsl#2]
 	strne r2,[r4,r5,lsl#2]
 	add r5,r5,#1
@@ -275,17 +291,18 @@ wsvRegistersReset:				;@ in r3=SOC
 	ldmfd sp!,{spxptr,lr}
 	ldrb r1,[spxptr,#wsvSOC]
 	cmp r1,#SOC_ASWAN
-	mov r0,#0x84
-	movne r0,#0x86
-	strb r0,[spxptr,#wsvSystemCtrl1]
-	mov r0,#LCD_ICON_TIME_VALUE
-	strb r0,[spxptr,#wsvCartIconTimer]
 	mov r0,#0x02
 	movne r0,#0x03
 	strb r0,[spxptr,#wsvHWVolume]
-	cmpne r1,#SOC_SPHINX2
+	mov r0,#0x84
+	orrne r0,r0,#0x02				;@ Color mode
+	strb r0,[spxptr,#wsvSystemCtrl1]
+	ands r0,r0,#0x80				;@ Cart Ok?
+	movne r0,#LCD_ICON_TIME_VALUE
+	strb r0,[spxptr,#wsvCartIconTimer]
+	cmp r1,#SOC_SPHINX
 	mov r0,#0x90
-	movne r0,#0x9F
+	moveq r0,#0x9F
 	strb r0,[spxptr,#wsvColor01]
 	cmp r1,#SOC_SPHINX2
 	mov r0,#0
@@ -453,15 +470,18 @@ wsvVCountR:					;@ 0x03
 	ldrb r0,[spxptr,#scanline]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvLCDVolumeR:				;@ 0x1A
+wsvLatchedIconsR:			;@ 0x1A
 ;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvLatchedIcons]
 	ldr r1,[spxptr,#enabledLCDIcons]
-	and r0,r1,LCD_ICON_SLEEP	;@ #1
+	and r0,r0,#1				;@ LCD block disabled?
+	tst r1,#LCD_ICON_CARTRIDGE
+	orrne r0,r0,#0x20
 	tst r1,#LCD_ICON_TIME
 	bxeq lr
-	tst r1,LCD_ICON_HEADPHONE
+	tst r1,#LCD_ICON_HEADPHONE
 	orrne r0,r0,#0x02
-	orreq r0,r0,#0x10
+	orreq r0,r0,#0x10			;@ Speaker
 	tst r1,#LCD_ICON_VOL1
 	orrne r0,r0,#0x08
 	tst r1,#LCD_ICON_VOL2
@@ -763,13 +783,17 @@ wsvRefW:					;@ 0x16, Last scan line.
 	str r0,lineStateLastLine
 	b setScreenRefresh
 ;@----------------------------------------------------------------------------
-wsvLCDVolumeW:				;@ 0x1A
+wsvLatchedIconsW:			;@ 0x1A
 ;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvLCDControl]
-	and r0,r0,#1
-	orr r1,r1,#1
-	eor r1,r1,r0
-	strb r1,[spxptr,#wsvLCDControl]
+	ands r1,r0,#1
+	strb r1,[spxptr,#wsvLatchedIcons]
+	bxeq lr
+	tst r0,#0x20				;@ Cart icon?
+	movne r1,#LCD_ICON_TIME_VALUE
+	strbne r1,[spxptr,#wsvCartIconTimer]
+	tst r0,#0x10				;@ Sound icons?
+	movne r1,#LCD_ICON_TIME_VALUE
+	strbne r1,[spxptr,#wsvSoundIconTimer]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvDMASourceW:				;@ 0x40, only WSC.
@@ -904,7 +928,7 @@ wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 	ldmfd sp!,{lr}
 	b intEepromSetSize
 ;@----------------------------------------------------------------------------
-wsvSysCtrl3W:				;@ 0x62, only WSC
+wsvSysCtrl3W:				;@ 0x62, only WSC & SC
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSystemCtrl3]
 	ands r0,r0,#1				;@ Power Off bit.
@@ -1086,7 +1110,7 @@ wsvHWVolumeW:				;@ 0x9E HW Volume?
 wsvHWW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSystemCtrl1]
-	and r1,r1,#0x83				;@ These can't be changed once set.
+	and r1,r1,#0x83				;@ These can't be cleared once set.
 	and r0,r0,#0x8D				;@ Only these bits can be set.
 	orr r0,r0,r1
 	strb r0,[spxptr,#wsvSystemCtrl1]
@@ -1138,10 +1162,10 @@ wsvVTimerHighW:				;@ 0xA7 VBlank timer high
 	bx lr
 
 ;@----------------------------------------------------------------------------
-wsv0xACW:					;@ 0xAC
+wsvPowerOffW:					;@ 0xAC
 ;@----------------------------------------------------------------------------
-	ands r0,r0,#1				;@ Power Off bit?
-	strb r0,[spxptr,#wsv0xAC]
+	ands r0,r0,#1				;@ Power Off bit
+	strb r0,[spxptr,#wsvPowerOff]
 	bxeq lr
 	b wsvSetPowerOff
 ;@----------------------------------------------------------------------------
@@ -1987,6 +2011,10 @@ skipSprLoop:
 wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 ;@----------------------------------------------------------------------------
 	ldr r1,[spxptr,#enabledLCDIcons]
+	ldrb r0,[spxptr,#wsvLatchedIcons]
+	tst r0,#1					;@ LCD block disabled?
+	movne r0,#0
+	bne setEnabledIcons
 	ldrb r0,[spxptr,#wsvLCDIcons]
 	and r0,r0,#0x3F
 	ldrb r2,[spxptr,#wsvHWVolume]
@@ -2006,15 +2034,16 @@ wsvUpdateIcons:				;@ Remap IO regs to LCD icons and draw icons.
 	subs r2,r2,#1
 	strbpl r2,[spxptr,#wsvSoundIconTimer]
 	orrhi r0,r0,#LCD_ICON_TIME
-	ldrb r2,[spxptr,#wsvSystemCtrl3]
+	ldrb r2,[spxptr,#wsvPowerOff]
 	tst r2,#1
 	orreq r0,r0,#LCD_ICON_POWER
 	movne r0,#0
+setEnabledIcons:
 	eors r1,r1,r0
 	bxeq lr
 	str r0,[spxptr,#enabledLCDIcons]
 ;@----------------------------------------------------------------------------
-wsvRedrawLCDIcons:			;@ In r0=
+wsvRedrawLCDIcons:			;@ In r0=enabledLCDIcons
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvMachine]
 	cmp r1,#HW_WONDERSWAN
@@ -2247,9 +2276,9 @@ defaultInTable:
 	.long wsvRegR				;@ 0x15 LCD icons
 	.long wsvRegR				;@ 0x16 Total scan lines
 	.long wsvRegR				;@ 0x17 Vsync line
-	.long wsvUnmappedR			;@ 0x18 ---
+	.long wsvUnmappedR			;@ 0x18 Write current scan line.
 	.long wsvUnmappedR			;@ 0x19 ---
-	.long wsvLCDVolumeR			;@ 0x1A Volume Icons
+	.long wsvLatchedIconsR		;@ 0x1A Cartridge & Volume Icons
 	.long wsvUnmappedR			;@ 0x1B ---
 	.long wsvRegR				;@ 0x1C Pal mono pool 0
 	.long wsvRegR				;@ 0x1D Pal mono pool 1
@@ -2341,14 +2370,14 @@ defaultInTable:
 	.long wsvUnmappedR			;@ 0x6E ---
 	.long wsvUnmappedR			;@ 0x6F ---
 
-	.long wsvImportantR			;@ 0x70 Unknown70, LCD settings on SC?
-	.long wsvImportantR			;@ 0x71 Unknown71
-	.long wsvImportantR			;@ 0x72 Unknown72
-	.long wsvImportantR			;@ 0x73 Unknown73
-	.long wsvImportantR			;@ 0x74 Unknown74
-	.long wsvImportantR			;@ 0x75 Unknown75
-	.long wsvImportantR			;@ 0x76 Unknown76
-	.long wsvImportantR			;@ 0x77 Unknown77
+	.long wsvImportantR			;@ 0x70 SC LCD control 0
+	.long wsvImportantR			;@ 0x71 SC LCD control 1
+	.long wsvImportantR			;@ 0x72 SC LCD control 2
+	.long wsvImportantR			;@ 0x73 SC LCD control 3
+	.long wsvImportantR			;@ 0x74 SC LCD control 4
+	.long wsvImportantR			;@ 0x75 SC LCD control 5
+	.long wsvImportantR			;@ 0x76 SC LCD control 6
+	.long wsvImportantR			;@ 0x77 SC LCD control 7
 	.long wsvUnmappedR			;@ 0x78 ---
 	.long wsvUnmappedR			;@ 0x79 ---
 	.long wsvUnmappedR			;@ 0x7A ---
@@ -2404,7 +2433,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0xA9 HBlankTimer counter high
 	.long wsvRegR				;@ 0xAA VBlankTimer counter low
 	.long wsvRegR				;@ 0xAB VBlankTimer counter high
-	.long wsvUnknownR			;@ 0xAC ???
+	.long wsvUnknownR			;@ 0xAC PowerOff
 	.long wsvUnmappedR			;@ 0xAD ---
 	.long wsvUnmappedR			;@ 0xAE ---
 	.long wsvUnmappedR			;@ 0xAF ---
@@ -2453,9 +2482,9 @@ defaultOutTable:
 	.long wsvLCDIconW			;@ 0x15 LCD icons
 	.long wsvRefW				;@ 0x16 Total scan lines
 	.long wsvRegW				;@ 0x17 Vsync line
-	.long wsvUnmappedW			;@ 0x18 ---
+	.long wsvImportantW			;@ 0x18 Write current scan line.
 	.long wsvUnmappedW			;@ 0x19 ---
-	.long wsvLCDVolumeW			;@ 0x1A Volume Icons, LCD sleep
+	.long wsvLatchedIconsW		;@ 0x1A Cartridge & Volume Icons, LCD disable
 	.long wsvUnmappedW			;@ 0x1B ---
 	.long wsvRegW				;@ 0x1C Pal mono pool 0
 	.long wsvRegW				;@ 0x1D Pal mono pool 1
@@ -2547,14 +2576,14 @@ defaultOutTable:
 	.long wsvUnmappedW			;@ 0x6E ---
 	.long wsvUnmappedW			;@ 0x6F ---
 
-	.long wsvImportantW			;@ 0x70 Unknown70, LCD settings on SC?
-	.long wsvImportantW			;@ 0x71 Unknown71
-	.long wsvImportantW			;@ 0x72 Unknown72
-	.long wsvImportantW			;@ 0x73 Unknown73
-	.long wsvImportantW			;@ 0x74 Unknown74
-	.long wsvImportantW			;@ 0x75 Unknown75
-	.long wsvImportantW			;@ 0x76 Unknown76
-	.long wsvImportantW			;@ 0x77 Unknown77
+	.long wsvImportantW			;@ 0x70 SC LCD control 0
+	.long wsvImportantW			;@ 0x71 SC LCD control 1
+	.long wsvImportantW			;@ 0x72 SC LCD control 2
+	.long wsvImportantW			;@ 0x73 SC LCD control 3
+	.long wsvImportantW			;@ 0x74 SC LCD control 4
+	.long wsvImportantW			;@ 0x75 SC LCD control 5
+	.long wsvImportantW			;@ 0x76 SC LCD control 6
+	.long wsvImportantW			;@ 0x77 SC LCD control 7
 	.long wsvUnmappedW			;@ 0x78 ---
 	.long wsvUnmappedW			;@ 0x79 ---
 	.long wsvUnmappedW			;@ 0x7A ---
@@ -2610,7 +2639,7 @@ defaultOutTable:
 	.long wsvReadOnlyW			;@ 0xA9 HBlank counter high
 	.long wsvReadOnlyW			;@ 0xAA VBlank counter low
 	.long wsvReadOnlyW			;@ 0xAB VBlank counter high
-	.long wsv0xACW				;@ 0xAC Power Off???
+	.long wsvPowerOffW			;@ 0xAC Power Off
 	.long wsvUnmappedW			;@ 0xAD ---
 	.long wsvUnmappedW			;@ 0xAE ---
 	.long wsvUnmappedW			;@ 0xAF ---
