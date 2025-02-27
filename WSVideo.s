@@ -38,6 +38,7 @@
 	.global wsvSetHeadphones
 	.global wsvSetLowBattery
 	.global wsvSetSerialByteIn
+	.global wsvSetPowerOff
 
 	.syntax unified
 	.arm
@@ -131,25 +132,40 @@ wsvSetPowerOff:
 	ldr r1,=powerIsOn
 	strb r0,[r1]
 
-	bl wsvRegistersReset
 	ldrb r0,[spxptr,#wsvPowerOff]
 	orr r0,r0,#1
 	strb r0,[spxptr,#wsvPowerOff]
+	mov r0,#143
+	str r0,[spxptr,#scanline]
+	str r0,[spxptr,#dispLine]
 	bl setMuteSoundChip
 	bl clearLCD
-	bl gfxEndFrame
 	bl setupEmuBackground
-	ldmfd sp!,{pc}
+	ldmfd sp!,{lr}
+	bx lr
 ;@----------------------------------------------------------------------------
 clearLCD:
 ;@----------------------------------------------------------------------------
+	mov r0,#0
+	strb r0,[spxptr,#wsvBgColor]	;@ Background palette
+	ldrb r2,[spxptr,#wsvSOC]
+	cmp r2,#SOC_SPHINX
+	ldrb r0,[spxptr,#wsvColor01]
+	orreq r0,r0,#0x0F
+	bicne r0,r0,#0x0F
+	strb r0,[spxptr,#wsvColor01]
+	ldr r1,[spxptr,#paletteRAM]
+	ldr r0,=0xFFF
+	moveq r0,#0x00
+	strh r0,[r1]
+	cmp r2,#SOC_SPHINX2
 	ldr r0,[spxptr,#dispBuff]
-	mov r1,#159
+	mov r2,#1
+	moveq r2,#2
+	mov r1,#159<<8
 clearLCDLoop:
-	ldrb r2,[r0,r1]
-	and r2,r2,#0
-	strb r2,[r0,r1]
-	subs r1,r1,#2
+	strb r1,[r0,r1,lsr#8]
+	subs r1,r1,r2,lsl#8
 	bpl clearLCDLoop
 	bx lr
 ;@----------------------------------------------------------------------------
