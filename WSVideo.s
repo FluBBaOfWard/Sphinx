@@ -39,6 +39,7 @@
 	.global wsvSetLowBattery
 	.global wsvSetSerialByteIn
 	.global wsvSetPowerOff
+	.global wsvHandleHalt
 
 	.syntax unified
 	.arm
@@ -124,6 +125,12 @@ wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc
 
 dummyIrqFunc:
 	bx lr
+;@----------------------------------------------------------------------------
+wsvHandleHalt:
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvSystemCtrl3]
+	tst r0,#1
+	bxeq lr
 ;@----------------------------------------------------------------------------
 wsvSetPowerOff:
 ;@----------------------------------------------------------------------------
@@ -950,8 +957,7 @@ wsvSysCtrl3W:				;@ 0x62, only WSC & SC
 	ands r0,r0,#1				;@ Power Off bit.
 	orr r0,r0,r1				;@ OR SwanCrystal flag (bit 7).
 	strb r0,[spxptr,#wsvSystemCtrl3]
-	bxeq lr
-	b wsvSetPowerOff
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvHyperCtrlW:				;@ 0x6A, only WSC
 ;@----------------------------------------------------------------------------
