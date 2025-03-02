@@ -697,7 +697,7 @@ wsvSpriteFirstW:			;@ 0x05, First Sprite
 	strb r0,[spxptr,#wsvSpriteFirst]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvMapAdrW:					;@ 0x07 Map table address
+wsvMapAdrW:					;@ 0x07, Map table address
 ;@----------------------------------------------------------------------------
 #ifdef __ARM_ARCH_5TE__
 	ldrd r2,r3,[spxptr,#wsvBgScrollBak]
@@ -954,7 +954,7 @@ wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 wsvSysCtrl3W:				;@ 0x62, only WSC & SC
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSystemCtrl3]
-	ands r0,r0,#1				;@ Power Off bit.
+	and r0,r0,#1				;@ Power Off bit.
 	orr r0,r0,r1				;@ OR SwanCrystal flag (bit 7).
 	strb r0,[spxptr,#wsvSystemCtrl3]
 	bx lr
@@ -970,7 +970,7 @@ wsvHyperChanCtrlW:			;@ 0x6B, only WSC
 	tst r0,#0x10				;@ Reset Left/Right?
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvFreqLW:					;@ 0x80,0x82,0x84,0x86 Sound frequency low
+wsvFreqLW:					;@ 0x80,0x82,0x84,0x86, Sound frequency low
 ;@----------------------------------------------------------------------------
 	add r2,spxptr,#wsvRegs
 	strb r0,[r2,r1]
@@ -979,7 +979,7 @@ wsvFreqLW:					;@ 0x80,0x82,0x84,0x86 Sound frequency low
 	strb r0,[r2,r1,lsl#1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvFreqHW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
+wsvFreqHW:					;@ 0x81,0x83,0x85,0x87, Sound frequency high
 ;@----------------------------------------------------------------------------
 	and r0,r0,#7				;@ Only low 3 bits
 	add r2,spxptr,#wsvRegs
@@ -990,7 +990,7 @@ wsvFreqHW:					;@ 0x81,0x83,0x85,0x87 Sound frequency high
 	strb r0,[r2,#pcm1CurrentAddr+1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvCh1VolumeW:				;@ 0x88 Sound Channel 1 Volume
+wsvCh1VolumeW:				;@ 0x88, Sound Channel 1 Volume
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSound1Vol]
 	teq r1,r0
@@ -998,7 +998,7 @@ wsvCh1VolumeW:				;@ 0x88 Sound Channel 1 Volume
 	strb r0,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
 	b setCh1Volume
 ;@----------------------------------------------------------------------------
-wsvCh2VolumeW:				;@ 0x89 Sound Channel 2 Volume
+wsvCh2VolumeW:				;@ 0x89, Sound Channel 2 Volume
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSound2Vol]
 	teq r1,r0
@@ -1006,7 +1006,7 @@ wsvCh2VolumeW:				;@ 0x89 Sound Channel 2 Volume
 	strb r0,[spxptr,#wsvSound2Vol]	;@ Each nibble is L & R
 	b setCh2Volume
 ;@----------------------------------------------------------------------------
-wsvCh3VolumeW:				;@ 0x8A Sound Channel 3 Volume
+wsvCh3VolumeW:				;@ 0x8A, Sound Channel 3 Volume
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSound3Vol]
 	teq r1,r0
@@ -1014,7 +1014,7 @@ wsvCh3VolumeW:				;@ 0x8A Sound Channel 3 Volume
 	strb r0,[spxptr,#wsvSound3Vol]	;@ Each nibble is L & R
 	b setCh3Volume
 ;@----------------------------------------------------------------------------
-wsvCh4VolumeW:				;@ 0x8B Sound Channel 4 Volume
+wsvCh4VolumeW:				;@ 0x8B, Sound Channel 4 Volume
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSound4Vol]
 	teq r1,r0
@@ -1022,7 +1022,7 @@ wsvCh4VolumeW:				;@ 0x8B Sound Channel 4 Volume
 	strb r0,[spxptr,#wsvSound4Vol]	;@ Each nibble is L & R
 	b setCh4Volume
 ;@----------------------------------------------------------------------------
-wsvSweepTimeW:				;@ 0x8D Sound sweep time
+wsvSweepTimeW:				;@ 0x8D, Sound sweep time
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0x1F				;@ Only low 5 bits
 	strb r0,[spxptr,#wsvSweepTime]
@@ -1034,7 +1034,7 @@ wsvSweepTimeW:				;@ 0x8D Sound sweep time
 	str r0,[spxptr,#sweep3CurrentAddr]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvNoiseCtrlW:				;@ 0x8E Noise Control
+wsvNoiseCtrlW:				;@ 0x8E, Noise Control
 ;@----------------------------------------------------------------------------
 	and r1,r0,#0x17				;@ Only keep enable & tap bits
 	strb r1,[spxptr,#wsvNoiseCtrl]
@@ -1061,7 +1061,7 @@ noiseTaps:
 	.long 0x00000028			;@ Tap bit 7 & 9
 	.long 0x00000088			;@ Tap bit 7 & 11
 ;@----------------------------------------------------------------------------
-wsvSampleBaseW:				;@ 0x8F Sample Base
+wsvSampleBaseW:				;@ 0x8F, Sample Base
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvSampleBase]
 	ldr r1,[spxptr,#gfxRAM]
@@ -1069,7 +1069,7 @@ wsvSampleBaseW:				;@ 0x8F Sample Base
 	str r1,[spxptr,#sampleBaseAddr]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSoundCtrlW:				;@ 0x90 Sound Control
+wsvSoundCtrlW:				;@ 0x90, Sound Control
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSoundCtrl]
 	teq r1,r0
@@ -1098,7 +1098,7 @@ ch2OpCode:
 	mlane r2,lr,r11,r2
 	add r2,lr,r2
 ;@----------------------------------------------------------------------------
-wsvSoundOutputW:			;@ 0x91 Sound ouput
+wsvSoundOutputW:			;@ 0x91, Sound ouput
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSoundOutput]
 	and r0,r0,#0x0F				;@ Only low 4 bits
@@ -1114,7 +1114,7 @@ wsvPushVolumeButton:
 	ldrb r0,[spxptr,#wsvHWVolume]
 	subeq r0,r0,#1
 ;@----------------------------------------------------------------------------
-wsvHWVolumeW:				;@ 0x9E HW Volume?
+wsvHWVolumeW:				;@ 0x9E, HW Volume?
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSOC]
 	cmp r1,#SOC_ASWAN
@@ -1153,31 +1153,31 @@ sp2DisLoop:
 	b setBootRomOverlay
 
 ;@----------------------------------------------------------------------------
-wsvTimerCtrlW:				;@ 0xA2 Timer control
+wsvTimerCtrlW:				;@ 0xA2, Timer control
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0x0F
 	strb r0,[spxptr,#wsvTimerControl]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvHTimerLowW:				;@ 0xA4 HBlank timer low
+wsvHTimerLowW:				;@ 0xA4, HBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvHBlTimerFreq]
 	strb r0,[spxptr,#wsvHBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvHTimerHighW:				;@ 0xA5 HBlank timer high
+wsvHTimerHighW:				;@ 0xA5, HBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvHBlTimerFreq+1]
 	strb r0,[spxptr,#wsvHBlCounter+1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvVTimerLowW:				;@ 0xA6 VBlank timer low
+wsvVTimerLowW:				;@ 0xA6, VBlank timer low
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvVBlTimerFreq]
 	strb r0,[spxptr,#wsvVBlCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvVTimerHighW:				;@ 0xA7 VBlank timer high
+wsvVTimerHighW:				;@ 0xA7, VBlank timer high
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvVBlTimerFreq+1]
 	strb r0,[spxptr,#wsvVBlCounter+1]
@@ -1338,24 +1338,22 @@ endFrame:
 	bl scrollCnt
 	bl gfxEndFrame
 	bl wsvDMASprites
+	ldmfd sp!,{lr}
 
-	mov r0,#0
 	ldrh r1,[spxptr,#wsvVBlCounter]
+	mov r0,#VBLST_IRQ_F				;@ #6 = VBlank
 	subs r1,r1,#1
-	bmi noTimerVBlIrq
-	orreq r0,r0,#VBLTM_IRQ_F		;@ #5 = VBlank timer
+	bmi wsvSetInterruptPins
 	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noVBlIrq
+	orreq r0,r0,#VBLTM_IRQ_F		;@ #5 = VBlank timer
 	tst r2,#0x8						;@ Repeat?
 	ldrhne r1,[spxptr,#wsvVBlTimerFreq]
 noVBlIrq:
 	tst r2,#0x4						;@ VBlank timer enabled?
 	strhne r1,[spxptr,#wsvVBlCounter]
-noTimerVBlIrq:
-	orr r0,r0,#VBLST_IRQ_F			;@ #6 = VBlank
-	bl wsvSetInterruptPins
+	b wsvSetInterruptPins
 
-	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
 drawFrameGfx:
 ;@----------------------------------------------------------------------------
@@ -1425,7 +1423,7 @@ checkScanlineIRQ:
 	ldrb r1,[spxptr,#wsvLineCompare]
 	cmp r0,r1
 	mov r0,#0
-	orreq r0,r0,#LINE_IRQ_F		;@ #4 = Line compare
+	moveq r0,#LINE_IRQ_F		;@ #4 = Line compare
 
 	ldrb r1,[spxptr,#wsvSerialStatus]
 	tst r1,#0x80
@@ -1434,9 +1432,9 @@ checkScanlineIRQ:
 	ldrh r1,[spxptr,#wsvHBlCounter]
 	subs r1,r1,#1
 	bmi noTimerHBlIrq
-	orreq r0,r0,#HBLTM_IRQ_F	;@ #7 = HBlank timer
 	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noHBlIrq
+	orreq r0,r0,#HBLTM_IRQ_F	;@ #7 = HBlank timer
 	tst r2,#0x2					;@ Repeat?
 	ldrhne r1,[spxptr,#wsvHBlTimerFreq]
 noHBlIrq:
@@ -1472,14 +1470,14 @@ checkSerialRxTx:
 ;@----------------------------------------------------------------------------
 	ldr r2,[spxptr,#serialRXCounter]
 	cmp r2,#0
-	subspl r2,r2,256			;@ Cycles per scanline
+	subspl r2,r2,#256			;@ Cycles per scanline
 	str r2,[spxptr,#serialRXCounter]
 	orrcc r0,r0,#SERRX_IRQ_F	;@ #3 = Serial receive
 	strbcc r0,[spxptr,#wsvSerialBufFull]
 
 	ldr r2,[spxptr,#serialTXCounter]
 	cmp r2,#0
-	subspl r2,r2,256			;@ Cycles per scanline
+	subspl r2,r2,#256			;@ Cycles per scanline
 	str r2,[spxptr,#serialTXCounter]
 	bxcs lr
 	orrcc r0,r0,#SERTX_IRQ_F	;@ #0 = Serial transmit
@@ -1495,7 +1493,7 @@ wsvSetInterruptExternal:	;@ r0 = irq pin state
 	mov r0,#EXTRN_IRQ_F			;@ External interrupt is bit/number 2.
 	beq wsvClearInterruptPins
 ;@----------------------------------------------------------------------------
-wsvSetInterruptPins:		;@ r0 = interrupt pins
+wsvSetInterruptPins:		;@ r0 = interrupt pins to set
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptPins]
 	orr r1,r1,r0
@@ -1509,7 +1507,7 @@ wsvSetInterruptPins:		;@ r0 = interrupt pins
 	strb r0,[spxptr,#wsvInterruptStatus]
 	ldr pc,[spxptr,#irqFunction]
 ;@----------------------------------------------------------------------------
-wsvClearInterruptPins:		;@ In r0 = interrupt pins
+wsvClearInterruptPins:		;@ In r0 = interrupt pins to clear
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptPins]
 	bic r1,r1,r0
