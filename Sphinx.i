@@ -94,7 +94,7 @@ wsvBgYScroll:		.byte 0		;@ 0x11 Background Y-Scroll
 wsvFgXScroll:		.byte 0		;@ 0x12 Foreground X-Scroll
 wsvFgYScroll:		.byte 0		;@ 0x13 Foreground Y-Scroll
 
-wsvLCDControl:		.byte 0		;@ 0x14 LCD control (on/off, WSC contrast)
+wsvLCDControl:		.byte 0		;@ 0x14 LCD control (sleep, WSC contrast)
 wsvLCDIcons:		.byte 0		;@ 0x15 LCD icons
 wsvTotalLines:		.byte 0		;@ 0x16 Total scan lines
 wsvVSync:			.byte 0		;@ 0x17 LCD_VSYNC
@@ -281,7 +281,7 @@ ledCounter:			.long 0
 wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 sphinxStateEnd:
 
-;@sprWindowData:		.long 0
+wsvDefaultBgCol:	.long 0		;@ LCD color when off
 cachedMaps:			.space 4
 
 wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2

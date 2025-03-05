@@ -144,14 +144,15 @@ setHyperVoiceValue:
 	str r0,[spxptr,#currentSampleValue]
 	bx lr
 ;@----------------------------------------------------------------------------
-setSoundOutput:				;@ r0 = wsvSoundOutput
+setSoundOutput:				;@ r0 = wsvSoundOutput (from 0x91)
 ;@----------------------------------------------------------------------------
 	and r1,r0,#0x6
 	tst r0,#0x80				;@ Headphones?
 	biceq r0,r0,#0x08			;@ Disable headphones out if not connected.
+	bicne r0,r0,#0x01			;@ Disable internal speaker if connected.
 	movne r1,#8					;@ Headphones
 	tst r0,#0x9					;@ Is any output enabled?
-	moveq r1,#9					;@ No sound
+	moveq r1,#10				;@ No sound
 	adr r2,mixerVolumes
 	ldr r1,[r2,r1,lsl#1]
 	ldr r0,=vol1_L

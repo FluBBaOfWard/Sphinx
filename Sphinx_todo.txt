@@ -1,7 +1,6 @@
 Bandai WonderSwan/Sphinx To do
 ------------------------------
 
-	Handle LCD on/off.
 	Stop DMA from SRAM and slow ROM.
 	Handle double buffered tile maps better, see Hataraku Chocobo.
 	Fix HyperVoice stereo handling.

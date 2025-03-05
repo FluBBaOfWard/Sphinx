@@ -409,10 +409,11 @@ typedef struct {
 	u32 scrollLine;
 	u32 ledCounter;
 	/// Internal sprite ram
-	u8 wsvSpriteRAM[0x200];
+	u8 spriteRAM[0x200];
 	// End of Sphinx state
 
-	//u32 sprWindowData;
+	/// LCD color when off
+	u32 wsvDefaultBgCol;
 	u8 cachedMaps[4];
 
 	/// ASWAN, SPHINX or SPHINX2

@@ -105,10 +105,12 @@ wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc
 	cmp r1,#HW_WONDERSWAN
 	cmpne r1,#HW_POCKETCHALLENGEV2
 	moveq r0,#SOC_ASWAN
-	movne r0,#SOC_SPHINX
-	cmp r1,#HW_SWANCRYSTAL
-	moveq r0,#SOC_SPHINX2
+	movne r0,#SOC_SPHINX2
+	subs r3,r1,#HW_WONDERSWANCOLOR
+	ldrne r3,=0xFFF
+	moveq r0,#SOC_SPHINX
 	strb r0,[spxptr,#wsvSOC]
+	str r3,[spxptr,#wsvDefaultBgCol]
 
 	cmp r2,#0
 	adreq r2,dummyIrqFunc
@@ -144,36 +146,9 @@ wsvSetPowerOff:
 	strb r0,[spxptr,#wsvPowerOff]
 	mov r0,#143
 	str r0,[spxptr,#scanline]
-	str r0,[spxptr,#dispLine]
 	bl setMuteSoundChip
-	bl clearLCD
-	bl setupEmuBackground
+	bl setupEmuBgrShutDown
 	ldmfd sp!,{lr}
-	bx lr
-;@----------------------------------------------------------------------------
-clearLCD:
-;@----------------------------------------------------------------------------
-	mov r0,#0
-	strb r0,[spxptr,#wsvBgColor]	;@ Background palette
-	ldrb r2,[spxptr,#wsvSOC]
-	cmp r2,#SOC_SPHINX
-	ldrb r0,[spxptr,#wsvColor01]
-	orreq r0,r0,#0x0F
-	bicne r0,r0,#0x0F
-	strb r0,[spxptr,#wsvColor01]
-	ldr r1,[spxptr,#paletteRAM]
-	ldr r0,=0xFFF
-	moveq r0,#0x00
-	strh r0,[r1]
-	cmp r2,#SOC_SPHINX2
-	ldr r0,[spxptr,#dispBuff]
-	mov r2,#1
-	moveq r2,#2
-	mov r1,#159<<8
-clearLCDLoop:
-	strb r1,[r0,r1,lsr#8]
-	subs r1,r1,r2,lsl#8
-	bpl clearLCDLoop
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvInitIOMap:		;@ r0=SOC
@@ -785,6 +760,17 @@ sy4:
 	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
+wsvLCDControlW:				;@ 0x14, Sleep, WSC contrast.
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvSOC]
+	and r0,r0,#0xF3
+	cmp r1,#SOC_SPHINX2
+	andeq r0,r0,#3
+	strb r0,[spxptr,#wsvLCDControl]
+	mov r0,r0,lsl#7				;@ Enable default color if LCD sleep.
+	strb r0,[spxptr,#wsvDefaultBgCol+3]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvLCDIconW:				;@ 0x15, Enable/disable LCD icons
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvLCDIcons]
@@ -1325,7 +1311,10 @@ midFrame:
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	ldrb r2,[spxptr,#wsvDispCtrl]
+	ldrb r2,[spxptr,#wsvLCDControl]
+	ands r2,r2,#1					;@ LCD on?
+	streq r2,[spxptr,#dispLine]
+	ldrbne r2,[spxptr,#wsvDispCtrl]
 	bl dispCnt
 	ldr r2,[spxptr,#wsvFgWinXPos]
 	bl windowCnt
@@ -2004,12 +1993,8 @@ dm5:
 	and r4,r2,#0x0E00			;@ Palette
 	orr r3,r3,r4,lsl#3
 	tst r2,#0x2000				;@ Priority
-#ifdef NDS
-	orreq r3,r3,#PRIORITY		;@ Prio NDS
-#elif GBA
-	orreq r3,r3,#PRIORITY*2		;@ Prio GBA
-	orrne r3,r3,#PRIORITY		;@ Prio GBA
-#endif
+	orreq r3,r3,#PRIORITY*2		;@ Prio GBA/NDS
+	orrne r3,r3,#PRIORITY		;@ Prio GBA/NDS
 	tst r2,r8					;@ Palette bit 2 for 2bitplane
 	orrne r3,r3,#0x200			;@ Opaque tiles
 
@@ -2292,7 +2277,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0x11 Bg scroll Y
 	.long wsvRegR				;@ 0x12 Fg scroll X
 	.long wsvRegR				;@ 0x13 Fg scroll Y
-	.long wsvRegR				;@ 0x14 LCD control (on/off?)
+	.long wsvRegR				;@ 0x14 LCD control (sleep, WSC contrast)
 	.long wsvRegR				;@ 0x15 LCD icons
 	.long wsvRegR				;@ 0x16 Total scan lines
 	.long wsvRegR				;@ 0x17 Vsync line
@@ -2498,7 +2483,7 @@ defaultOutTable:
 	.long wsvBgScrYW			;@ 0x11 Bg scroll Y
 	.long wsvFgScrXW			;@ 0x12 Fg scroll X
 	.long wsvFgScrYW			;@ 0x13 Fg scroll Y
-	.long wsvRegW				;@ 0x14 LCD control (on/off?)
+	.long wsvLCDControlW		;@ 0x14 LCD control (sleep, WSC contrast)
 	.long wsvLCDIconW			;@ 0x15 LCD icons
 	.long wsvRefW				;@ 0x16 Total scan lines
 	.long wsvRegW				;@ 0x17 Vsync line
