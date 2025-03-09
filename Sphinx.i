@@ -74,9 +74,9 @@
 	.equ KEYPD_IRQ_F,	0x02			;@ Key press IRQ flag
 	.equ EXTRN_IRQ_F,	0x04			;@ External (cart) IRQ flag
 	.equ SERRX_IRQ_F,	0x08			;@ Serial Receive IRQ flag
-	.equ LINE_IRQ_F,	0x10			;@ Drawing line IRQ flag
+	.equ LINE_IRQ_F,	0x10			;@ Drawing Line IRQ flag
 	.equ VBLTM_IRQ_F,	0x20			;@ VBlank Timer IRQ flag
-	.equ VBLST_IRQ_F,	0x40			;@ VBlank begin IRQ flag
+	.equ VBLST_IRQ_F,	0x40			;@ VBlank Start IRQ flag
 	.equ HBLTM_IRQ_F,	0x80			;@ HBlank Timer IRQ flag
 ;@----------------------------------------------------------------------------
 

@@ -530,22 +530,22 @@ wsvGetInterruptVector:		;@ return vector in r0
 ;@----------------------------------------------------------------------------
 wsvInterruptBaseR:			;@ 0xB0
 ;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvInterruptStatus]
+	ldrb r0,[spxptr,#wsvInterruptStatus]
 #ifdef GBA
-	mov r0,#7
-	mov r1,r1,lsl#24
+	mov r1,#7
+	mov r0,r0,lsl#24
 intVecLoop:
-	movs r1,r1,lsl#1
+	movs r0,r0,lsl#1
 	bcs intFound
-	subs r0,r0,#1
+	subs r1,r1,#1
 	bne intVecLoop
 intFound:
 #else
-	clz r0,r1
-	rsbs r0,r0,#31
-	movmi r0,#0
+	clz r1,r0
+	rsbs r1,r1,#31
+	movmi r1,#0
 #endif
-	ldrb r1,[spxptr,#wsvInterruptBase]
+	ldrb r0,[spxptr,#wsvInterruptBase]
 	orr r0,r0,r1
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -578,10 +578,9 @@ wsvControlsR:				;@ 0xB5
 	ldr r0,[spxptr,#wsvJoyState]
 	tst r1,#0x10				;@ Y keys enabled?
 	biceq r0,r0,#0xF00
-	tst r1,#0x20				;@ X keys enabled?
-	biceq r0,r0,#0x0F0
-	tst r1,#0x40				;@ Buttons enabled?
-	biceq r0,r0,#0x00F
+	teq r1,r1,lsl#26			;@ X keys / Buttons enabled?
+	bicpl r0,r0,#0x0F0
+	biccc r0,r0,#0x00F
 	orr r0,r0,r0,lsr#8
 	orr r0,r0,r0,lsr#4
 	and r0,r0,#0x0F
@@ -1220,7 +1219,7 @@ wsvIntEnableW:				;@ 0xB2
 	ldrb r1,[spxptr,#wsvInterruptPins]
 	strb r0,[spxptr,#wsvInterruptEnable]
 	and r0,r0,r1
-	and r0,r0,#0x0F
+	and r0,r0,#0x0D				;@ RX/TX/Extrn are level interrupts
 	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSerialStatusW:			;@ 0xB3
@@ -1250,7 +1249,7 @@ wsvIntAckW:					;@ 0xB6
 	ldrb r1,[spxptr,#wsvInterruptEnable]
 	ldrb r2,[spxptr,#wsvInterruptPins]
 	and r2,r2,r1
-	and r2,r2,#0x0F
+	and r2,r2,#0x0D				;@ RX/TX/Extrn are level interrupts
 	orr r0,r0,r2
 	strb r0,[spxptr,#wsvInterruptStatus]
 	ldr pc,[spxptr,#irqFunction]
@@ -1274,15 +1273,28 @@ wsvSetLowBattery:			;@ r0 = on/off
 	bne V30SetNMIPin
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSetJoyState:			;@ r0 = joy state
+wsvSetJoyState:				;@ r0 = joy state
 ;@----------------------------------------------------------------------------
 	ldr r1,[spxptr,#wsvJoyState]
 	str r0,[spxptr,#wsvJoyState]
 	eor r1,r0,r1
-	and r1,r1,r0
+	ands r1,r1,r0
+	bxeq lr
 	tst r1,#0x10000
 	bne wsvPushVolumeButton
-	bx lr
+	ldrb r0,[spxptr,#wsvInterruptEnable]
+	tst r0,#KEYPD_IRQ_F
+	bxeq lr
+	ldrb r0,[spxptr,#wsvControls]
+	tst r0,#0x10				;@ Y keys enabled?
+	biceq r1,r1,#0xF00
+	teq r0,r0,lsl#26			;@ X keys / Buttons enabled?
+	bicpl r1,r1,#0x0F0
+	biccc r1,r1,#0x00F
+	cmp r1,#0
+	bxeq lr
+	mov r0,#KEYPD_IRQ_F			;@ #2 = Key pressed
+	b wsvSetInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSetHeadphones:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
