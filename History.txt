@@ -1,7 +1,8 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.9 - 2025-03-05 (FluBBa)
+V0.3.9 - 2025-03-09 (FluBBa)
+	Added function to set joypad state.
 	Fixed sound output control (0x91) register.
 	Fixed latched icons (0x1A) register.
 	Fixed LCD sleep (0x14) register.

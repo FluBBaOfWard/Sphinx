@@ -37,6 +37,7 @@
 	.global wsvPushVolumeButton
 	.global wsvSetHeadphones
 	.global wsvSetLowBattery
+	.global wsvSetJoyState
 	.global wsvSetSerialByteIn
 	.global wsvSetPowerOff
 	.global wsvHandleHalt
@@ -568,6 +569,24 @@ wsvSerialStatusR:			;@ 0xB3
 	ldrb r1,[spxptr,#wsvSerialBufFull]
 	cmp r1,#0					;@ Receive buffer full?
 	orrne r0,r0,#1
+	bx lr
+;@----------------------------------------------------------------------------
+wsvControlsR:				;@ 0xB5
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvControls]
+	and r1,r1,#0x70
+	ldr r0,[spxptr,#wsvJoyState]
+	tst r1,#0x10				;@ Y keys enabled?
+	biceq r0,r0,#0xF00
+	tst r1,#0x20				;@ X keys enabled?
+	biceq r0,r0,#0x0F0
+	tst r1,#0x40				;@ Buttons enabled?
+	biceq r0,r0,#0x00F
+	orr r0,r0,r0,lsr#8
+	orr r0,r0,r0,lsr#4
+	and r0,r0,#0x0F
+	orr r0,r0,r1
+
 	bx lr
 
 ;@----------------------------------------------------------------------------
@@ -1246,15 +1265,24 @@ wsvSetLowBattery:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
 	cmp r0,#0
 	movne r0,#0x10
-	strb r0,[spxptr,#wsvLowBattery]
 	ldrb r1,[spxptr,#wsvNMIControl]
+	strb r0,[spxptr,#wsvLowBattery]
 	and r0,r0,r1
 	ldrb r1,[spxptr,#wsvLowBatPin]
 	strb r0,[spxptr,#wsvLowBatPin]
 	cmp r0,r1
 	bne V30SetNMIPin
 	bx lr
-
+;@----------------------------------------------------------------------------
+wsvSetJoyState:			;@ r0 = joy state
+;@----------------------------------------------------------------------------
+	ldr r1,[spxptr,#wsvJoyState]
+	str r0,[spxptr,#wsvJoyState]
+	eor r1,r0,r1
+	and r1,r1,r0
+	tst r1,#0x10000
+	bne wsvPushVolumeButton
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvSetHeadphones:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
@@ -1278,6 +1306,7 @@ wsvSetSerialByteIn:			;@ r0=byte in, Needs spxptr
 	movne r2,#640					;@ 3072000/(38400/8)
 	str r2,[spxptr,#serialRXCounter]
 	bx lr
+
 ;@----------------------------------------------------------------------------
 wsvConvertTileMaps:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
@@ -2448,7 +2477,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusR		;@ 0xB3 Serial status
 	.long wsvRegR				;@ 0xB4 Interrupt status
-	.long IOPortA_R				;@ 0xB5 keypad
+	.long wsvControlsR			;@ 0xB5 keypad
 	.long wsvZeroR				;@ 0xB6 Interrupt acknowledge
 	.long wsvRegR				;@ 0xB7 NMI ctrl, bit 4.
 	.long wsvUnmappedR			;@ 0xB8 ---

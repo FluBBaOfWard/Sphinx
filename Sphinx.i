@@ -40,6 +40,29 @@
 /** Time for latched icons (sound & cartridge) */
 #define LCD_ICON_TIME_VALUE (128)
 
+#define WS_KEY_START	(1<<1)
+#define WS_KEY_A		(1<<2)
+#define WS_KEY_B		(1<<3)
+#define WS_KEY_X1		(1<<4)
+#define WS_KEY_X2		(1<<5)
+#define WS_KEY_X3		(1<<6)
+#define WS_KEY_X4		(1<<7)
+#define WS_KEY_Y1		(1<<8)
+#define WS_KEY_Y2		(1<<9)
+#define WS_KEY_Y3		(1<<10)
+#define WS_KEY_Y4		(1<<11)
+#define WS_KEY_SOUND	(1<<16)
+
+#define PCV2_KEY_LEFT	(1<<0)
+#define PCV2_KEY_DOWN	(1<<2)
+#define PCV2_KEY_UP		(1<<3)
+#define PCV2_KEY_VIEW	(1<<4)
+#define PCV2_KEY_ESCAPE	(1<<6)
+#define PCV2_KEY_RIGHT	(1<<7)
+#define PCV2_KEY_CLEAR	(1<<8)
+#define PCV2_KEY_CIRCLE	(1<<10)
+#define PCV2_KEY_PASS	(1<<11)
+
 /** Game screen width in pixels */
 #define GAME_WIDTH  (224)
 /** Game screen height in pixels */
@@ -282,6 +305,7 @@ wsvSpriteRAM:		.space 0x200 ;@ Internal sprite ram
 sphinxStateEnd:
 
 wsvDefaultBgCol:	.long 0		;@ LCD color when off
+wsvJoyState:		.long 0		;@ Current Joypad state
 cachedMaps:			.space 4
 
 wsvSOC:				.byte 0		;@ ASwan, Sphinx or Sphinx2

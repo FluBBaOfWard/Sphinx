@@ -413,7 +413,9 @@ typedef struct {
 	// End of Sphinx state
 
 	/// LCD color when off
-	u32 wsvDefaultBgCol;
+	u32 defaultBgCol;
+	/// Current Joypad state
+	u32 joyState;
 	u8 cachedMaps[4];
 
 	/// ASWAN, SPHINX or SPHINX2
