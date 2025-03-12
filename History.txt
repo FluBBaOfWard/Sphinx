@@ -1,7 +1,7 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.3.9 - 2025-03-09 (FluBBa)
+V0.4.0 - 2025-03-12 (FluBBa)
 	Added function to set joypad state.
 	Added support for key pressed interrupt.
 	Fixed sound output control (0x91) register.

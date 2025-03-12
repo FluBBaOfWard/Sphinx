@@ -18,6 +18,7 @@
 
 	.global wsVideoInit
 	.global wsVideoReset
+	.global wsvSetCartOk
 	.global wsvSetCartMap
 	.global wsvSetIOPortOut
 	.global wsvDoScanline
@@ -28,7 +29,7 @@
 	.global sphinxSaveState
 	.global sphinxLoadState
 	.global sphinxGetStateSize
-	.global copyScrollValues
+	.global wsvCopyScrollValues
 	.global wsvConvertTileMaps
 	.global wsvConvertSprites
 	.global wsvRefW
@@ -121,10 +122,10 @@ wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc
 	str r3,[spxptr,#txFunction]
 
 	;@ r0=SOC
-	bl wsvInitIOMap
+	bl initIOMap
 
 	ldmfd sp!,{lr}
-	b wsvRegistersReset
+	b registersReset
 
 dummyIrqFunc:
 	bx lr
@@ -152,7 +153,7 @@ wsvSetPowerOff:
 	ldmfd sp!,{lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvInitIOMap:		;@ r0=SOC
+initIOMap:					;@ r0=SOC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
 	ldr r1,=defaultInTable
@@ -173,9 +174,9 @@ ioTblLoop:
 	ldr r1,=wsvUnmappedR
 	ldr r2,=wsvUnmappedW
 	cmp r0,#SOC_ASWAN
-	streq r2,[r4,#0xAC<<2]	;@ Power Off not on ASWAN
+	streq r2,[r4,#0xAC<<2]		;@ Power Off not on ASWAN
 	moveq r5,#0x40
-	movne r5,#0x70			;@ SPHINX
+	movne r5,#0x70				;@ SPHINX
 ioASLoop:
 	str r1,[r3,r5,lsl#2]
 	str r2,[r4,r5,lsl#2]
@@ -184,7 +185,7 @@ ioASLoop:
 	bne ioASLoop
 	ldmfd sp!,{r4,r5,pc}
 ;@----------------------------------------------------------------------------
-wsvSetIOMode:		;@ r0=color mode, 0=mono !0=color.
+setIOMode:				;@ r0=color mode, 0=mono !0=color.
 ;@ Should only be called on SPHINX/SPHINX2
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
@@ -218,7 +219,7 @@ ioMode0Loop:
 	bne ioMode0Loop
 	ldmfd sp!,{r4,r5,pc}
 ;@----------------------------------------------------------------------------
-wsvSetCartMap:		;@ r0=inTable, r1=outTable
+wsvSetCartMap:				;@ r0=inTable, r1=outTable
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,lr}
 	ldr r2,=cartInTable
@@ -277,7 +278,15 @@ thumbCallR3:
 ;@----------------------------------------------------------------------------
 	bx r3
 ;@----------------------------------------------------------------------------
-wsvRegistersReset:				;@ in r3=SOC
+wsvSetCartOk:
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvSystemCtrl1]
+	cmp r0,#0
+	orrne r1,r1,#0x80
+	strb r1,[spxptr,#wsvSystemCtrl1]
+	bx lr
+;@----------------------------------------------------------------------------
+registersReset:				;@ in r3=SOC
 ;@----------------------------------------------------------------------------
 	adr r1,IO_Default
 //	cmp r3,#SOC_SPHINX
@@ -293,7 +302,7 @@ wsvRegistersReset:				;@ in r3=SOC
 	mov r0,#0x02
 	movne r0,#0x03
 	strb r0,[spxptr,#wsvHWVolume]
-	mov r0,#0x84
+	mov r0,#0x04					;@ Rom width 16bit.
 	orrne r0,r0,#0x02				;@ Color mode
 	strb r0,[spxptr,#wsvSystemCtrl1]
 	ands r0,r0,#0x80				;@ Cart Ok?
@@ -553,7 +562,7 @@ wsvComByteR:				;@ 0xB1
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 	mov r0,#SERRX_IRQ_F			;@ #3 = Serial receive
-	bl wsvClearInterruptPins
+	bl clearInterruptPins
 	bl callSerialInEmpty
 	mov r0,#0
 	strb r0,[spxptr,#wsvSerialBufFull]
@@ -951,7 +960,7 @@ wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 	bxeq lr
 	and r0,r0,#0x80
 	stmfd sp!,{lr}
-	bl wsvSetIOMode
+	bl setIOMode
 	ldmfd sp!,{lr}
 	b intEepromSetSize
 ;@----------------------------------------------------------------------------
@@ -1080,10 +1089,10 @@ wsvSoundCtrlW:				;@ 0x90, Sound Control
 	bxeq lr
 	strb r0,[spxptr,#wsvSoundCtrl]
 	tst r0,#0x20				;@ Ch 2 voice on?
-	ldr r2,=vol2_L
+	ldr r2,=ch2Op
 	ldreq r1,ch2OpCode
 	ldrne r1,ch2OpCode+4
-	str r1,[r2,#8]
+	str r1,[r2]
 
 	ldr r1,[spxptr,#sweep3CurrentAddr]
 	tst r0,#0x40				;@ Ch 3 sweep on?
@@ -1188,7 +1197,7 @@ wsvVTimerHighW:				;@ 0xA7, VBlank timer high
 	bx lr
 
 ;@----------------------------------------------------------------------------
-wsvPowerOffW:					;@ 0xAC
+wsvPowerOffW:				;@ 0xAC
 ;@----------------------------------------------------------------------------
 	ands r0,r0,#1				;@ Power Off bit
 	strb r0,[spxptr,#wsvPowerOff]
@@ -1212,7 +1221,7 @@ wsvComByteW:				;@ 0xB1
 	movne r2,#640					;@ 3072000/(38400/8)
 	str r2,[spxptr,#serialTXCounter]
 	mov r0,#SERTX_IRQ_F				;@ #0 = Serial transmit
-	b wsvClearInterruptPins
+	b clearInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntEnableW:				;@ 0xB2
 ;@----------------------------------------------------------------------------
@@ -1220,7 +1229,7 @@ wsvIntEnableW:				;@ 0xB2
 	strb r0,[spxptr,#wsvInterruptEnable]
 	and r0,r0,r1
 	and r0,r0,#0x0D				;@ RX/TX/Extrn are level interrupts
-	b wsvSetInterruptPins
+	b setInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSerialStatusW:			;@ 0xB3
 ;@----------------------------------------------------------------------------
@@ -1235,12 +1244,12 @@ wsvSerialStatusW:			;@ 0xB3
 	str r1,[spxptr,#serialRXCounter]
 	tst r0,#0x80				;@ Serial enable now?
 	mov r0,#SERTX_IRQ_F|SERRX_IRQ_F		;@ #0 = Serial transmit, 3 = receive
-	beq wsvClearInterruptPins
+	beq clearInterruptPins
 	stmfd sp!,{lr}
 	bl callSerialInEmpty
 	ldmfd sp!,{lr}
 	mov r0,#SERTX_IRQ_F			;@ #0 = Serial transmit buffer empty
-	b wsvSetInterruptPins
+	b setInterruptPins
 ;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
@@ -1294,7 +1303,7 @@ wsvSetJoyState:				;@ r0 = joy state
 	cmp r1,#0
 	bxeq lr
 	mov r0,#KEYPD_IRQ_F			;@ #2 = Key pressed
-	b wsvSetInterruptPins
+	b setInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSetHeadphones:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
@@ -1367,13 +1376,13 @@ endFrame:
 #endif
 	bl scrollCnt
 	bl gfxEndFrame
-	bl wsvDMASprites
+	bl dmaSprites
 	ldmfd sp!,{lr}
 
 	ldrh r1,[spxptr,#wsvVBlCounter]
 	mov r0,#VBLST_IRQ_F				;@ #6 = VBlank
 	subs r1,r1,#1
-	bmi wsvSetInterruptPins
+	bmi setInterruptPins
 	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noVBlIrq
 	orreq r0,r0,#VBLTM_IRQ_F		;@ #5 = VBlank timer
@@ -1382,7 +1391,7 @@ endFrame:
 noVBlIrq:
 	tst r2,#0x4						;@ VBlank timer enabled?
 	strhne r1,[spxptr,#wsvVBlCounter]
-	b wsvSetInterruptPins
+	b setInterruptPins
 
 ;@----------------------------------------------------------------------------
 drawFrameGfx:
@@ -1390,14 +1399,14 @@ drawFrameGfx:
 	stmfd sp!,{lr}
 
 	ldrb r0,[spxptr,#wsvVideoMode]
-	adr lr,TransRet
+	adr lr,transRet
 	and r1,r0,#0xC0
 	cmp r1,#0xC0
-	bne TransferVRAM4Planar
+	bne transferVRAM4Planar
 	tst r0,#0x20
-	bne TransferVRAM16Packed
-	b TransferVRAM16Planar
-TransRet:
+	bne transferVRAM16Packed
+	b transferVRAM16Planar
+transRet:
 	bl wsvUpdateIcons
 
 	ldmfd sp!,{pc}
@@ -1471,7 +1480,7 @@ noHBlIrq:
 	tst r2,#0x1					;@ HBlank timer enabled?
 	strhne r1,[spxptr,#wsvHBlCounter]
 noTimerHBlIrq:
-	bl wsvSetInterruptPins
+	bl setInterruptPins
 
 	ldrb r0,[spxptr,#wsvSndDMACtrl]
 	tst r0,#0x80
@@ -1521,9 +1530,9 @@ wsvSetInterruptExternal:	;@ r0 = irq pin state
 ;@----------------------------------------------------------------------------
 	cmp r0,#0
 	mov r0,#EXTRN_IRQ_F			;@ External interrupt is bit/number 2.
-	beq wsvClearInterruptPins
+	beq clearInterruptPins
 ;@----------------------------------------------------------------------------
-wsvSetInterruptPins:		;@ r0 = interrupt pins to set
+setInterruptPins:			;@ r0 = interrupt pins to set
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptPins]
 	orr r1,r1,r0
@@ -1537,7 +1546,7 @@ wsvSetInterruptPins:		;@ r0 = interrupt pins to set
 	strb r0,[spxptr,#wsvInterruptStatus]
 	ldr pc,[spxptr,#irqFunction]
 ;@----------------------------------------------------------------------------
-wsvClearInterruptPins:		;@ In r0 = interrupt pins to clear
+clearInterruptPins:			;@ In r0 = interrupt pins to clear
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptPins]
 	bic r1,r1,r0
@@ -1591,17 +1600,17 @@ checkSndDMAEnd:
 	orr r3,r3,r1,lsl#16
 	bx lr
 ;@----------------------------------------------------------------------------
-T_data:
+tData:
 	.long DIRTYTILES+0x200
 	.long wsRAM+0x4000
 	.long CHR_DECODE
 	.long BG_GFX+0x08000		;@ BGR tiles
 	.long SPRITE_GFX			;@ SPR tiles
 ;@----------------------------------------------------------------------------
-TransferVRAM16Packed:
+transferVRAM16Packed:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r10,lr}
-	adr r0,T_data
+	adr r0,tData
 	ldmia r0,{r4-r8}
 	ldr r6,=0xF0F0F0F0
 	ldr r9,=0x10101010
@@ -1643,10 +1652,10 @@ tileLoop16_1p:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-TransferVRAM16Planar:
+transferVRAM16Planar:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r10,lr}
-	adr r0,T_data
+	adr r0,tData
 	ldmia r0,{r4-r8}
 	ldr r9,=0x20202020
 	mov r1,#0
@@ -1695,7 +1704,7 @@ tx16ColTileLoop1:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-T4Data:
+t4Data:
 	.long DIRTYTILES+0x100
 	.long wsRAM+0x2000
 	.long CHR_DECODE
@@ -1705,10 +1714,10 @@ T4Data:
 	.long SPRITE_GFX+0x4000		;@ SPR tiles 2
 	.long 0x44444444			;@ Extra bitplane, undirty mark
 ;@----------------------------------------------------------------------------
-TransferVRAM4Planar:
+transferVRAM4Planar:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r12,lr}
-	adr r0,T4Data
+	adr r0,t4Data
 	ldmia r0,{r4-r11}
 	mov r1,#0
 
@@ -1933,7 +1942,7 @@ bgm4Loop:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-copyScrollValues:			;@ r0 = destination
+wsvCopyScrollValues:			;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r8}
 	ldr r1,[spxptr,#scrollBuff]
@@ -1967,7 +1976,7 @@ setScrlLoop:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-wsvDMASprites:
+dmaSprites:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{spxptr,lr}
 
