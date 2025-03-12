@@ -9,17 +9,24 @@
 #ifdef __arm__
 #include "Sphinx.i"
 
+#ifdef GBA
+#define PSG_DIVIDE 24
+#else
+#define PSG_DIVIDE 16
+#endif
+#define PSG_ADDITION 0x00010000*PSG_DIVIDE
+#define PSG_SWEEP_ADD 0x00010000*PSG_DIVIDE
+
 	.global wsAudioReset
 	.global wsAudioMixer
-	.global setAllChVolume
-	.global setCh1Volume
-	.global setCh2Volume
-	.global setCh3Volume
-	.global setCh4Volume
-	.global setHyperVoiceValue
-	.global setSoundOutput
-	.global setTotalVolume
-	.global ch2Op
+	.global wsaSetAllChVolume
+	.global wsaSetCh1Volume
+	.global wsaSetCh2Volume
+	.global wsaSetCh3Volume
+	.global wsaSetCh4Volume
+	.global wsaSetHyperVoiceValue
+	.global wsaSetSoundOutput
+	.global wsaSetTotalVolume
 
 	.syntax unified
 	.arm
@@ -41,20 +48,73 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 	str r0,[spxptr,#sampleBaseAddr]
 
 ;@----------------------------------------------------------------------------
-setAllChVolume:				;@ In r0=SoundCtrl
+wsaSetAllChVolume:			;@ In r0=SoundCtrl (from 0x90)
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
+	tst r0,#0x20				;@ Ch 2 voice on?
+	ldr r2,=ch2Op
+	ldreq r1,ch2OpCode
+	ldrne r1,ch2OpCode+4
+	str r1,[r2]
+
+	ldr r1,[spxptr,#sweep3CurrentAddr]
+	tst r0,#0x40				;@ Ch 3 sweep on?
+	biceq r1,r1,#0x100
+	orrne r1,r1,#0x100
+	str r1,[spxptr,#sweep3CurrentAddr]
+
+	ldrb r2,[spxptr,#wsvNoiseCtrl]
+	ldr r1,[spxptr,#noise4CurrentAddr]
+	tst r2,#0x10				;@ Enable Noise calculation?
+	orrne r1,r1,#0x10000
+	tst r0,#0x08				;@ Ch 4 on?
+	tstne r0,#0x80				;@ Ch 4 noise on?
+	biceq r1,r1,#0x14000
+	orrne r1,r1,#0x04000
+	str r1,[spxptr,#noise4CurrentAddr]
+
+	ldr r2,=ch1En
+	tst r0,#1
+	ldrne r1,EnableOps+0
+	ldreq r1,EnableOps+4
+	str r1,[r2,#ch1En-ch1En]
+	tst r0,#2
+	ldrne r1,EnableOps+8
+	ldreq r1,EnableOps+12
+	str r1,[r2,#ch2En-ch1En]
+	tst r0,#4
+	ldrne r1,EnableOps+16
+	ldreq r1,EnableOps+20
+	str r1,[r2,#ch3En-ch1En]
+	tst r0,#8
+	ldrne r1,EnableOps+24
+	ldreq r1,EnableOps+28
+	str r1,[r2,#ch4En-ch1En]
+
 	ldrb r0,[spxptr,#wsvSound1Vol]
-	bl setCh1Volume
+	bl wsaSetCh1Volume
 	ldrb r0,[spxptr,#wsvSound2Vol]
-	bl setCh2Volume
+	bl wsaSetCh2Volume
 	ldrb r0,[spxptr,#wsvSound3Vol]
-	bl setCh3Volume
+	bl wsaSetCh3Volume
 	ldrb r0,[spxptr,#wsvSound4Vol]
-	bl setCh4Volume
+	bl wsaSetCh4Volume
 	ldmfd sp!,{pc}
+ch2OpCode:
+	mlane r2,lr,r11,r2
+	add r2,lr,r2
+EnableOps:
+	adds r2,r11,r3,ror#32-5
+	adds r2,lr,r3,ror#32-5
+	adds r2,r11,r4,ror#32-5
+	adds r2,lr,r4,ror#32-5
+	adds r2,r11,r5,ror#32-5
+	adds r2,lr,r5,ror#32-5
+	adds r2,r11,r6,ror#32-5
+	adds r2,lr,r6,ror#32-5
+
 ;@----------------------------------------------------------------------------
-setCh1Volume:
+wsaSetCh1Volume:
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSoundCtrl]
 	tst r1,#1					;@ Ch 1 on?
@@ -66,7 +126,7 @@ setCh1Volume:
 	strb r1,[r2,#vol1_R-vol1_L]
 	bx lr
 ;@----------------------------------------------------------------------------
-setCh2Volume:
+wsaSetCh2Volume:
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSoundCtrl]
 	tst r1,#0x20				;@ Ch 2 voice on?
@@ -94,7 +154,7 @@ doCh2Voice:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-setCh3Volume:
+wsaSetCh3Volume:
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSoundCtrl]
 	tst r1,#4					;@ Ch 3 on?
@@ -106,7 +166,7 @@ setCh3Volume:
 	strb r1,[r2,#vol3_R-vol1_L]
 	bx lr
 ;@----------------------------------------------------------------------------
-setCh4Volume:
+wsaSetCh4Volume:
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSoundCtrl]
 	tst r1,#8					;@ Ch 4 on?
@@ -118,7 +178,7 @@ setCh4Volume:
 	strb r1,[r2,#vol4_R-vol1_L]
 	bx lr
 ;@----------------------------------------------------------------------------
-setHyperVoiceValue:
+wsaSetHyperVoiceValue:
 ;@----------------------------------------------------------------------------
 	ldrh r1,[spxptr,#wsvHyperVCtrl]
 	ldrb r2,[spxptr,#wsvSoundOutput]
@@ -144,7 +204,7 @@ setHyperVoiceValue:
 	str r0,[spxptr,#currentSampleValue]
 	bx lr
 ;@----------------------------------------------------------------------------
-setSoundOutput:				;@ r0 = wsvSoundOutput (from 0x91)
+wsaSetSoundOutput:			;@ r0 = SoundOutput (from 0x91)
 ;@----------------------------------------------------------------------------
 	and r1,r0,#0x6
 	tst r0,#0x80				;@ Headphones?
@@ -167,7 +227,7 @@ mixerVolumes:
 	mov lr,r2,lsr#32			;@ No sound
 
 ;@----------------------------------------------------------------------------
-setTotalVolume:
+wsaSetTotalVolume:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[spxptr,#wsvHWVolume]
 	ldrb r1,[spxptr,#wsvSOC]
@@ -198,14 +258,6 @@ hw2Volumes:
 #endif
 	.align 2
 
-#ifdef GBA
-#define PSG_DIVIDE 24
-#else
-#define PSG_DIVIDE 16
-#endif
-#define PSG_ADDITION 0x00010000*PSG_DIVIDE
-#define PSG_SWEEP_ADD 0x00010000*PSG_DIVIDE
-
 ;@----------------------------------------------------------------------------
 #ifdef WSAUDIO_LOW
 ;@----------------------------------------------------------------------------
@@ -223,7 +275,7 @@ hw2Volumes:
 ;@ r11 = Current sample
 ;@ lr  = Current volume
 ;@----------------------------------------------------------------------------
-wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
+wsAudioMixer:				;@ r0=len, r1=dest, r12=spxptr
 // IIIIICCCCCCCCCCC00001FFFFFFFFFFF
 // I=sampleindex, C=counter, F=frequency
 ;@----------------------------------------------------------------------------
@@ -232,28 +284,33 @@ wsAudioMixer:		;@ r0=len, r1=dest, r12=spxptr
 	ldmia r2,{r3-r10}
 mixLoop:
 	mov r11,#PSG_ADDITION<<5
+	mov lr,#0					;@ Used when channels disabled.
 innerMixLoop:
+ch1En:
 	adds r2,r11,r3,ror#32-5
 	mov r3,r2,ror#5
 	addcs r3,r3,r3,lsl#16
 
+ch2En:
 	adds r2,r11,r4,ror#32-5
 	mov r4,r2,ror#5
 	addcs r4,r4,r4,lsl#16
 
+ch3En:
 	adds r2,r11,r5,ror#32-5
 	mov r5,r2,ror#5
 	addcs r5,r5,r5,lsl#16
 
+ch4En:
 	adds r2,r11,r6,ror#32-5
 	mov r6,r2,ror#5
 	addcs r6,r6,r6,lsl#16
 
-	movscs r2,r7,lsr#16			;@ Mask LFSR and check noise calc enable.
-	addcs r7,r7,r2,lsl#16
-	ands r2,r7,r7,lsl#21
-	eorsne r2,r2,r7,lsl#21
-	orreq r7,r7,#0x00010000
+	movscs r2,r7,lsr#17			;@ Mask LFSR and check noise calc enable.
+	addcs r7,r7,r2,lsl#17
+	ands r2,r7,r7,lsl#22		;@ Mask Taps
+	eorsne r2,r2,r7,lsl#22
+	orreq r7,r7,#0x00020000
 
 	adds r0,r0,#0x20000000
 	bcc innerMixLoop
@@ -290,12 +347,11 @@ vol3_R:
 	andsne r11,r11,#0xF
 	mlane r2,lr,r11,r2
 
-	movs r11,r7,lsl#17			;@ Channel 4 Noise enabled? (#0x4000)
+	movs r11,r7,lsl#15			;@ Channel 4 Noise enabled? (#0x8000)
+	movcs r11,#0xFF
 	orrspl r11,r10,r6,lsr#28
 	ldrbpl r11,[r11,#0x30]		;@ Channel 4 PCM
 	movcs r11,r11,lsr#4
-	movsmi r11,r7,lsl#15
-	movmi r11,#0x0F
 	ands r11,r11,#0xF
 vol4_L:
 	mov lr,#0x00				;@ Volume left
@@ -331,7 +387,6 @@ totalVolume:
 	add lr,r2,r2,lsl#16
 	str lr,[spxptr,#wsvSoundOutL]	;@ Update Reg 0x98/0x9A.
 #endif
-
 	mov r2,r7,lsr#17
 	strh r2,[spxptr,#wsvNoiseCntr]	;@ Update Reg 0x92 for "rnd".
 	add r0,spxptr,#pcm1CurrentAddr	;@ Counters

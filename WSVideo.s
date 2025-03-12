@@ -832,31 +832,31 @@ wsvLatchedIconsW:			;@ 0x1A
 	strbne r1,[spxptr,#wsvSoundIconTimer]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvDMASourceW:				;@ 0x40, only WSC.
+wsvDMASourceW:				;@ 0x40, only Color.
 ;@----------------------------------------------------------------------------
 	bic r0,r0,#0x01
 	strb r0,[spxptr,#wsvDMASource]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvDMASourceHW:				;@ 0x42, only WSC.
+wsvDMASourceHW:				;@ 0x42, only Color.
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0x0F
 	strb r0,[spxptr,#wsvDMASource+2]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvDMADestW:				;@ 0x44, only WSC.
+wsvDMADestW:				;@ 0x44, only Color.
 ;@----------------------------------------------------------------------------
 	bic r0,r0,#0x01
 	strb r0,[spxptr,#wsvDMADest]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvDMALengthW:				;@ 0x46, only WSC.
+wsvDMALengthW:				;@ 0x46, only Color.
 ;@----------------------------------------------------------------------------
 	bic r0,r0,#0x01
 	strb r0,[spxptr,#wsvDMALength]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvDMACtrlW:				;@ 0x48, only WSC, word transfer. steals 5+2*word cycles.
+wsvDMACtrlW:				;@ 0x48, only Color, word transfer. steals 5+2*word cycles.
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0xC0
 	strb r0,[spxptr,#wsvDMACtrl]
@@ -908,50 +908,50 @@ dmaEnd:
 	ldmfd sp!,{r4-r8,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMASrc0W:				;@ 0x4A, only WSC.
+wsvSndDMASrc0W:				;@ 0x4A, only Color.
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvSndDMASrcL]
 	strb r0,[spxptr,#sndDmaSource]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMASrc1W:				;@ 0x4B, only WSC.
+wsvSndDMASrc1W:				;@ 0x4B, only Color.
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvSndDMASrcL+1]
 	strb r0,[spxptr,#sndDmaSource+1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMASrc2W:				;@ 0x4C, only WSC.
+wsvSndDMASrc2W:				;@ 0x4C, only Color.
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvSndDMASrcH]
 	strb r0,[spxptr,#sndDmaSource+2]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMALen0W:				;@ 0x4E, only WSC.
+wsvSndDMALen0W:				;@ 0x4E, only Color.
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvSndDMALenL]
 	strb r0,[spxptr,#sndDmaLength]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMALen1W:				;@ 0x4F, only WSC.
+wsvSndDMALen1W:				;@ 0x4F, only Color.
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvSndDMALenL+1]
 	strb r0,[spxptr,#sndDmaLength+1]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMALen2W:				;@ 0x50, only WSC.
+wsvSndDMALen2W:				;@ 0x50, only Color.
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0x0F
 	strb r0,[spxptr,#wsvSndDMALenH]
 	strb r0,[spxptr,#sndDmaLength+2]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSndDMACtrlW:				;@ 0x52, only WSC. steals 7n cycles.
+wsvSndDMACtrlW:				;@ 0x52, only Color mode. steals 6+n cycles.
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0xDF
 	strb r0,[spxptr,#wsvSndDMACtrl]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvVideoModeW:				;@ 0x60, Video mode, WSColor
+wsvVideoModeW:				;@ 0x60, Video mode, only Color.
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvVideoMode]
 	strb r0,[spxptr,#wsvVideoMode]
@@ -964,7 +964,7 @@ wsvVideoModeW:				;@ 0x60, Video mode, WSColor
 	ldmfd sp!,{lr}
 	b intEepromSetSize
 ;@----------------------------------------------------------------------------
-wsvSysCtrl3W:				;@ 0x62, only WSC & SC
+wsvSysCtrl3W:				;@ 0x62, only Color.
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSystemCtrl3]
 	and r0,r0,#1				;@ Power Off bit.
@@ -972,12 +972,12 @@ wsvSysCtrl3W:				;@ 0x62, only WSC & SC
 	strb r0,[spxptr,#wsvSystemCtrl3]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvHyperCtrlW:				;@ 0x6A, only WSC
+wsvHyperCtrlW:				;@ 0x6A, only Color
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvHyperVCtrl]
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvHyperChanCtrlW:			;@ 0x6B, only WSC
+wsvHyperChanCtrlW:			;@ 0x6B, only Color
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvHyperVCtrl+1]
 	tst r0,#0x10				;@ Reset Left/Right?
@@ -1009,7 +1009,7 @@ wsvCh1VolumeW:				;@ 0x88, Sound Channel 1 Volume
 	teq r1,r0
 	bxeq lr
 	strb r0,[spxptr,#wsvSound1Vol]	;@ Each nibble is L & R
-	b setCh1Volume
+	b wsaSetCh1Volume
 ;@----------------------------------------------------------------------------
 wsvCh2VolumeW:				;@ 0x89, Sound Channel 2 Volume
 ;@----------------------------------------------------------------------------
@@ -1017,7 +1017,7 @@ wsvCh2VolumeW:				;@ 0x89, Sound Channel 2 Volume
 	teq r1,r0
 	bxeq lr
 	strb r0,[spxptr,#wsvSound2Vol]	;@ Each nibble is L & R
-	b setCh2Volume
+	b wsaSetCh2Volume
 ;@----------------------------------------------------------------------------
 wsvCh3VolumeW:				;@ 0x8A, Sound Channel 3 Volume
 ;@----------------------------------------------------------------------------
@@ -1025,7 +1025,7 @@ wsvCh3VolumeW:				;@ 0x8A, Sound Channel 3 Volume
 	teq r1,r0
 	bxeq lr
 	strb r0,[spxptr,#wsvSound3Vol]	;@ Each nibble is L & R
-	b setCh3Volume
+	b wsaSetCh3Volume
 ;@----------------------------------------------------------------------------
 wsvCh4VolumeW:				;@ 0x8B, Sound Channel 4 Volume
 ;@----------------------------------------------------------------------------
@@ -1033,7 +1033,7 @@ wsvCh4VolumeW:				;@ 0x8B, Sound Channel 4 Volume
 	teq r1,r0
 	bxeq lr
 	strb r0,[spxptr,#wsvSound4Vol]	;@ Each nibble is L & R
-	b setCh4Volume
+	b wsaSetCh4Volume
 ;@----------------------------------------------------------------------------
 wsvSweepTimeW:				;@ 0x8D, Sound sweep time
 ;@----------------------------------------------------------------------------
@@ -1053,16 +1053,18 @@ wsvNoiseCtrlW:				;@ 0x8E, Noise Control
 	strb r1,[spxptr,#wsvNoiseCtrl]
 	ldr r1,[spxptr,#noise4CurrentAddr]
 	mov r1,r1,lsr#12			;@ Clear taps
-	tst r0,#0x08				;@ Reset?
-	andne r1,r1,#0x4			;@ Keep Ch4 noise on/off
-	tst r0,#0x10				;@ Enable calculation?
-	biceq r1,r1,#0x8
-	orrne r1,r1,#0x8
-	and r0,r0,#7				;@ Which taps?
+	tst r1,#4					;@ Ch4 Enable & Ch4 Noise?
+	tstne r0,#0x10				;@ Enable Noise calculation?
+	biceq r1,r1,#0x10
+	orrne r1,r1,#0x10
+	movs r0,r0,lsl#29			;@ Mask taps, Reset to carry
+	andcs r1,r1,#0x14			;@ Keep Ch4 noise/calculation on/off
 	adr r2,noiseTaps
-	ldr r0,[r2,r0,lsl#2]
+	ldr r0,[r2,r0,lsr#29-2]
 	orr r1,r0,r1,lsl#12
 	str r1,[spxptr,#noise4CurrentAddr]
+	mov r1,r1,lsr#17
+	strh r1,[spxptr,#wsvNoiseCntr]	;@ Update Reg 0x92 for "rnd".
 	bx lr
 noiseTaps:
 	.long 0x00000408			;@ Tap bit 7 & 14
@@ -1088,28 +1090,7 @@ wsvSoundCtrlW:				;@ 0x90, Sound Control
 	teq r1,r0
 	bxeq lr
 	strb r0,[spxptr,#wsvSoundCtrl]
-	tst r0,#0x20				;@ Ch 2 voice on?
-	ldr r2,=ch2Op
-	ldreq r1,ch2OpCode
-	ldrne r1,ch2OpCode+4
-	str r1,[r2]
-
-	ldr r1,[spxptr,#sweep3CurrentAddr]
-	tst r0,#0x40				;@ Ch 3 sweep on?
-	biceq r1,r1,#0x100
-	orrne r1,r1,#0x100
-	str r1,[spxptr,#sweep3CurrentAddr]
-
-	ldr r1,[spxptr,#noise4CurrentAddr]
-	tst r0,#0x80				;@ Ch 4 noise on?
-	biceq r1,r1,#0x4000
-	orrne r1,r1,#0x4000
-	str r1,[spxptr,#noise4CurrentAddr]
-
-	b setAllChVolume
-ch2OpCode:
-	mlane r2,lr,r11,r2
-	add r2,lr,r2
+	b wsaSetAllChVolume
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91, Sound ouput
 ;@----------------------------------------------------------------------------
@@ -1118,7 +1099,7 @@ wsvSoundOutputW:			;@ 0x91, Sound ouput
 	and r1,r1,#0x80				;@ Keep Headphones bit
 	orr r0,r0,r1
 	strb r0,[spxptr,#wsvSoundOutput]
-	b setSoundOutput
+	b wsaSetSoundOutput
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
@@ -1140,7 +1121,7 @@ wsvHWVolumeW:				;@ 0x9E, HW Volume?
 	strb r0,[spxptr,#wsvHWVolume]
 	mov r1,#LCD_ICON_TIME_VALUE
 	strb r1,[spxptr,#wsvSoundIconTimer]
-	b setTotalVolume
+	b wsaSetTotalVolume
 ;@----------------------------------------------------------------------------
 wsvHWW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
@@ -1314,7 +1295,7 @@ wsvSetHeadphones:			;@ r0 = on/off
 	strb r0,[spxptr,#wsvSoundOutput]
 	mov r1,#LCD_ICON_TIME_VALUE
 	strb r1,[spxptr,#wsvSoundIconTimer]
-	b setSoundOutput
+	b wsaSetSoundOutput
 ;@----------------------------------------------------------------------------
 wsvSetSerialByteIn:			;@ r0=byte in, Needs spxptr
 ;@----------------------------------------------------------------------------
@@ -1580,12 +1561,12 @@ doSoundDMA:					;@ In r0 = SndDmaCtrl
 	tst r4,#0x10				;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
 	beq wsvCh2VolumeW
-	b setHyperVoiceValue
+	b wsaSetHyperVoiceValue
 sdmaHold:
 	ands r0,r0,#0x10			;@ Ch2Vol/HyperVoice
 	beq wsvCh2VolumeW
 	mov r0,#0
-	b setHyperVoiceValue
+	b wsaSetHyperVoiceValue
 ;@----------------------------------------------------------------------------
 checkSndDMAEnd:
 	tst r4,#0x08				;@ Loop?
