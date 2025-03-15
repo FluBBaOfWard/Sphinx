@@ -534,6 +534,12 @@ wsvHyperChanCtrlR:			;@ 0x6B, only WSC
 	and r0,r0,#0x6F
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvNoiseCntrHR:				;@ 0x93
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#wsvNoiseCntr+1]
+	and r0,r0,#0x7F
+	bx lr
+;@----------------------------------------------------------------------------
 wsvGetInterruptVector:		;@ return vector in r0
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
@@ -1049,21 +1055,21 @@ wsvSweepTimeW:				;@ 0x8D, Sound sweep time
 ;@----------------------------------------------------------------------------
 wsvNoiseCtrlW:				;@ 0x8E, Noise Control
 ;@----------------------------------------------------------------------------
-	and r1,r0,#0x17				;@ Only keep enable & tap bits
+	and r1,r0,#0x17				;@ Only save enable & tap bits
 	strb r1,[spxptr,#wsvNoiseCtrl]
 	ldr r1,[spxptr,#noise4CurrentAddr]
 	mov r1,r1,lsr#12			;@ Clear taps
 	tst r1,#4					;@ Ch4 Enable & Ch4 Noise?
 	tstne r0,#0x10				;@ Enable Noise calculation?
-	biceq r1,r1,#0x10
-	orrne r1,r1,#0x10
+	biceq r1,r1,#0x8
+	orrne r1,r1,#0x8
 	movs r0,r0,lsl#29			;@ Mask taps, Reset to carry
-	andcs r1,r1,#0x14			;@ Keep Ch4 noise/calculation on/off
+	andcs r1,r1,#0xC			;@ Keep Ch4 noise/calculation on/off
 	adr r2,noiseTaps
 	ldr r0,[r2,r0,lsr#29-2]
 	orr r1,r0,r1,lsl#12
 	str r1,[spxptr,#noise4CurrentAddr]
-	mov r1,r1,lsr#17
+	mov r1,r1,lsr#16
 	strh r1,[spxptr,#wsvNoiseCntr]	;@ Update Reg 0x92 for "rnd".
 	bx lr
 noiseTaps:
@@ -2443,7 +2449,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0x90 Sound control
 	.long wsvRegR				;@ 0x91 Sound output
 	.long wsvRegR				;@ 0x92 Noise LFSR value low
-	.long wsvRegR				;@ 0x93 Noise LFSR value high
+	.long wsvNoiseCntrHR		;@ 0x93 Noise LFSR value high
 	.long wsvRegR				;@ 0x94 Sound voice control
 	.long wsvRegR				;@ 0x95 Sound Hyper voice
 	.long wsvImportantR			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.

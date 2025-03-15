@@ -66,11 +66,11 @@ wsaSetAllChVolume:			;@ In r0=SoundCtrl (from 0x90)
 	ldrb r2,[spxptr,#wsvNoiseCtrl]
 	ldr r1,[spxptr,#noise4CurrentAddr]
 	tst r2,#0x10				;@ Enable Noise calculation?
-	orrne r1,r1,#0x10000
+	orrne r1,r1,#0x8000
 	tst r0,#0x08				;@ Ch 4 on?
 	tstne r0,#0x80				;@ Ch 4 noise on?
-	biceq r1,r1,#0x14000
-	orrne r1,r1,#0x04000
+	biceq r1,r1,#0xC000
+	orrne r1,r1,#0x4000
 	str r1,[spxptr,#noise4CurrentAddr]
 
 	ldr r2,=ch1En
@@ -306,12 +306,13 @@ ch4En:
 	mov r6,r2,ror#5
 	addcs r6,r6,r6,lsl#16
 
-	movscs r2,r7,lsr#17			;@ Mask LFSR and check noise calc enable.
-	addcs r7,r7,r2,lsl#17
-	ands r2,r7,r7,lsl#22		;@ Mask Taps
-	eorsne r2,r2,r7,lsl#22
-	orreq r7,r7,#0x00020000
-
+	bcc checkInnerLoop
+	movscs r2,r7,lsr#16			;@ Mask LFSR and check noise calc enable.
+	addcs r7,r7,r2,lsl#16
+	ands r2,r7,r7,lsl#21		;@ Mask Taps
+	eorsne r2,r2,r7,lsl#21
+	orreq r7,r7,#0x00010000
+checkInnerLoop:
 	adds r0,r0,#0x20000000
 	bcc innerMixLoop
 ;@----------------------------------------------------------------------------
@@ -347,7 +348,7 @@ vol3_R:
 	andsne r11,r11,#0xF
 	mlane r2,lr,r11,r2
 
-	movs r11,r7,lsl#15			;@ Channel 4 Noise enabled? (#0x8000)
+	movs r11,r7,lsl#16			;@ Channel 4 Noise enabled? (#0x8000)
 	movcs r11,#0xFF
 	orrspl r11,r10,r6,lsr#28
 	ldrbpl r11,[r11,#0x30]		;@ Channel 4 PCM
@@ -387,7 +388,7 @@ totalVolume:
 	add lr,r2,r2,lsl#16
 	str lr,[spxptr,#wsvSoundOutL]	;@ Update Reg 0x98/0x9A.
 #endif
-	mov r2,r7,lsr#17
+	mov r2,r7,lsr#16
 	strh r2,[spxptr,#wsvNoiseCntr]	;@ Update Reg 0x92 for "rnd".
 	add r0,spxptr,#pcm1CurrentAddr	;@ Counters
 	stmia r0,{r3-r8}
