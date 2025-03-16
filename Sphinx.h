@@ -468,6 +468,14 @@ void wsvConvertTileMaps(void *destination);
 void wsvConvertSprites(void *destination);
 void wsvConvertTiles(void);
 
+/**
+ * Read a value from an IO port but doesn't affect logic, can be used for debugging.
+ * @param  *chip: The Sphinx chip to load a state into.
+ * @param  port: The port to read.
+ * @return The value of the port.
+ */
+u8 spxGetIOPortRaw(Sphinx *chip, int port);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

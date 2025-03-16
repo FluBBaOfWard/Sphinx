@@ -29,6 +29,7 @@
 	.global sphinxSaveState
 	.global sphinxLoadState
 	.global sphinxGetStateSize
+	.global spxGetIOPortRaw
 	.global wsvCopyScrollValues
 	.global wsvConvertTileMaps
 	.global wsvConvertSprites
@@ -76,7 +77,7 @@ chrLutLoop:
 
 	bx lr
 ;@----------------------------------------------------------------------------
-wsVideoReset:		;@ r0=ram+LUTs, r1=machine, r2=IrqFunc
+wsVideoReset:				;@ r0=ram+LUTs, r1=machine, r2=IrqFunc
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0-r3,lr}
 
@@ -185,7 +186,7 @@ ioASLoop:
 	bne ioASLoop
 	ldmfd sp!,{r4,r5,pc}
 ;@----------------------------------------------------------------------------
-setIOMode:				;@ r0=color mode, 0=mono !0=color.
+setIOMode:					;@ r0=color mode, 0=mono !0=color.
 ;@ Should only be called on SPHINX/SPHINX2
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
@@ -236,7 +237,7 @@ cartTblLoop:
 	ldmfd sp!,{r4,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvSetIOPortOut:		;@ r0=port, r1=function
+wsvSetIOPortOut:			;@ r0=port, r1=function
 ;@----------------------------------------------------------------------------
 	ldr r2,=ioOutTable
 	str r1,[r2,r0,lsl#2]
@@ -341,7 +342,7 @@ IO_Default:
 	.byte 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1
 
 ;@----------------------------------------------------------------------------
-sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
+sphinxSaveState:			;@ In r0=dest, r1=spxptr. Out r0=state size.
 	.type sphinxSaveState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
@@ -354,7 +355,7 @@ sphinxSaveState:		;@ In r0=destination, r1=spxptr. Out r0=state size.
 	mov r0,#sphinxStateSize
 	bx lr
 ;@----------------------------------------------------------------------------
-sphinxLoadState:		;@ In r0=spxptr, r1=source. Out r0=state size.
+sphinxLoadState:			;@ In r0=spxptr, r1=source. Out r0=state size.
 	.type sphinxLoadState STT_FUNC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4,r5,lr}
@@ -389,10 +390,19 @@ fixStateTableLoop:
 
 	ldmfd sp!,{r4,r5,lr}
 ;@----------------------------------------------------------------------------
-sphinxGetStateSize:	;@ Out r0=state size.
+sphinxGetStateSize:			;@ Out r0=state size.
 	.type sphinxGetStateSize STT_FUNC
 ;@----------------------------------------------------------------------------
 	mov r0,#sphinxStateSize
+	bx lr
+
+;@----------------------------------------------------------------------------
+spxGetIOPortRaw:			;@ r0=Sphinx, r1=port
+	.type spxGetIOPortRaw STT_FUNC
+;@----------------------------------------------------------------------------
+	and r1,r1,#0xFF
+	add r0,r0,#wsvRegs
+	ldrb r0,[r0,r1]
 	bx lr
 
 	.pool
@@ -1929,7 +1939,7 @@ bgm4Loop:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-wsvCopyScrollValues:			;@ r0 = destination
+wsvCopyScrollValues:		;@ r0 = destination
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r8}
 	ldr r1,[spxptr,#scrollBuff]
@@ -2152,7 +2162,7 @@ redrawColorIcons:
 	tst r0,#LCD_ICON_TIME
 	bne chkVoluIcon
 clrVoluIcon:
-	strh r4,[r2],#0x40		;@ No Volume when headphones
+	strh r4,[r2],#0x40			;@ No Volume when headphones
 	strh r4,[r2],#0x40
 	b chkBattIcon
 
@@ -2360,7 +2370,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0x3D Pal mono E high
 	.long wsvRegR				;@ 0x3E Pal mono F low
 	.long wsvRegR				;@ 0x3F Pal mono F high
-			;@ DMA registers, only WSC
+			;@ DMA registers, only Color
 	.long wsvRegR				;@ 0x40 DMA source
 	.long wsvRegR				;@ 0x41 DMA source
 	.long wsvRegR				;@ 0x42 DMA source
@@ -2566,7 +2576,7 @@ defaultOutTable:
 	.long wsvRegW				;@ 0x3D Pal mono E high
 	.long wsvRegW				;@ 0x3E Pal mono F low
 	.long wsvRegW				;@ 0x3F Pal mono F high
-			;@ DMA registers, only WSC
+			;@ DMA registers, only Color
 	.long wsvDMASourceW			;@ 0x40	DMA source
 	.long wsvRegW				;@ 0x41 DMA src
 	.long wsvDMASourceHW		;@ 0x42 DMA src
