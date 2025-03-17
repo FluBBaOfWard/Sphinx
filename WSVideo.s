@@ -285,6 +285,8 @@ wsvSetCartOk:
 	cmp r0,#0
 	orrne r1,r1,#0x80
 	strb r1,[spxptr,#wsvSystemCtrl1]
+	movne r0,#LCD_ICON_TIME_VALUE
+	strb r0,[spxptr,#wsvCartIconTimer]
 	bx lr
 ;@----------------------------------------------------------------------------
 registersReset:				;@ in r3=SOC
@@ -306,9 +308,6 @@ registersReset:				;@ in r3=SOC
 	mov r0,#0x04					;@ Rom width 16bit.
 	orrne r0,r0,#0x02				;@ Color mode
 	strb r0,[spxptr,#wsvSystemCtrl1]
-	ands r0,r0,#0x80				;@ Cart Ok?
-	movne r0,#LCD_ICON_TIME_VALUE
-	strb r0,[spxptr,#wsvCartIconTimer]
 	cmp r1,#SOC_SPHINX
 	mov r0,#0x90
 	moveq r0,#0x9F
