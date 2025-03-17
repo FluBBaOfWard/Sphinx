@@ -6,5 +6,6 @@ Bandai WonderSwan/Sphinx To do
 	Fix HyperVoice stereo handling.
 	Palette change per line?
 	Sound frequency updates are not working as on HW.
+	Ch4 noise/LFSR is not clear how/when it's clocked.
 	Handle Contrast High/Low for WSC, change Y every other frame.
 	Check sprite start & sprite count.

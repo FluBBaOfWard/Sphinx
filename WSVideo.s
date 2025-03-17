@@ -544,9 +544,14 @@ wsvHyperChanCtrlR:			;@ 0x6B, only WSC
 	and r0,r0,#0x6F
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvNoiseCntrLR:				;@ 0x92
+;@----------------------------------------------------------------------------
+	ldrb r0,[spxptr,#noise4CurrentAddr+2]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvNoiseCntrHR:				;@ 0x93
 ;@----------------------------------------------------------------------------
-	ldrb r0,[spxptr,#wsvNoiseCntr+1]
+	ldrb r0,[spxptr,#noise4CurrentAddr+3]
 	and r0,r0,#0x7F
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1069,8 +1074,7 @@ wsvNoiseCtrlW:				;@ 0x8E, Noise Control
 	strb r1,[spxptr,#wsvNoiseCtrl]
 	ldr r1,[spxptr,#noise4CurrentAddr]
 	mov r1,r1,lsr#12			;@ Clear taps
-	tst r1,#4					;@ Ch4 Enable & Ch4 Noise?
-	tstne r0,#0x10				;@ Enable Noise calculation?
+	tst r0,#0x10				;@ Enable Noise calculation?
 	biceq r1,r1,#0x8
 	orrne r1,r1,#0x8
 	movs r0,r0,lsl#29			;@ Mask taps, Reset to carry
@@ -1079,8 +1083,6 @@ wsvNoiseCtrlW:				;@ 0x8E, Noise Control
 	ldr r0,[r2,r0,lsr#29-2]
 	orr r1,r0,r1,lsl#12
 	str r1,[spxptr,#noise4CurrentAddr]
-	mov r1,r1,lsr#16
-	strh r1,[spxptr,#wsvNoiseCntr]	;@ Update Reg 0x92 for "rnd".
 	bx lr
 noiseTaps:
 	.long 0x00000408			;@ Tap bit 7 & 14
@@ -2458,7 +2460,7 @@ defaultInTable:
 
 	.long wsvRegR				;@ 0x90 Sound control
 	.long wsvRegR				;@ 0x91 Sound output
-	.long wsvRegR				;@ 0x92 Noise LFSR value low
+	.long wsvNoiseCntrLR		;@ 0x92 Noise LFSR value low
 	.long wsvNoiseCntrHR		;@ 0x93 Noise LFSR value high
 	.long wsvRegR				;@ 0x94 Sound voice control
 	.long wsvRegR				;@ 0x95 Sound Hyper voice
