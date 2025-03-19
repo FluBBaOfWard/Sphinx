@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.4.2 - 2025-03-19 (FluBBa)
+	Fixed debugging of some registers.
+
 V0.4.1 - 2025-03-17 (FluBBa)
 	Fixed a regression in the noise.
 
