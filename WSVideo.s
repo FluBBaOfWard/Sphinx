@@ -220,21 +220,22 @@ ioMode0Loop:
 	bne ioMode0Loop
 	ldmfd sp!,{r4,r5,pc}
 ;@----------------------------------------------------------------------------
-wsvSetCartMap:				;@ r0=inTable, r1=outTable
+wsvSetCartMap:				;@ r0=inTable, r1=outTable, r2=mask (0x3F=full)
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r4,lr}
-	ldr r2,=cartInTable
-	ldr r3,=cartOutTable
-	mov r4,#0x40
+	stmfd sp!,{r4-r6,lr}
+	ldr r3,=cartInTable
+	ldr r4,=cartOutTable
+	mov r6,#0x40
 cartTblLoop:
-	ldr lr,[r0],#4
-	str lr,[r2],#4
-	ldr lr,[r1],#4
-	str lr,[r3],#4
-	subs r4,r4,#1
+	subs r6,r6,#1
+	and r5,r6,r2
+	ldr lr,[r0,r5,lsl#2]
+	str lr,[r3,r6,lsl#2]
+	ldr lr,[r1,r5,lsl#2]
+	str lr,[r4,r6,lsl#2]
 	bhi cartTblLoop
 
-	ldmfd sp!,{r4,lr}
+	ldmfd sp!,{r4-r6,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvSetIOPortOut:			;@ r0=port, r1=function
@@ -458,10 +459,10 @@ wsvUnmappedR:
 ;@----------------------------------------------------------------------------
 wsvZeroR:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
+	mov r1,#0x00
+	stmfd sp!,{r1,lr}
 	bl _debugIOUnmappedR
-	ldmfd sp!,{lr}
-	mov r0,#0x00
+	ldmfd sp!,{r0,lr}
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvUnknownR:
