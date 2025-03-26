@@ -601,24 +601,6 @@ wsvSerialStatusR:			;@ 0xB3
 	orrne r0,r0,#1
 	bx lr
 ;@----------------------------------------------------------------------------
-wsvControlsR:				;@ 0xB5
-;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvControls]
-	and r1,r1,#0x70
-	ldr r0,[spxptr,#wsvJoyState]
-	tst r1,#0x10				;@ Y keys enabled?
-	biceq r0,r0,#0xF00
-	teq r1,r1,lsl#26			;@ X keys / Buttons enabled?
-	bicpl r0,r0,#0x0F0
-	biccc r0,r0,#0x00F
-	orr r0,r0,r0,lsr#8
-	orr r0,r0,r0,lsr#4
-	and r0,r0,#0x0F
-	orr r0,r0,r1
-
-	bx lr
-
-;@----------------------------------------------------------------------------
 wsvWriteHigh:				;@ I/O write (0x0100-0xFFFF)
 ;@----------------------------------------------------------------------------
 	mov r2,r1,lsl#23
@@ -1251,6 +1233,34 @@ wsvSerialStatusW:			;@ 0xB3
 	mov r0,#SERTX_IRQ_F			;@ #0 = Serial transmit buffer empty
 	b setInterruptPins
 ;@----------------------------------------------------------------------------
+wsvSetJoyState:				;@ r0 = joy state
+;@----------------------------------------------------------------------------
+	ldr r1,[spxptr,#wsvJoyState]
+	str r0,[spxptr,#wsvJoyState]
+	eor r1,r0,r1
+	ands r1,r1,r0
+	bxeq lr
+	tst r1,#0x10000
+	bne wsvPushVolumeButton
+	ldrb r0,[spxptr,#wsvKeypad]
+;@----------------------------------------------------------------------------
+wsvKeypadW:					;@ 0xB5
+;@----------------------------------------------------------------------------
+	and r0,r0,#0x70
+	ldr r1,[spxptr,#wsvJoyState]
+	tst r0,#0x10				;@ Y keys enabled?
+	biceq r1,r1,#0xF00
+	teq r0,r0,lsl#26			;@ X keys / Buttons enabled?
+	bicpl r1,r1,#0x0F0
+	biccc r1,r1,#0x00F
+	orr r1,r1,r1,lsr#8
+	orr r1,r1,r1,lsr#4
+	and r1,r1,#0x0F
+	orr r0,r0,r1
+	strb r0,[spxptr,#wsvKeypad]
+
+	bx lr
+;@----------------------------------------------------------------------------
 wsvIntAckW:					;@ 0xB6
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvInterruptStatus]
@@ -1281,29 +1291,6 @@ wsvSetLowBattery:			;@ r0 = on/off
 	cmp r0,r1
 	bne V30SetNMIPin
 	bx lr
-;@----------------------------------------------------------------------------
-wsvSetJoyState:				;@ r0 = joy state
-;@----------------------------------------------------------------------------
-	ldr r1,[spxptr,#wsvJoyState]
-	str r0,[spxptr,#wsvJoyState]
-	eor r1,r0,r1
-	ands r1,r1,r0
-	bxeq lr
-	tst r1,#0x10000
-	bne wsvPushVolumeButton
-	ldrb r0,[spxptr,#wsvInterruptEnable]
-	tst r0,#KEYPD_IRQ_F
-	bxeq lr
-	ldrb r0,[spxptr,#wsvControls]
-	tst r0,#0x10				;@ Y keys enabled?
-	biceq r1,r1,#0xF00
-	teq r0,r0,lsl#26			;@ X keys / Buttons enabled?
-	bicpl r1,r1,#0x0F0
-	biccc r1,r1,#0x00F
-	cmp r1,#0
-	bxeq lr
-	mov r0,#KEYPD_IRQ_F			;@ #2 = Key pressed
-	b setInterruptPins
 ;@----------------------------------------------------------------------------
 wsvSetHeadphones:			;@ r0 = on/off
 ;@----------------------------------------------------------------------------
@@ -1373,17 +1360,25 @@ endFrame:
 	bl dmaSprites
 	ldmfd sp!,{lr}
 
+	ldrb r0,[spxptr,#wsvKeypad]
+	ldrb r1,[spxptr,#wsvOldKeypadReg]
+	strb r0,[spxptr,#wsvOldKeypadReg]
+	eor r1,r1,r0
+	and r1,r1,r0
+	ands r0,r1,#0xF
+	movne r0,#KEYPD_IRQ_F		;@ #2 = Key pressed
+
 	ldrh r1,[spxptr,#wsvVBlCounter]
-	mov r0,#VBLST_IRQ_F				;@ #6 = VBlank Start
+	orr r0,r0,#VBLST_IRQ_F		;@ #6 = VBlank Start
 	subs r1,r1,#1
 	bmi setInterruptPins
 	ldrb r2,[spxptr,#wsvTimerControl]
 	bne noVBlIrq
-	orreq r0,r0,#VBLTM_IRQ_F		;@ #5 = VBlank timer
-	tst r2,#0x8						;@ Repeat?
+	orreq r0,r0,#VBLTM_IRQ_F	;@ #5 = VBlank timer
+	tst r2,#0x8					;@ Repeat?
 	ldrhne r1,[spxptr,#wsvVBlTimerFreq]
 noVBlIrq:
-	tst r2,#0x4						;@ VBlank timer enabled?
+	tst r2,#0x4					;@ VBlank timer enabled?
 	strhne r1,[spxptr,#wsvVBlCounter]
 	b setInterruptPins
 
@@ -2490,7 +2485,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusR		;@ 0xB3 Serial status
 	.long wsvRegR				;@ 0xB4 Interrupt status
-	.long wsvControlsR			;@ 0xB5 keypad
+	.long wsvRegR				;@ 0xB5 keypad
 	.long wsvZeroR				;@ 0xB6 Interrupt acknowledge
 	.long wsvRegR				;@ 0xB7 NMI ctrl, bit 4.
 	.long wsvUnmappedR			;@ 0xB8 ---
@@ -2696,7 +2691,7 @@ defaultOutTable:
 	.long wsvIntEnableW			;@ 0xB2 Interrupt enable
 	.long wsvSerialStatusW		;@ 0xB3 Serial status
 	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
-	.long wsvRegW				;@ 0xB5 Input Controls
+	.long wsvKeypadW			;@ 0xB5 Input Controls
 	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
 	.long wsvNMICtrlW			;@ 0xB7 NMI ctrl
 	.long wsvUnmappedW			;@ 0xB8 ---

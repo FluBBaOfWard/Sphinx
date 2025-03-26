@@ -301,7 +301,7 @@ typedef struct {
 	/// 0xB4 Interrupt status
 	u8 interruptStatus;
 	/// 0xB5 Input Controls
-	u8 controls;
+	u8 keypad;
 	/// 0xB6 Interrupt acknowledge
 	u8 interruptAck;
 	/// 0xB7 NMI Control
@@ -397,7 +397,7 @@ typedef struct {
 	u8 serialBufFull;
 	u8 soundIconTimer;
 	u8 cartIconTimer;
-	u8 sleepMode__;
+	u8 oldKeypadReg;
 	u8 padding15[2];
 
 	u32 enabledLCDIcons;
