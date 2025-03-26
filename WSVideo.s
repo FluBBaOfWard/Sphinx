@@ -1352,12 +1352,6 @@ newFrame:					;@ Called before line 0
 ;@----------------------------------------------------------------------------
 	bx lr
 ;@----------------------------------------------------------------------------
-midFrame:
-;@----------------------------------------------------------------------------
-	ldr r0,[spxptr,#wsvSprWinXPos]	;@ Win pos/size
-	;@str r0,[spxptr,#sprWindowData]
-	bx lr
-;@----------------------------------------------------------------------------
 endFrame:
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
@@ -1380,7 +1374,7 @@ endFrame:
 	ldmfd sp!,{lr}
 
 	ldrh r1,[spxptr,#wsvVBlCounter]
-	mov r0,#VBLST_IRQ_F				;@ #6 = VBlank
+	mov r0,#VBLST_IRQ_F				;@ #6 = VBlank Start
 	subs r1,r1,#1
 	bmi setInterruptPins
 	ldrb r2,[spxptr,#wsvTimerControl]
@@ -1427,7 +1421,6 @@ frameEndHook:
 ;@----------------------------------------------------------------------------
 lineStateTable:
 	.long 0, newFrame			;@ zeroLine
-	.long 72, midFrame			;@ Middle of screen
 	.long 144, endFrame			;@ After last visible scanline
 	.long 145, drawFrameGfx		;@ frameIRQ
 lineStateLastLine:
@@ -1985,9 +1978,8 @@ dmaSprites:
 	ldrb r2,[spxptr,#wsvSprTblAdr]
 	add r1,r1,r2,lsl#9
 	ldrb r2,[spxptr,#wsvSpriteFirst]	;@ First sprite
-	add r1,r1,r2,lsl#2
-
 	ldrb r3,[spxptr,#wsvSpriteCount]	;@ Sprite count
+	add r1,r1,r2,lsl#2
 	add r3,r3,r2
 	cmp r3,#128
 	movpl r3,#128
