@@ -34,8 +34,8 @@
 #define LCD_ICON_BATTERY	(1<<9)
 #define LCD_ICON_CARTRIDGE	(1<<10)
 #define LCD_ICON_POWER		(1<<11)
-/** Timer for sound icons is on/off */
-#define LCD_ICON_TIME		(1<<12)
+/** Sound icons are on/off */
+#define LCD_ICON_SOUND		(1<<12)
 
 /** Time for latched icons (sound & cartridge) */
 #define LCD_ICON_TIME_VALUE (128)
@@ -227,11 +227,11 @@ wsvPowerOff:		.byte 0		;@ 0xAC Power Off
 wsvPadding11:		.space 3	;@ 0xAD - 0xAF ???
 
 wsvInterruptBase:	.byte 0		;@ 0xB0 Interrupt base
-wsvComByte:			.byte 0		;@ 0xB1 Serial Communication byte
+wsvByteReceived:	.byte 0		;@ 0xB1 Serial Communication byte
 wsvInterruptEnable:	.byte 0		;@ 0xB2 Interrupt enable
 wsvSerialStatus:	.byte 0		;@ 0xB3 Serial status
 wsvInterruptStatus:	.byte 0		;@ 0xB4 Interrupt status
-wsvKeypad	:		.byte 0		;@ 0xB5 Input Controls
+wsvKeypad:			.byte 0		;@ 0xB5 Input Controls
 wsvInterruptAck:	.byte 0		;@ 0xB6 Interrupt acknowledge
 wsvNMIControl:		.byte 0		;@ 0xB7 NMI Control
 
@@ -289,11 +289,11 @@ wsvOrientation:		.byte 0
 wsvLowBattery:		.byte 0
 wsvLowBatPin:		.byte 0
 wsvInterruptPins:	.byte 0
-wsvByteReceived:	.byte 0
+wsvComByte:			.byte 0
 wsvSerialBufFull:	.byte 0
+wsvOldKeypadReg:	.byte 0
 wsvSoundIconTimer:	.byte 0
 wsvCartIconTimer:	.byte 0
-wsvOldKeypadReg:	.byte 0
 wsvPadding15:		.space 2
 
 enabledLCDIcons:	.long 0

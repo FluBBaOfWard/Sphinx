@@ -1,9 +1,10 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.4.2 - 2025-03-26 (FluBBa)
+V0.4.2 - 2025-04-02 (FluBBa)
 	Fixed debugging of some registers.
 	Fixed "Cart OK" icon handling.
+	Fixed register startup values for ASWAN.
 
 V0.4.1 - 2025-03-17 (FluBBa)
 	Fixed a regression in the noise.

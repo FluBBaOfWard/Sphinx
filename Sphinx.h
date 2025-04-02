@@ -293,7 +293,7 @@ typedef struct {
 	/// 0xB0 Interrupt base
 	u8 interruptBase;
 	/// 0xB1 Serial Port byte
-	u8 comByte;
+	u8 byteReceived;
 	/// 0xB2 Interrupt enable
 	u8 interruptEnable;
 	/// 0xB3 Serial Port status
@@ -393,11 +393,11 @@ typedef struct {
 	u8 lowBattery;
 	u8 lowBatPin;
 	u8 interruptPins;
-	u8 byteReceived;
+	u8 comByte;
 	u8 serialBufFull;
+	u8 oldKeypadReg;
 	u8 soundIconTimer;
 	u8 cartIconTimer;
-	u8 oldKeypadReg;
 	u8 padding15[2];
 
 	u32 enabledLCDIcons;
