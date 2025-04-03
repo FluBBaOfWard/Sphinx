@@ -221,20 +221,26 @@ ioMode0Loop:
 	bne ioMode0Loop
 	ldmfd sp!,{r4,r5,pc}
 ;@----------------------------------------------------------------------------
-wsvSetCartMap:				;@ r0=inTable, r1=outTable, r2=mask (0x3F=full)
+wsvSetCartMap:				;@ r0=inTable, r1=outTable, r2=length, r3=defaultIn
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r4-r6,lr}
-	ldr r3,=cartInTable
-	ldr r4,=cartOutTable
-	mov r6,#0x40
+	ldr r4,=cartInTable
+	ldr r5,=cartOutTable
+	rsb r6,r2,#0x40
 cartTblLoop:
-	subs r6,r6,#1
-	and r5,r6,r2
-	ldr lr,[r0,r5,lsl#2]
-	str lr,[r3,r6,lsl#2]
-	ldr lr,[r1,r5,lsl#2]
-	str lr,[r4,r6,lsl#2]
+	subs r2,r2,#1
+	ldr lr,[r0],#4
+	str lr,[r4],#4
+	ldr lr,[r1],#4
+	str lr,[r5],#4
 	bhi cartTblLoop
+
+	ldr lr,wsvUnmappedW
+cartTblLoop2:
+	subs r6,r6,#1
+	str r3,[r4],#4
+	str lr,[r5],#4
+	bhi cartTblLoop2
 
 	ldmfd sp!,{r4-r6,lr}
 	bx lr
@@ -310,10 +316,6 @@ registersReset:				;@ in r0=SOC
 	mov r0,#0x04					;@ Rom width 16bit.
 	orrne r0,r0,#0x02				;@ Color mode
 	strb r0,[spxptr,#wsvSystemCtrl1]
-	cmp r1,#SOC_SPHINX
-	mov r0,#0x80
-	moveq r0,#0x9F
-	strb r0,[spxptr,#wsvColor01]
 	cmp r1,#SOC_SPHINX2
 	mov r0,#0
 	moveq r0,#0x80
