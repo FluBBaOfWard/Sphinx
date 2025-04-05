@@ -2,6 +2,7 @@ Bandai WonderSwan/Sphinx To do
 ------------------------------
 
 	Stop DMA from SRAM and slow ROM.
+	Add support for cart-io waitstates.
 	Handle double buffered tile maps better, see Hataraku Chocobo.
 	Fix HyperVoice stereo handling.
 	Palette change per line?
