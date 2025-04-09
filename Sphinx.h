@@ -274,8 +274,8 @@ typedef struct {
 
 	/// 0xA2 Timer control
 	u8 timerControl;
-	/// 0xA3 No register
-	u8 padding10;
+	/// 0xA3 System Test
+	u8 systemTest;
 	/// 0xA4/0xA5 HBlank Timer 'frequency'
 	u16 hblTimerFreq;
 	/// 0xA6/0xA7 VBlank Timer 'frequency'
@@ -398,6 +398,7 @@ typedef struct {
 	u8 oldKeypadReg;
 	u8 soundIconTimer;
 	u8 cartIconTimer;
+	u8 regMask14;
 	u8 padding15[2];
 
 	u32 enabledLCDIcons;

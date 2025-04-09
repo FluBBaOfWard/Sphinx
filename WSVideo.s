@@ -128,7 +128,7 @@ wsVideoReset:				;@ r0=ram+LUTs, r1=machine, r2=IrqFunc
 	bl initIOMap
 
 	ldmfd sp!,{lr}
-	b registersReset
+	b resetRegisters
 
 dummyIrqFunc:
 	bx lr
@@ -210,7 +210,7 @@ ioMode1Loop:
 	ldr lr,[r2,r5,lsl#2]
 	str lr,[r4,r5,lsl#2]
 	add r5,r5,#1
-	cmp r5,#0x6C
+	cmp r5,#0x60
 	bne ioMode1Loop
 	ldmfd sp!,{r4,r5,pc}
 
@@ -218,12 +218,10 @@ modeMono:
 	ldr r1,=wsvUnmappedR
 	ldr r2,=wsvUnmappedW
 ioMode0Loop:
-	cmp r5,#0x60				;@ Skip 0x60 since it's used to switch back to color mode.
-	cmpne r5,#0x62				;@ Skip 0x62, works in mono mode (on WSC & SC).
-	strne r1,[r3,r5,lsl#2]
-	strne r2,[r4,r5,lsl#2]
+	str r1,[r3,r5,lsl#2]
+	str r2,[r4,r5,lsl#2]
 	add r5,r5,#1
-	cmp r5,#0x6C
+	cmp r5,#0x60
 	bne ioMode0Loop
 	ldmfd sp!,{r4,r5,pc}
 ;@----------------------------------------------------------------------------
@@ -303,7 +301,7 @@ wsvSetCartOk:
 	strb r0,[spxptr,#wsvCartIconTimer]
 	bx lr
 ;@----------------------------------------------------------------------------
-registersReset:				;@ in r0=SOC
+resetRegisters:				;@ in r0=SOC
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r0,spxptr,lr}
 	adr r1,AswanIODefault
@@ -314,13 +312,15 @@ registersReset:				;@ in r0=SOC
 	add r0,spxptr,#wsvRegs
 	bl memCopy
 	ldmfd sp!,{r1,spxptr}
+	mov r2,#0xF1				;@ 0x14 default mask
 	cmp r1,#SOC_SPHINX2
+	moveq r2,#0x01				;@ 0x14 spx2 mask
 	moveq r0,#0x80
 	strbeq r0,[spxptr,#wsvSystemCtrl3]
-	subs r0,r1,#SOC_ASWAN
-	movne r0,#0x02				;@ Color mode
-	strb r0,[spxptr,#wsvSystemCtrl1]
-	moveq r0,#0x02
+	strb r2,[spxptr,#wsvRegMask14]
+	cmp r1,#SOC_ASWAN
+	mov r0,#0x02				;@ Color mode
+	strbne r0,[spxptr,#wsvSystemCtrl1]
 	bleq wsvHWVolumeW
 	ldmfd sp!,{lr}
 
@@ -760,6 +760,14 @@ sy1:
 	bhi sy1
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvBgColorW:				;@ 0x01, Background Color
+;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvVideoMode]
+	tst r1,#0x80				;@ Color mode?
+	andeq r0,r0,#0x07
+	strb r0,[spxptr,#wsvBgColor]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvSpriteTblAdrW:			;@ 0x04, Sprite Table Address
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvVideoMode]
@@ -865,10 +873,8 @@ sy4:
 ;@----------------------------------------------------------------------------
 wsvLCDControlW:				;@ 0x14, Sleep, WSC contrast.
 ;@----------------------------------------------------------------------------
-	ldrb r1,[spxptr,#wsvSOC]
-	and r0,r0,#0xF3
-	cmp r1,#SOC_SPHINX2
-	andeq r0,r0,#3
+	ldrb r1,[spxptr,#wsvRegMask14]
+	and r0,r0,r1
 	strb r0,[spxptr,#wsvLCDControl]
 	mov r0,r0,lsl#7				;@ Enable default color if LCD sleep.
 	strb r0,[spxptr,#wsvDefaultBgCol+3]
@@ -876,6 +882,7 @@ wsvLCDControlW:				;@ 0x14, Sleep, WSC contrast.
 ;@----------------------------------------------------------------------------
 wsvLCDIconW:				;@ 0x15, Enable/disable LCD icons
 ;@----------------------------------------------------------------------------
+	and r0,r0,#0x3F
 	strb r0,[spxptr,#wsvLCDIcons]
 	ands r0,r0,#6
 	bxeq lr
@@ -905,6 +912,10 @@ wsvLatchedIconsW:			;@ 0x1A
 	strbcs r1,[spxptr,#wsvCartIconTimer]
 	strbmi r1,[spxptr,#wsvSoundIconTimer]
 	bx lr
+;@----------------------------------------------------------------------------
+wsvPaletteTrW:				;@ 0x28,0x2A,0x2C,0x2E,0x38,0x3A,0x3C,0x3E
+;@----------------------------------------------------------------------------
+	and r0,r0,#0x70
 ;@----------------------------------------------------------------------------
 wsvPaletteW:				;@ 0x20-0x3F
 ;@----------------------------------------------------------------------------
@@ -951,6 +962,7 @@ wsvDMACtrlW:				;@ 0x48, only Color, word transfer. steals 5+2*word cycles.
 	ldr r4,[spxptr,#wsvDMASource]
 	ldr r5,[spxptr,#wsvDMADest]	;@ r5=destination
 #endif
+	and r0,r0,#0x40				;@ Only keep Inc/dec
 	movs r6,r5,lsr#16			;@ r6=length
 	beq dmaEnd
 	mov r4,r4,lsl#12
@@ -958,8 +970,7 @@ wsvDMACtrlW:				;@ 0x48, only Color, word transfer. steals 5+2*word cycles.
 	sub v30cyc,v30cyc,#5*CYCLE
 	sub v30cyc,v30cyc,r6,lsl#CYC_SHIFT
 
-	and r7,r0,#0x40				;@ Inc/dec
-	rsb r7,r7,#0x20
+	rsb r7,r0,#0x20				;@ Inc/dec
 	mov r8,spxptr
 
 dmaLoop:
@@ -983,11 +994,10 @@ dmaLoop:
 	str r5,[spxptr,#wsvDMADest]	;@ Store dest plus clear length
 #endif
 
-	rsb r7,r7,#0x20
-	strb r7,[spxptr,#wsvDMACtrl]
+	rsb r0,r7,#0x20
 dmaEnd:
-	ldmfd sp!,{r4-r8,lr}
-	bx lr
+	strb r0,[spxptr,#wsvDMACtrl]
+	ldmfd sp!,{r4-r8,pc}
 ;@----------------------------------------------------------------------------
 wsvSndDMASrc0W:				;@ 0x4A, only Color.
 ;@----------------------------------------------------------------------------
@@ -1028,7 +1038,10 @@ wsvSndDMALen2W:				;@ 0x50, only Color.
 ;@----------------------------------------------------------------------------
 wsvSndDMACtrlW:				;@ 0x52, only Color mode. steals 6+n cycles.
 ;@----------------------------------------------------------------------------
+	ldr r1,[spxptr,#sndDmaLength]
 	and r0,r0,#0xDF
+	cmp r1,#0
+	biceq r0,r0,#0x80
 	strb r0,[spxptr,#wsvSndDMACtrl]
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1049,6 +1062,7 @@ wsvSysCtrl3W:				;@ 0x62, only Color.
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSystemCtrl3]
 	and r0,r0,#1				;@ Power Off bit.
+	and r1,r1,#0x80
 	orr r0,r0,r1				;@ OR SwanCrystal flag (bit 7).
 	strb r0,[spxptr,#wsvSystemCtrl3]
 	bx lr
@@ -1164,6 +1178,7 @@ wsvSampleBaseW:				;@ 0x8F, Sample Base
 ;@----------------------------------------------------------------------------
 wsvSoundCtrlW:				;@ 0x90, Sound Control
 ;@----------------------------------------------------------------------------
+	and r0,r0,#0xEF
 	ldrb r1,[spxptr,#wsvSoundCtrl]
 	teq r1,r0
 	bxeq lr
@@ -1178,6 +1193,12 @@ wsvSoundOutputW:			;@ 0x91, Sound ouput
 	orr r0,r0,r1
 	strb r0,[spxptr,#wsvSoundOutput]
 	b wsaSetSoundOutput
+;@----------------------------------------------------------------------------
+wsvCh2VoiceVolW:			;@ 0x94, Sound Channel 2 Voice Volume
+;@----------------------------------------------------------------------------
+	and r0,r0,#0x0F				;@ Only low 4 bits
+	strb r0,[spxptr,#wsvCh2VoiceVol]
+	bx lr
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
@@ -1204,8 +1225,8 @@ wsvHWVolumeW:				;@ 0x9E, HW Volume?
 wsvHWW:						;@ 0xA0, Color/Mono, boot rom lock
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSystemCtrl1]
+	and r0,r0,#0x0D				;@ Only these bits can be set.
 	and r1,r1,#0x83				;@ These can't be cleared once set.
-	and r0,r0,#0x8D				;@ Only these bits can be set.
 	orr r0,r0,r1
 	strb r0,[spxptr,#wsvSystemCtrl1]
 	eor r1,r1,r0
@@ -1229,6 +1250,12 @@ wsvTimerCtrlW:				;@ 0xA2, Timer control
 ;@----------------------------------------------------------------------------
 	and r0,r0,#0x0F
 	strb r0,[spxptr,#wsvTimerControl]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvSystemTestW:				;@ 0xA3, System Test
+;@----------------------------------------------------------------------------
+	and r0,r0,#0x0F				;@ Only low 4 bits
+	strb r0,[spxptr,#wsvSystemTest]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvHTimerLowW:				;@ 0xA4, HBlank timer low
@@ -2516,28 +2543,28 @@ defaultInTable:
 	.long wsvUnmappedR			;@ 0x7E ---
 	.long wsvUnmappedR			;@ 0x7F ---
 
-	.long wsvRegR				;@ 0x80 Sound Ch1 pitch low
-	.long wsvRegR				;@ 0x81 Sound Ch1 pitch high
-	.long wsvRegR				;@ 0x82 Sound Ch2 pitch low
-	.long wsvRegR				;@ 0x83 Sound Ch2 pitch high
-	.long wsvRegR				;@ 0x84 Sound Ch3 pitch low
-	.long wsvRegR				;@ 0x85 Sound Ch3 pitch high
-	.long wsvRegR				;@ 0x86 Sound Ch4 pitch low
-	.long wsvRegR				;@ 0x87 Sound Ch4 pitch high
-	.long wsvRegR				;@ 0x88 Sound Ch1 volume
-	.long wsvRegR				;@ 0x89 Sound Ch2 volume
-	.long wsvRegR				;@ 0x8A Sound Ch3 volume
-	.long wsvRegR				;@ 0x8B Sound Ch4 volume
-	.long wsvRegR				;@ 0x8C Sweeep value
-	.long wsvRegR				;@ 0x8D Sweep time
-	.long wsvRegR				;@ 0x8E Noise control
-	.long wsvRegR				;@ 0x8F Wave base
+	.long wsvRegR				;@ 0x80 Sound Ch1 Pitch Low
+	.long wsvRegR				;@ 0x81 Sound Ch1 Pitch High
+	.long wsvRegR				;@ 0x82 Sound Ch2 Pitch Low
+	.long wsvRegR				;@ 0x83 Sound Ch2 Pitch High
+	.long wsvRegR				;@ 0x84 Sound Ch3 Pitch Low
+	.long wsvRegR				;@ 0x85 Sound Ch3 Pitch High
+	.long wsvRegR				;@ 0x86 Sound Ch4 Pitch Low
+	.long wsvRegR				;@ 0x87 Sound Ch4 Pitch High
+	.long wsvRegR				;@ 0x88 Sound Ch1 Volume
+	.long wsvRegR				;@ 0x89 Sound Ch2 Volume
+	.long wsvRegR				;@ 0x8A Sound Ch3 Volume
+	.long wsvRegR				;@ 0x8B Sound Ch4 Volume
+	.long wsvRegR				;@ 0x8C Sweeep Amount
+	.long wsvRegR				;@ 0x8D Sweep Time
+	.long wsvRegR				;@ 0x8E Noise Control
+	.long wsvRegR				;@ 0x8F Wave Base
 
-	.long wsvRegR				;@ 0x90 Sound control
-	.long wsvRegR				;@ 0x91 Sound output
+	.long wsvRegR				;@ 0x90 Sound Control
+	.long wsvRegR				;@ 0x91 Sound Output
 	.long wsvNoiseCntrLR		;@ 0x92 Noise LFSR value low
 	.long wsvNoiseCntrHR		;@ 0x93 Noise LFSR value high
-	.long wsvRegR				;@ 0x94 Sound voice control
+	.long wsvRegR				;@ 0x94 Sound Ch2 Voice Volume
 	.long wsvRegR				;@ 0x95 Sound Hyper voice
 	.long wsvImportantR			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.
 	.long wsvImportantR			;@ 0x97 SND9697
@@ -2553,7 +2580,7 @@ defaultInTable:
 	.long wsvRegR				;@ 0xA0 Color or mono HW
 	.long wsvUnmappedR			;@ 0xA1 ---
 	.long wsvRegR				;@ 0xA2 Timer Control
-	.long wsvUnknownR			;@ 0xA3 ???
+	.long wsvImportantR			;@ 0xA3 System Test
 	.long wsvRegR				;@ 0xA4 HBlankTimer low
 	.long wsvRegR				;@ 0xA5 HBlankTimer high
 	.long wsvRegR				;@ 0xA6 VBlankTimer low
@@ -2587,7 +2614,7 @@ defaultInTable:
 ;@----------------------------------------------------------------------------
 defaultOutTable:
 	.long wsvDisplayCtrlW		;@ 0x00 Display control
-	.long wsvRegW				;@ 0x01 Background color
+	.long wsvBgColorW			;@ 0x01 Background color
 	.long wsvReadOnlyW			;@ 0x02 Current scan line
 	.long wsvRegW				;@ 0x03 Scan line compare
 	.long wsvSpriteTblAdrW		;@ 0x04 Sprite table address
@@ -2628,13 +2655,13 @@ defaultOutTable:
 	.long wsvPaletteW			;@ 0x25 Pal mono 2 high
 	.long wsvPaletteW			;@ 0x26 Pal mono 3 low
 	.long wsvPaletteW			;@ 0x27 Pal mono 3 high
-	.long wsvPaletteW			;@ 0x28 Pal mono 4 low
+	.long wsvPaletteTrW			;@ 0x28 Pal mono 4 low
 	.long wsvPaletteW			;@ 0x29 Pal mono 4 high
-	.long wsvPaletteW			;@ 0x2A Pal mono 5 low
+	.long wsvPaletteTrW			;@ 0x2A Pal mono 5 low
 	.long wsvPaletteW			;@ 0x2B Pal mono 5 high
-	.long wsvPaletteW			;@ 0x2C Pal mono 6 low
+	.long wsvPaletteTrW			;@ 0x2C Pal mono 6 low
 	.long wsvPaletteW			;@ 0x2D Pal mono 6 high
-	.long wsvPaletteW			;@ 0x2E Pal mono 7 low
+	.long wsvPaletteTrW			;@ 0x2E Pal mono 7 low
 	.long wsvPaletteW			;@ 0x2F Pal mono 7 high
 
 	.long wsvPaletteW			;@ 0x30 Pal mono 8 low
@@ -2645,13 +2672,13 @@ defaultOutTable:
 	.long wsvPaletteW			;@ 0x35 Pal mono A high
 	.long wsvPaletteW			;@ 0x36 Pal mono B low
 	.long wsvPaletteW			;@ 0x37 Pal mono B high
-	.long wsvPaletteW			;@ 0x38 Pal mono C low
+	.long wsvPaletteTrW			;@ 0x38 Pal mono C low
 	.long wsvPaletteW			;@ 0x39 Pal mono C high
-	.long wsvPaletteW			;@ 0x3A Pal mono D low
+	.long wsvPaletteTrW			;@ 0x3A Pal mono D low
 	.long wsvPaletteW			;@ 0x3B Pal mono D high
-	.long wsvPaletteW			;@ 0x3C Pal mono E low
+	.long wsvPaletteTrW			;@ 0x3C Pal mono E low
 	.long wsvPaletteW			;@ 0x3D Pal mono E high
-	.long wsvPaletteW			;@ 0x3E Pal mono F low
+	.long wsvPaletteTrW			;@ 0x3E Pal mono F low
 	.long wsvPaletteW			;@ 0x3F Pal mono F high
 			;@ DMA registers, only Color
 	.long wsvDMASourceW			;@ 0x40	DMA source
@@ -2743,7 +2770,7 @@ defaultOutTable:
 	.long wsvSoundOutputW		;@ 0x91 Sound output
 	.long wsvReadOnlyW			;@ 0x92 Noise LFSR value low
 	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
-	.long wsvRegW				;@ 0x94 Sound voice control
+	.long wsvCh2VoiceVolW		;@ 0x94 Sound voice volume
 	.long wsvImportantW			;@ 0x95 Sound Test
 	.long wsvReadOnlyW			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.
 	.long wsvReadOnlyW			;@ 0x97 SND9697
@@ -2756,31 +2783,31 @@ defaultOutTable:
 	.long wsvHWVolumeW			;@ 0x9E HW Volume
 	.long wsvUnmappedW			;@ 0x9F ---
 
-	.long wsvHWW				;@ 0xA0 Hardware type, SOC_ASWAN / SOC_SPHINX.
+	.long wsvHWW				;@ 0xA0 Hardware Type, SOC_ASWAN / SOC_SPHINX.
 	.long wsvUnmappedW			;@ 0xA1 ---
-	.long wsvTimerCtrlW			;@ 0xA2 Timer control
-	.long wsvUnknownW			;@ 0xA3 ???
-	.long wsvHTimerLowW			;@ 0xA4 HBlank timer low
-	.long wsvHTimerHighW		;@ 0xA5 HBlank timer high
-	.long wsvVTimerLowW			;@ 0xA6 VBlank timer low
-	.long wsvVTimerHighW		;@ 0xA7 VBlank timer high
-	.long wsvReadOnlyW			;@ 0xA8 HBlank counter low
-	.long wsvReadOnlyW			;@ 0xA9 HBlank counter high
-	.long wsvReadOnlyW			;@ 0xAA VBlank counter low
-	.long wsvReadOnlyW			;@ 0xAB VBlank counter high
+	.long wsvTimerCtrlW			;@ 0xA2 Timer Control
+	.long wsvSystemTestW		;@ 0xA3 System Test
+	.long wsvHTimerLowW			;@ 0xA4 HBlank Timer Low
+	.long wsvHTimerHighW		;@ 0xA5 HBlank Timer High
+	.long wsvVTimerLowW			;@ 0xA6 VBlank Timer Low
+	.long wsvVTimerHighW		;@ 0xA7 VBlank Timer High
+	.long wsvReadOnlyW			;@ 0xA8 HBlank Counter Low
+	.long wsvReadOnlyW			;@ 0xA9 HBlank Counter High
+	.long wsvReadOnlyW			;@ 0xAA VBlank Counter Low
+	.long wsvReadOnlyW			;@ 0xAB VBlank Counter High
 	.long wsvPowerOffW			;@ 0xAC Power Off
 	.long wsvUnmappedW			;@ 0xAD ---
 	.long wsvUnmappedW			;@ 0xAE ---
 	.long wsvUnmappedW			;@ 0xAF ---
 
-	.long wsvInterruptBaseW		;@ 0xB0 Interrupt base
-	.long wsvComByteW			;@ 0xB1 Serial data
-	.long wsvIntEnableW			;@ 0xB2 Interrupt enable
-	.long wsvSerialStatusW		;@ 0xB3 Serial status
-	.long wsvReadOnlyW			;@ 0xB4 Interrupt status
+	.long wsvInterruptBaseW		;@ 0xB0 Interrupt Base
+	.long wsvComByteW			;@ 0xB1 Serial Data
+	.long wsvIntEnableW			;@ 0xB2 Interrupt Enable
+	.long wsvSerialStatusW		;@ 0xB3 Serial Status
+	.long wsvReadOnlyW			;@ 0xB4 Interrupt Status
 	.long wsvKeypadW			;@ 0xB5 Input Controls
-	.long wsvIntAckW			;@ 0xB6 Interrupt acknowledge
-	.long wsvNMICtrlW			;@ 0xB7 NMI ctrl
+	.long wsvIntAckW			;@ 0xB6 Interrupt Acknowledge
+	.long wsvNMICtrlW			;@ 0xB7 NMI Ctrl
 	.long wsvUnmappedW			;@ 0xB8 ---
 	.long wsvUnmappedW			;@ 0xB9 ---
 	.long intEepromDataLowW		;@ 0xBA Internal eeprom data low

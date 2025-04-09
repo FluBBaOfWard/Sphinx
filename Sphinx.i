@@ -217,7 +217,7 @@ wsvSystemCtrl1:		.byte 0		;@ 0xA0 Hardware type, boot rom lock.
 wsvPadding9:		.space 1	;@ 0xA1 ???
 
 wsvTimerControl:	.byte 0		;@ 0xA2 Timer control
-wsvPadding10:		.space 1	;@ 0xA3 ???
+wsvSystemTest:		.byte 0		;@ 0xA3 System Test
 wsvHBlTimerFreq:	.short 0	;@ 0xA4/0xA5 HBlank Timer 'frequency'
 wsvVBlTimerFreq:	.short 0	;@ 0xA6/0xA7 VBlank Timer 'frequency'
 wsvHBlCounter:		.short 0	;@ 0xA8/0xA9 HBlank Counter - 1/12000s
@@ -294,7 +294,8 @@ wsvSerialBufFull:	.byte 0
 wsvOldKeypadReg:	.byte 0
 wsvSoundIconTimer:	.byte 0
 wsvCartIconTimer:	.byte 0
-wsvPadding15:		.space 2
+wsvRegMask14:		.byte 0
+wsvPadding15:		.space 1
 
 enabledLCDIcons:	.long 0
 dispLine: 			.long 0		;@ Last line dispCtrl was updated.
