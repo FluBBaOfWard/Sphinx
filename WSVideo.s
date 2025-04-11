@@ -239,7 +239,7 @@ cartTblLoop:
 	str lr,[r5],#4
 	bhi cartTblLoop
 
-	ldr lr,wsvUnmappedW
+	ldr lr,=wsvUnmappedW
 cartTblLoop2:
 	subs r6,r6,#1
 	str r3,[r4],#4
