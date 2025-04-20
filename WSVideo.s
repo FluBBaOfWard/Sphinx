@@ -1341,9 +1341,9 @@ wsvSetJoyState:				;@ r0 = joy state
 ;@----------------------------------------------------------------------------
 	ldr r1,[spxptr,#wsvJoyState]
 	str r0,[spxptr,#wsvJoyState]
-	eor r1,r0,r1
-	ands r1,r1,r0
+	eors r1,r0,r1
 	bxeq lr
+	and r1,r1,r0
 	tst r1,#0x10000
 	bne wsvPushVolumeButton
 	ldrb r0,[spxptr,#wsvKeypad]
