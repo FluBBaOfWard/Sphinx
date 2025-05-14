@@ -2247,6 +2247,7 @@ redrawColorIcons:
 	strh r3,[r2],#0x40
 	tst r0,#LCD_ICON_HORZ
 	ldrhne r3,[r1,#22]
+	moveq r3,r4
 	strh r3,[r2],#0x40
 
 	tst r0,#LCD_ICON_VERT		;@ Vertical
