@@ -649,14 +649,14 @@ intFound:
 ;@----------------------------------------------------------------------------
 wsvComByteR:				;@ 0xB1
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{lr}
-	mov r0,#SERRX_IRQ_F			;@ #3 = Serial receive
-	bl clearInterruptPins
-	bl callSerialInEmpty
 	mov r0,#0
 	strb r0,[spxptr,#wsvSerialBufFull]
 	ldrb r0,[spxptr,#wsvByteReceived]
-	ldmfd sp!,{pc}
+	stmfd sp!,{r0,spxptr,lr}
+	mov r0,#SERRX_IRQ_F			;@ #3 = Serial receive
+	bl clearInterruptPins
+	bl callSerialInEmpty
+	ldmfd sp!,{r0,spxptr,pc}
 ;@----------------------------------------------------------------------------
 wsvSerialStatusR:			;@ 0xB3
 ;@----------------------------------------------------------------------------

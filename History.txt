@@ -1,12 +1,13 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
-V0.4.2 - 2025-05-14 (FluBBa)
+V0.4.2 - 2025-05-25 (FluBBa)
 	Fixed debugging of some registers.
 	Fixed "Cart OK" icon handling.
 	Fixed "Small Dot" icon handling.
 	Fixed IO registers startup values.
 	Fixed IO registers writable bits.
+	Fixed reading of serial port.
 
 V0.4.1 - 2025-03-17 (FluBBa)
 	Fixed a regression in the noise.
