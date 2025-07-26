@@ -15,7 +15,7 @@
 #define PSG_DIVIDE 16
 #endif
 #define PSG_ADDITION 0x00010000*PSG_DIVIDE
-#define PSG_SWEEP_ADD 0x00010000*PSG_DIVIDE
+#define PSG_SWEEP_ADD 0x00100000
 
 	.global wsAudioReset
 	.global wsAudioMixer
@@ -59,8 +59,8 @@ wsaSetAllChVolume:			;@ In r0=SoundCtrl (from 0x90)
 
 	ldr r1,[spxptr,#sweep3CurrentAddr]
 	tst r0,#0x40				;@ Ch 3 sweep on?
-	biceq r1,r1,#0x100
-	orrne r1,r1,#0x100
+	biceq r1,r1,#0x8000
+	orrne r1,r1,#0x8000
 	str r1,[spxptr,#sweep3CurrentAddr]
 
 	ldr r1,[spxptr,#noise4CurrentAddr]
@@ -357,12 +357,12 @@ vol4_R:
 	orrsne lr,lr,#0xFF0000		;@ Volume right
 	mlane r2,lr,r11,r2
 
-	tst r8,r8,lsr#9				;@ Ch3 Sweep?
+	tst r8,r8,lsr#16			;@ Ch3 Sweep?
 	bcc noSweep
 	addscs r8,r8,#PSG_SWEEP_ADD
 	bcc noSweep
-	subcs r8,r8,r8,lsl#26
-	ldrsb lr,[spxptr,#wsvSweepValue]
+	subcs r8,r8,r8,lsl#20
+	ldr lr,[spxptr,#sweepValueFull]
 	mov r5,r5,ror#11
 	add r5,r5,lr,lsl#21
 	mov r5,r5,ror#21

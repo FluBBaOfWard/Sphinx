@@ -381,6 +381,17 @@ typedef struct {
 	u32 noise4CurrentAddr;
 	/// Ch3 sweep Current addr
 	u32 sweep3CurrentAddr;
+	/// Hyper Voice sample
+	u32 currentSampleValue;
+	/// Current sample base address
+	u32 sampleBaseAddr;
+
+	/// Full Sweep value
+	u32 sweepValueFull;
+	/// Number of missing samples from last sound callback.
+	u32 missingSamplesCnt;
+	/// Used for precision cycle counting.
+	u32 sweepOffset;
 
 	/// How many cycles to receive byte.
 	u32 serialRXCounter;

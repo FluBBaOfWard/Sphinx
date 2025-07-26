@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.4.4 - 2025-07-26 (FluBBa)
+	Fixed reading of channel 3 frequency.
+
 V0.4.2 - 2025-05-25 (FluBBa)
 	Fixed debugging of some registers.
 	Fixed "Cart OK" icon handling.

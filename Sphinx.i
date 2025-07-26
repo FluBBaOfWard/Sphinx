@@ -279,7 +279,9 @@ sweep3CurrentAddr:	.long 0		;@ Ch3 sweep Current address
 currentSampleValue: .long 0		;@ Hyper Voice sample
 sampleBaseAddr:		.long 0		;@ Current sample base address
 
+sweepValueFull:		.long 0		;@ Full Sweep value
 missingSamplesCnt:	.long 0		;@ Number of missing samples from last sound callback.
+sweepOffset:		.long 0		;@ Used for precision cycle counting.
 
 serialRXCounter:	.long 0		;@ How many cycles to receive byte.
 serialTXCounter:	.long 0		;@ How many cycles to send byte.
