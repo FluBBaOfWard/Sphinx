@@ -986,8 +986,13 @@ wsvDMACtrlW:				;@ 0x48, only Color, word transfer. steals 5+2*word cycles.
 	ldr r5,[spxptr,#wsvDMADest]	;@ r5=destination
 #endif
 	and r0,r0,#0x40				;@ Only keep Inc/dec
+	and r1,r4,#0xF0000			;@ Source bank
 	movs r6,r5,lsr#16			;@ r6=length
+	cmpne r1,#0x10000			;@ SRAM?
 	beq dmaEnd
+	ldrbcs r1,[spxptr,#wsvSystemCtrl1]
+	movscs r1,r1,lsl#29			;@ ROM waitstate +1?
+	bcs dmaEnd
 	mov r4,r4,lsl#12
 	mov r5,r5,lsl#16
 	sub v30cyc,v30cyc,#5*CYCLE
@@ -1701,42 +1706,39 @@ clearInterruptPins:			;@ In r0 = interrupt pins to clear
 ;@----------------------------------------------------------------------------
 doSoundDMA:					;@ In r0 = SndDmaCtrl
 ;@----------------------------------------------------------------------------
-	and r1,r0,#0x03				;@ DMA Frequency
-	cmp r1,#3
-	movne r1,#1
-	moveq r1,#2
-	rsb r2,r1,r1,lsl#3			;@ *7
+	and r3,r0,#0x03				;@ DMA Frequency
+	cmp r3,#3
+	movne r3,#1
+	moveq r3,#2
+	rsb r2,r3,r3,lsl#3			;@ *7
 	sub v30cyc,v30cyc,r2,lsl#CYC_SHIFT
-	tst r0,#0x04				;@ Hold ?
-	bne sdmaHold				;@ Hold
 	stmfd sp!,{r4,lr}
-	mov r4,r0
-	ldr r2,[spxptr,#sndDmaSource]
-	ldr r3,[spxptr,#sndDmaLength]
-	mov r0,r2,lsl#12
-	tst r4,#0x40				;@ Increase/decrease
-	subne r2,r2,r1
-	addeq r2,r2,r1
-	subs r3,r3,r1
+	movs r4,r0,lsl#25			;@ Increase/decrease to sign bit.
+	ldr r0,[spxptr,#sndDmaSource]
+	ldr r1,[spxptr,#sndDmaLength]
+	mov r0,r0,lsl#12
+	rsbmi r2,r3,r0,lsr#12
+	addpl r2,r3,r0,lsr#12
+	subs r3,r1,r3
 	blle checkSndDMAEnd			;@ Less or equal.
-	str r2,[spxptr,#sndDmaSource]
-	str r3,[spxptr,#sndDmaLength]
-	bl cpuReadMem20				;@ Fetch data
+	tst r4,#0x08000000			;@ Hold ?
+	movne r0,#0					;@ Hold
+	streq r2,[spxptr,#sndDmaSource]
+	streq r3,[spxptr,#sndDmaLength]
+	bleq cpuReadMem20			;@ Fetch data
 
-	tst r4,#0x10				;@ Ch2Vol/HyperVoice
+	tst r4,#0x20000000			;@ Ch2Vol/HyperVoice
 	ldmfd sp!,{r4,lr}
 	beq wsvCh2VolumeW
 	b wsaSetHyperVoiceValue
-sdmaHold:
-	ands r0,r0,#0x10			;@ Ch2Vol/HyperVoice
-	beq wsvCh2VolumeW
-	mov r0,#0
-	b wsaSetHyperVoiceValue
 ;@----------------------------------------------------------------------------
 checkSndDMAEnd:
-	tst r4,#0x08				;@ Loop?
-	biceq r4,r4,#0x80			;@ Nope.
-	strbeq r4,[spxptr,#wsvSndDMACtrl]
+	ands r3,r4,#0x10000000		;@ Loop? Also clear r3 if no loop.
+	moveq r1,r4,lsr#25			;@ Nope, end.
+	strbeq r1,[spxptr,#wsvSndDMACtrl]
+	biceq r2,r2,#0x0FF00000
+	addeq r0,r2,r0,lsr#12
+	moveq r0,r0,lsl#11
 	bxeq lr
 	ldrh r2,[spxptr,#wsvSndDMASrcL]
 	ldrh r1,[spxptr,#wsvSndDMASrcH]
@@ -2736,16 +2738,16 @@ defaultOutTable:
 	.long wsvDMALengthW			;@ 0x46 DMA length
 	.long wsvRegW				;@ 0x47 DMA len
 	.long wsvDMACtrlW			;@ 0x48 DMA control
-	.long wsvRegW				;@ 0x49 DMA ctrl
+	.long wsvZeroW				;@ 0x49 ---
 	.long wsvSndDMASrc0W		;@ 0x4A	Sound DMA source
 	.long wsvSndDMASrc1W		;@ 0x4B Sound DMA src
 	.long wsvSndDMASrc2W		;@ 0x4C Sound DMA src
-	.long wsvZeroW				;@ 0x4D Sound DMA src
+	.long wsvZeroW				;@ 0x4D ---
 	.long wsvSndDMALen0W		;@ 0x4E Sound DMA length
 	.long wsvSndDMALen1W		;@ 0x4F Sound DMA len
 
 	.long wsvSndDMALen2W		;@ 0x50 Sound DMA len
-	.long wsvZeroW				;@ 0x51 Sound DMA len
+	.long wsvZeroW				;@ 0x51 ---
 	.long wsvSndDMACtrlW		;@ 0x52 Sound DMA control
 	.long wsvZeroW				;@ 0x53 ---
 	.long wsvUnmappedW			;@ 0x54 ---
