@@ -51,20 +51,21 @@ wsAudioReset:				;@ spxptr=r12=pointer to struct
 wsaSetAllChVolume:			;@ In r0=SoundCtrl (from 0x90)
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	tst r0,#0x20				;@ Ch 2 voice on?
+	tst r0,#0x20				;@ Ch 2 Voice on?
 	ldr r2,=ch2Op
 	ldreq r1,ch2OpCode
 	ldrne r1,ch2OpCode+4
 	str r1,[r2]
 
 	ldr r1,[spxptr,#sweep3CurrentAddr]
-	tst r0,#0x40				;@ Ch 3 sweep on?
+	and r2,r0,r0,lsr#4
+	tst r2,#0x04				;@ Ch 3 & Sweep on?
 	biceq r1,r1,#0x8000
 	orrne r1,r1,#0x8000
 	str r1,[spxptr,#sweep3CurrentAddr]
 
 	ldr r1,[spxptr,#noise4CurrentAddr]
-	tst r0,#0x80				;@ Ch 4 noise on?
+	tst r0,#0x80				;@ Ch 4 Noise on?
 	biceq r1,r1,#0x4000
 	orrne r1,r1,#0x4000
 	str r1,[spxptr,#noise4CurrentAddr]
@@ -363,8 +364,7 @@ vol4_R:
 	bcc noSweep
 	subcs r8,r8,r8,lsl#20
 	ldr lr,[spxptr,#sweepValueFull]
-	mov r5,r5,ror#11
-	add r5,r5,lr,lsl#21
+	add r5,lr,r5,ror#11
 	mov r5,r5,ror#21
 noSweep:
 totalVolume:

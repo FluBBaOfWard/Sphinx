@@ -1126,6 +1126,24 @@ wsvFreqHW:					;@ 0x81,0x83,0x85,0x87, Sound frequency high
 	strb r0,[r2,#pcm1CurrentAddr+1]
 	bx lr
 ;@----------------------------------------------------------------------------
+wsvFreq3LW:					;@ 0x84, Sound 3 frequency low
+;@----------------------------------------------------------------------------
+	strb r0,[spxptr,#wsvSound3Freq]
+	strb r0,[spxptr,#pcm3CurrentAddr]
+	sub r1,v30cyc,#1<<CYC_SHIFT
+	str r1,[spxptr,#sweepOffset]
+	bx lr
+;@----------------------------------------------------------------------------
+wsvFreq3HW:					;@ 0x85, Sound 3 frequency high
+;@----------------------------------------------------------------------------
+	and r0,r0,#7				;@ Only low 3 bits
+	strb r0,[spxptr,#wsvSound3Freq+1]
+	orr r0,r0,#8
+	strb r0,[spxptr,#pcm3CurrentAddr+1]
+	sub r1,v30cyc,#1<<CYC_SHIFT
+	str r1,[spxptr,#sweepOffset]
+	bx lr
+;@----------------------------------------------------------------------------
 wsvCh1VolumeW:				;@ 0x88, Sound Channel 1 Volume
 ;@----------------------------------------------------------------------------
 	ldrb r1,[spxptr,#wsvSound1Vol]
@@ -1160,11 +1178,10 @@ wsvCh4VolumeW:				;@ 0x8B, Sound Channel 4 Volume
 ;@----------------------------------------------------------------------------
 wsvSweepValueW:				;@ 0x8C, Sound sweep value
 ;@----------------------------------------------------------------------------
-	;@ This should be higher when SoundTest bit #1 is set.
+	strb r0,[spxptr,#wsvSweepValue]
 	ldrb r1,[spxptr,#wsvSoundTest]
 	mov r0,r0,lsl#24
-	mov r0,r0,asr#24
-	strb r0,[spxptr,#wsvSweepValue]
+	mov r0,r0,asr#3
 	tst r1,#0x02				;@ CPU clock for sweep?
 	movne r0,r0,lsl#7
 	str r0,[spxptr,#sweepValueFull]
@@ -1249,6 +1266,18 @@ wsvCh2VoiceVolW:			;@ 0x94, Sound Channel 2 Voice Volume
 ;@----------------------------------------------------------------------------
 wsvSoundTestW:				;@ 0x95, Sound Test
 ;@----------------------------------------------------------------------------
+	ldrb r1,[spxptr,#wsvSoundTest]
+	strb r0,[spxptr,#wsvSoundTest]
+	eors r1,r1,r0
+	bxeq lr
+	ldrb r1,[spxptr,#wsvSweepValue]
+	mov r1,r1,lsl#24
+	mov r1,r1,asr#3
+	tst r0,#0x02				;@ CPU clock for sweep?
+	movne r1,r1,lsl#7
+	str r1,[spxptr,#sweepValueFull]
+	ldrb r0,[spxptr,#wsvSweepTime]
+	b wsvSweepTimeW
 ;@----------------------------------------------------------------------------
 wsvPushVolumeButton:
 ;@----------------------------------------------------------------------------
@@ -2801,8 +2830,8 @@ defaultOutTable:
 	.long wsvFreqHW				;@ 0x81 Sound Ch1 pitch high
 	.long wsvFreqLW				;@ 0x82 Sound Ch2 pitch low
 	.long wsvFreqHW				;@ 0x83 Sound Ch2 pitch high
-	.long wsvFreqLW				;@ 0x84 Sound Ch3 pitch low
-	.long wsvFreqHW				;@ 0x85 Sound Ch3 pitch high
+	.long wsvFreq3LW			;@ 0x84 Sound Ch3 pitch low
+	.long wsvFreq3HW			;@ 0x85 Sound Ch3 pitch high
 	.long wsvFreqLW				;@ 0x86 Sound Ch4 pitch low
 	.long wsvFreqHW				;@ 0x87 Sound Ch4 pitch high
 	.long wsvCh1VolumeW			;@ 0x88 Sound Ch1 volume
@@ -2819,7 +2848,7 @@ defaultOutTable:
 	.long wsvReadOnlyW			;@ 0x92 Noise LFSR value low
 	.long wsvReadOnlyW			;@ 0x93 Noise LFSR value high
 	.long wsvCh2VoiceVolW		;@ 0x94 Sound voice volume
-	.long wsvImportantW			;@ 0x95 Sound Test
+	.long wsvSoundTestW			;@ 0x95 Sound Test
 	.long wsvReadOnlyW			;@ 0x96 SND9697 SND_OUT_R (ch1-4) right output, 10bit.
 	.long wsvReadOnlyW			;@ 0x97 SND9697
 	.long wsvReadOnlyW			;@ 0x98 SND9899 SND_OUT_L (ch1-4) left output, 10bit.
