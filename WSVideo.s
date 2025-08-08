@@ -1245,8 +1245,7 @@ wsvSoundCtrlW:				;@ 0x90, Sound Control
 	strb r0,[spxptr,#wsvSoundCtrl]
 	and r1,r1,r0
 	tst r1,#0x40				;@ Sweep enabled?
-	subne r1,v30cyc,#1<<CYC_SHIFT
-	strne r1,[spxptr,#sweepOffset]
+	strne v30cyc,[spxptr,#sweepOffset]
 	b wsaSetAllChVolume
 ;@----------------------------------------------------------------------------
 wsvSoundOutputW:			;@ 0x91, Sound ouput

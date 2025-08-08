@@ -1,6 +1,9 @@
 Sphinx revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
+V0.4.5 - 2025-08-08 (FluBBa)
+	Fixed reading of channel 3 frequency for real.
+
 V0.4.4 - 2025-08-08 (FluBBa)
 	Fixed reading of channel 3 frequency.
 	Fixed GDMA from SRAM & slow ROM (should fail).
