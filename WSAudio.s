@@ -101,14 +101,14 @@ ch2OpCode:
 	mlane r2,lr,r11,r2
 	add r2,lr,r2
 EnableOps:
-	adds r2,r11,r3,ror#32-5
-	adds r2,lr,r3,ror#32-5
-	adds r2,r11,r4,ror#32-5
-	adds r2,lr,r4,ror#32-5
-	adds r2,r11,r5,ror#32-5
-	adds r2,lr,r5,ror#32-5
-	adds r2,r11,r6,ror#32-5
-	adds r2,lr,r6,ror#32-5
+	adds r3,r11,r3,ror#32-5
+	adds r3,lr,r3,ror#32-5
+	adds r4,r11,r4,ror#32-5
+	adds r4,lr,r4,ror#32-5
+	adds r5,r11,r5,ror#32-5
+	adds r5,lr,r5,ror#32-5
+	adds r6,r11,r6,ror#32-5
+	adds r6,lr,r6,ror#32-5
 
 ;@----------------------------------------------------------------------------
 wsaSetCh1Volume:
@@ -284,23 +284,23 @@ mixLoop:
 	mov lr,#0					;@ Used when channels disabled.
 innerMixLoop:
 ch1En:
-	adds r2,r11,r3,ror#32-5
-	mov r3,r2,ror#5
+	adds r3,r11,r3,ror#32-5
+	mov r3,r3,ror#5
 	addcs r3,r3,r3,lsl#16
 
 ch2En:
-	adds r2,r11,r4,ror#32-5
-	mov r4,r2,ror#5
+	adds r4,r11,r4,ror#32-5
+	mov r4,r4,ror#5
 	addcs r4,r4,r4,lsl#16
 
 ch3En:
-	adds r2,r11,r5,ror#32-5
-	mov r5,r2,ror#5
+	adds r5,r11,r5,ror#32-5
+	mov r5,r5,ror#5
 	addcs r5,r5,r5,lsl#16
 
 ch4En:
-	adds r2,r11,r6,ror#32-5
-	mov r6,r2,ror#5
+	adds r6,r11,r6,ror#32-5
+	mov r6,r6,ror#5
 	addcs r6,r6,r6,lsl#16
 
 	bcc checkInnerLoop

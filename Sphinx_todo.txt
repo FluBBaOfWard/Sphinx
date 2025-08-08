@@ -5,7 +5,7 @@ Bandai WonderSwan/Sphinx To do
 	Handle double buffered tile maps better, see Hataraku Chocobo.
 	Fix HyperVoice stereo handling.
 	Palette change per line?
-	Sound frequency updates are not working as on HW.
+	Sound frequency updates are not working as on HW (writing to frequency reg).
 	Sound rendering affects timing of sweep and noise.
 	Ch4 noise/LFSR is not clear how/when it's clocked.
 	Handle Contrast High/Low for WSC, change Y every other frame.

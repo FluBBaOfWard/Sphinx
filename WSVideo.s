@@ -618,6 +618,7 @@ wsvCh3FreqLR:					;@ 0x84, Ch3 Sound frequency low
 	ldrb r0,[spxptr,#pcm3CurrentAddr]
 	tst r1,#0x02				;@ CPU clock for sweep?
 	ldrne r1,[spxptr,#sweepOffset]
+	subne r1,r1,#1<<CYC_SHIFT
 	addne r0,r0,r1,lsr#CYC_SHIFT
 	subne r0,r0,v30cyc,lsr#CYC_SHIFT
 	and r0,r0,#0xFF				;@ Only low byte
@@ -629,6 +630,7 @@ wsvCh3FreqHR:					;@ 0x85, Ch3 Sound frequency high
 	ldr r0,[spxptr,#pcm3CurrentAddr]
 	tst r1,#0x02				;@ CPU clock for sweep?
 	ldrne r1,[spxptr,#sweepOffset]
+	subne r1,r1,#1<<CYC_SHIFT
 	addne r0,r0,r1,lsr#CYC_SHIFT
 	subne r0,r0,v30cyc,lsr#CYC_SHIFT
 	mov r0,r0,lsr#8
@@ -1130,8 +1132,7 @@ wsvFreq3LW:					;@ 0x84, Sound 3 frequency low
 ;@----------------------------------------------------------------------------
 	strb r0,[spxptr,#wsvSound3Freq]
 	strb r0,[spxptr,#pcm3CurrentAddr]
-	sub r1,v30cyc,#1<<CYC_SHIFT
-	str r1,[spxptr,#sweepOffset]
+	str v30cyc,[spxptr,#sweepOffset]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvFreq3HW:					;@ 0x85, Sound 3 frequency high
@@ -1140,8 +1141,7 @@ wsvFreq3HW:					;@ 0x85, Sound 3 frequency high
 	strb r0,[spxptr,#wsvSound3Freq+1]
 	orr r0,r0,#8
 	strb r0,[spxptr,#pcm3CurrentAddr+1]
-	sub r1,v30cyc,#1<<CYC_SHIFT
-	str r1,[spxptr,#sweepOffset]
+	str v30cyc,[spxptr,#sweepOffset]
 	bx lr
 ;@----------------------------------------------------------------------------
 wsvCh1VolumeW:				;@ 0x88, Sound Channel 1 Volume
