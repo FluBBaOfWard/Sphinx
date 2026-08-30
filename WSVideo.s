@@ -1307,6 +1307,14 @@ wsvHWW:						;@ 0xA0, Color/Mono, boot rom lock
 	and r1,r1,#0x83				;@ These can't be cleared once set.
 	orr r0,r0,r1
 	strb r0,[spxptr,#wsvSystemCtrl1]
+	;@ Cache the cartridge ROM instruction-stream wait state in the CPU cycle
+	;@ flags. Opcode/immediate fetches can then avoid reading the Sphinx state on
+	;@ every byte, while normal ROM data reads remain untouched.
+	bic v30cyc,v30cyc,#FETCH_ROM_WAIT_FLAG | FETCH_WAIT_ACTIVE_FLAG
+	tst r0,#0x08				;@ Bit 3: cartridge ROM wait state +1.
+	orrne v30cyc,v30cyc,#FETCH_ROM_WAIT_FLAG
+	tstne v30cyc,#FETCH_CART_ROM_FLAG
+	orrne v30cyc,v30cyc,#FETCH_WAIT_ACTIVE_FLAG
 	eor r1,r1,r0
 	tst r1,#1					;@ Boot rom locked?
 	bxeq lr
