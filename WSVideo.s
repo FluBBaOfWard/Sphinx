@@ -791,7 +791,18 @@ wsvBgColorW:				;@ 0x01, Background Color
 	tst r1,#0x80				;@ Color mode?
 	andeq r0,r0,#0x07
 	strb r0,[spxptr,#wsvBgColor]
+#ifdef WS_VIDEO_WRITE_CALLBACK
+	ldr r1,=wsvVideoWriteCallbackEnabled
+	ldrb r1,[r1]
+	cmp r1,#0
+	bxeq lr
+	stmfd sp!,{r0-r3,spxptr,lr}
+	mov r0,#0x01				;@ Background Color register.
+	bl wsvVideoRegisterWriteCallback
+	ldmfd sp!,{r0-r3,spxptr,pc}
+#else
 	bx lr
+#endif
 ;@----------------------------------------------------------------------------
 wsvSpriteTblAdrW:			;@ 0x04, Sprite Table Address
 ;@----------------------------------------------------------------------------
